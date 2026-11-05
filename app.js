@@ -7,7 +7,7 @@ const APPS = [
     name: 'Smooth Cursor',
     cat: 'Видео',
     icon: 'assets/smooth-cursor.png',
-    demo: 'assets/smooth-cursor-demo.gif',
+    demo: 'assets/smooth-cursor-demo.mp4',
     desc: 'Плавный курсор для записей экрана в OBS, как в Screen Studio. Клики попадают точно в цель.',
     file: 'https://github.com/fggtf24-cyber/smooth-cursor-obs/releases/latest/download/SmoothCursor-Setup.exe',
     size: '130 МБ',
@@ -117,6 +117,13 @@ const platform = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" st
 const download = (a, cls = 'btn') => `<a class="${cls} dl" data-id="${esc(a.id)}" href="${safeUrl(a.file)}" aria-label="Скачать ${esc(a.name)}">Скачать</a>`;
 const siteLink = a => (safeUrl(a.site) ? `<a class="link" href="${safeUrl(a.site)}" target="_blank" rel="noopener">Сайт</a>` : '');
 const editLink = (kind, a) => (isAdmin ? `<a class="link" href="#edit/${kind}/${esc(a.id)}" aria-label="Изменить ${esc(a.name)}">Изменить</a>` : '');
+const media = a => {
+  const src = safeUrl(a.demo);
+  if (!src) return '';
+  return /\.(mp4|webm)(\?|$)/i.test(src)
+    ? `<video src="${src}" autoplay muted loop playsinline aria-label="${esc(a.name)} в работе"></video>`
+    : `<img src="${src}" alt="${esc(a.name)} в работе">`;
+};
 const authorLine = a => (a.author ? `<p class="author">Автор: ${esc(a.author)}</p>` : '');
 
 const card = a => `
@@ -136,10 +143,16 @@ const card = a => `
     </div>
   </article>`;
 
+// Ссылка на soundcloud.com в проекте сама превращается в плеер.
+const soundcloud = p => (/^https:\/\/soundcloud\.com\//.test(p.url || '') ? `
+  <iframe class="player" title="Плеер: ${esc(p.name)}" allow="autoplay; encrypted-media"
+    src="https://w.soundcloud.com/player/?url=${encodeURIComponent(p.url)}&color=%231473e6&show_comments=false&show_teaser=false&visual=true"></iframe>` : '');
+
 const projectCard = p => `
-  <article class="card">
+  <article class="card${soundcloud(p) ? ' wide' : ''}">
     <div class="card-head"><h2>${esc(p.name)}</h2></div>
     <p>${esc(p.desc)}</p>
+    ${soundcloud(p)}
     <div class="card-foot">
       ${editLink('projects', p)}
       <a class="btn open" href="${safeUrl(p.url)}" target="_blank" rel="noopener" aria-label="Открыть ${esc(p.name)}">Открыть</a>
@@ -180,7 +193,7 @@ function renderApps() {
 
 function renderApp(a) {
   const list = items => `<ul>${items.map(i => `<li>${esc(i)}</li>`).join('')}</ul>`;
-  const demo = safeUrl(a.demo);
+  const demo = media(a);
   const features = a.features || [];
   const isWindows = /Windows/.test(navigator.userAgent);
   view.innerHTML = `
@@ -221,8 +234,8 @@ function renderApp(a) {
               <p class="use-lead">${esc(features[0])}</p>
               ${list(features.slice(1))}
             </div>
-            ${demo ? `<img src="${demo}" alt="${esc(a.name)} в работе">` : ''}
-          </div>` : (demo ? `<div class="use"><img src="${demo}" alt="${esc(a.name)} в работе"></div>` : '')}
+            ${demo}
+          </div>` : (demo ? `<div class="use">${demo}</div>` : '')}
         ${a.needs?.length ? `<h2>Что нужно</h2><div class="use"><div class="use-text">${list(a.needs)}</div></div>` : ''}
       </div>
     </div>`;
@@ -242,7 +255,7 @@ const FIELDS = {
     ['site', 'Сайт программы', 'url'],
     ['repo', 'GitHub', 'url'],
     ['icon', 'Ссылка на иконку', 'url'],
-    ['demo', 'Ссылка на гифку или картинку', 'url'],
+    ['demo', 'Ссылка на картинку, гифку или .mp4', 'url'],
     ['features', 'Что умеет (один пункт на строку)', 'lines'],
     ['needs', 'Что нужно (один пункт на строку)', 'lines'],
   ],
@@ -328,8 +341,9 @@ async function checkAdmin(u) {
   if (!u?.email) return false;
   try {
     return (await fs.getDoc(fs.doc(db, 'admins', u.email.toLowerCase()))).exists();
-  } catch {
-    return false; // правила не пускают: вход не через Google
+  } catch (e) {
+    console.error(e); // правила не пускают: вход не через Google
+    return false;
   }
 }
 
