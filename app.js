@@ -104,6 +104,9 @@ let user = null;
 let isAdmin = false;
 let authState = 'loading';    // loading | ready | failed
 let contentState = 'loading'; // loading | ready | failed
+let authors = {};   // uid админа -> { name }: публичные имена для поля «Автор»
+let messages = [];  // личка админа
+let stopMessages = null;
 let notifications = [];
 let stopNotifications = null;
 let profile = {};  // users/<uid>: name, photo
@@ -128,7 +131,8 @@ const media = a => {
     ? `<video src="${src}" autoplay muted loop playsinline aria-label="${esc(a.name)} в работе"></video>`
     : `<img src="${src}" alt="${esc(a.name)} в работе">`;
 };
-const authorLine = a => (a.author ? `<p class="author">Автор: ${esc(a.author)}</p>` : '');
+const authorName = a => authors[a.authorUid]?.name || '';
+const authorLine = a => (authorName(a) ? `<p class="author">Автор: ${esc(authorName(a))}</p>` : '');
 
 const card = a => `
   <article class="card">
@@ -175,7 +179,7 @@ const promo = `
 
 function renderApps() {
   const q = search.value.trim().toLowerCase();
-  const found = a => !q || `${a.name} ${a.author} ${a.desc}`.toLowerCase().includes(q);
+  const found = a => !q || `${a.name} ${authorName(a)} ${a.desc}`.toLowerCase().includes(q);
   const onProjects = cat === PROJECTS_TAB;
   const list = (onProjects ? projects : apps).filter(found);
   const tabs = [['all', 'Все приложения'], [PROJECTS_TAB, 'Другие проекты']];
@@ -220,9 +224,10 @@ function renderApp(a) {
         <ul class="app-meta">
           <li>${isWindows ? '<i class="ok">✓</i>Работает на этом устройстве' : '<i>!</i>Только для Windows'}</li>
           ${a.size ? `<li><i>↓</i>${esc(a.size)} после установки</li>` : ''}
-          ${a.author ? `<li><i>@</i>Автор: ${esc(a.author)}</li>` : ''}
+          ${authorName(a) ? `<li><i>@</i>Автор: ${esc(authorName(a))}</li>` : ''}
         </ul>
         ${download(a, 'btn primary')}
+        ${authorName(a) ? `<a class="btn report-link" href="#report/${esc(a.id)}">Сообщить о баге или идее</a>` : ''}
         <div class="app-links">
           ${siteLink(a)}
           ${safeUrl(a.repo) ? `<a class="link" href="${safeUrl(a.repo)}" target="_blank" rel="noopener">GitHub</a>` : ''}
@@ -469,7 +474,7 @@ function toggleBell(open) {
 const FIELDS = {
   apps: [
     ['name', 'Название', 'text*'],
-    ['author', 'Автор', 'text'],
+    ['authorUid', 'Автор (аккаунт админа)', 'author'],
     ['desc', 'Описание', 'area*'],
     ['file', 'Ссылка на .exe', 'url*'],
     ['size', 'Размер после установки, например 130 МБ', 'text'],
@@ -499,7 +504,12 @@ function renderEditor(kind, id) {
     const required = type.endsWith('*') ? 'required' : '';
     const t = type.replace('*', '');
     const value = Array.isArray(item[key]) ? item[key].join('\n') : item[key] ?? '';
-    const control = t === 'area' || t === 'lines'
+    const control = t === 'author' ? `
+      <select name="${key}">
+        <option value="">Не указан</option>
+        ${Object.entries(authors).map(([uid, a]) => `<option value="${esc(uid)}" ${uid === value ? 'selected' : ''}>${esc(a.name)}</option>`).join('')}
+      </select>`
+      : t === 'area' || t === 'lines'
       ? `<textarea name="${key}" rows="${t === 'lines' ? 6 : 3}" ${required}>${esc(value)}</textarea>`
       : `<input name="${key}" value="${esc(value)}" ${required} ${t === 'url' ? 'pattern="(https://|assets/).+" title="Ссылка должна начинаться с https://"' : ''}>`;
     return `<label class="field">${label}${control}</label>`;
@@ -542,10 +552,18 @@ function merge(base, snap) {
 }
 
 async function loadContent() {
-  const [a, p] = await Promise.all(['apps', 'projects'].map(c => fs.getDocs(fs.collection(db, c))));
+  const [a, p, people] = await Promise.all(['apps', 'projects', 'authors'].map(c => fs.getDocs(fs.collection(db, c))));
   apps = merge(APPS, a);
   projects = merge(PROJECTS, p);
+  people.forEach(d => { authors[d.id] = d.data(); });
   contentState = 'ready';
+}
+
+// Админ сам появляется в списке авторов при входе, а смена имени в профиле меняет подпись на всех его программах.
+async function syncAuthor() {
+  const name = (displayName() || 'Админ').slice(0, 80);
+  await fs.setDoc(fs.doc(db, 'authors', user.uid), { name });
+  authors[user.uid] = { name };
 }
 
 async function loadProfile(u) {
@@ -644,6 +662,7 @@ function drawAvatar(el) {
 async function saveProfile(data) {
   await fs.setDoc(fs.doc(db, 'users', user.uid), data, { merge: true });
   profile = { ...profile, ...data };
+  if (isAdmin) await syncAuthor();
   drawAvatar(avatar);
   renderAccount();
   say('Сохранено.', true);
@@ -658,6 +677,111 @@ async function photoToDataUrl(file) {
   canvas.getContext('2d').drawImage(bitmap,
     (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, 128, 128);
   return canvas.toDataURL('image/jpeg', 0.8);
+}
+
+/* ---------- Баги и идеи ---------- */
+
+function renderReport(appId) {
+  const note = html => { view.innerHTML = `<section class="section"><h1>Сообщить о баге или идее</h1><p class="empty">${html}</p></section>`; };
+  if (authState === 'loading' || contentState === 'loading') return note('Загрузка…');
+  if (!user) return note('<a class="link" href="#account">Войдите</a>, чтобы написать автору программы.');
+  if (!apps.some(authorName)) return note('Пока ни у одной программы не указан автор.');
+  const option = a => (authorName(a)
+    ? `<option value="${esc(a.id)}" ${a.id === appId ? 'selected' : ''}>${esc(a.name)} (автор: ${esc(authorName(a))})</option>`
+    : `<option disabled>${esc(a.name)} (автор не указан)</option>`);
+  view.innerHTML = `
+    <section class="section account editor">
+      <h1>Сообщить о баге или идее</h1>
+      <form id="report-form" class="account">
+        <label class="field">Что это
+          <select name="type"><option value="bug">Баг</option><option value="idea">Идея</option></select>
+        </label>
+        <label class="field">Программа
+          <select name="appId" required>${apps.map(option).join('')}</select>
+        </label>
+        <label class="field">Сообщение
+          <textarea name="text" rows="6" maxlength="2000" required></textarea>
+        </label>
+        <button class="btn primary">Отправить автору</button>
+      </form>
+      <p id="msg" class="msg" role="alert"></p>
+    </section>`;
+}
+
+async function sendReport(form) {
+  const { type, appId, text } = Object.fromEntries(new FormData(form));
+  const app = apps.find(a => a.id === appId);
+  if (!authorName(app) || !text.trim()) return;
+  await fs.addDoc(fs.collection(db, 'messages'), {
+    to: app.authorUid,
+    from: user.uid,
+    fromName: (displayName() || 'Пользователь').slice(0, 80),
+    fromEmail: user.email || '',
+    type,
+    appId,
+    appName: app.name.slice(0, 100),
+    text: text.trim(),
+    createdAt: fs.serverTimestamp(),
+    read: false,
+  });
+  form.reset();
+  say(`Отправлено. Сообщение получит ${authorName(app)}.`, true);
+}
+
+function watchMessages(u) {
+  stopMessages?.();
+  stopMessages = null;
+  messages = [];
+  if (u) {
+    stopMessages = fs.onSnapshot(
+      fs.query(fs.collection(db, 'messages'), fs.where('to', '==', u.uid)),
+      snap => {
+        messages = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+        drawInboxCount();
+        if (route().name === 'inbox') renderInbox();
+      },
+      console.error,
+    );
+  }
+  drawInboxCount();
+}
+
+function drawInboxCount() {
+  const unread = messages.filter(m => !m.read).length;
+  const count = document.getElementById('inbox-count');
+  count.hidden = !unread;
+  count.textContent = unread > 9 ? '9+' : unread;
+}
+
+// Имя, почту и текст пишут посетители: только через esc.
+const messageItem = m => `
+  <article class="comment">
+    <div class="comment-body">
+      <div class="comment-head">
+        <span class="tag ${m.type === 'idea' ? 'idea' : 'bug'}">${m.type === 'idea' ? 'Идея' : 'Баг'}</span>
+        <a class="link" href="#app/${esc(m.appId)}">${esc(m.appName)}</a>
+        <span>${when(m.createdAt)}</span>
+      </div>
+      <p>${esc(m.text)}</p>
+      <div class="comment-head"><b>${esc(m.fromName)}</b><span>${esc(m.fromEmail)}</span></div>
+      <div class="comment-actions"><button type="button" class="link linkbtn" data-del-message="${esc(m.id)}">Удалить</button></div>
+    </div>
+  </article>`;
+
+function renderInbox() {
+  const note = text => { view.innerHTML = `<section class="section"><h1>Сообщения</h1><p class="empty">${text}</p></section>`; };
+  if (authState === 'loading') return note('Загрузка…');
+  if (!isAdmin) return note('Сообщения видят только админы, вошедшие через Google.');
+  view.innerHTML = `
+    <section class="section inbox">
+      <h1>Сообщения</h1>
+      ${messages.map(messageItem).join('') || '<p class="empty">Пока ничего не пришло. Сюда попадают баги и идеи по программам, где автор вы.</p>'}
+      <p id="msg" class="msg" role="alert"></p>
+    </section>`;
+  messages.filter(m => !m.read).forEach(m => {
+    fs.updateDoc(fs.doc(db, 'messages', m.id), { read: true }).catch(console.error);
+  });
 }
 
 /* ---------- Статистика ---------- */
@@ -765,8 +889,11 @@ async function initFirebase() {
       user = u;
       authState = 'ready';
       watchNotifications(u);
+      watchMessages(isAdmin ? u : null);
+      if (isAdmin) await syncAuthor().catch(console.error);
       drawAvatar(avatar);
       document.getElementById('rail-stats').hidden = !isAdmin;
+      document.getElementById('rail-inbox').hidden = !isAdmin;
       render();
     });
   } catch (e) {
@@ -781,7 +908,8 @@ async function initFirebase() {
 
 function route() {
   const [name, a, b] = location.hash.slice(1).split('/');
-  if (name === 'account' || name === 'stats') return { name };
+  if (['account', 'stats', 'inbox'].includes(name)) return { name };
+  if (name === 'report') return { name, appId: a };
   if (name === 'edit' && FIELDS[a] && b) return { name, kind: a, id: b };
   const app = name === 'app' && apps.find(x => x.id === a);
   return app ? { name: 'app', app, commentId: b } : { name: 'apps' };
@@ -791,11 +919,13 @@ function render() {
   const r = route();
   if (r.name === 'account') renderAccount();
   else if (r.name === 'stats') renderStats();
+  else if (r.name === 'inbox') renderInbox();
+  else if (r.name === 'report') renderReport(r.appId);
   else if (r.name === 'edit') renderEditor(r.kind, r.id);
   else if (r.name === 'app') renderApp(r.app);
   else renderApps();
   document.querySelectorAll('.rail a').forEach(a => {
-    if (a.dataset.route === (['account', 'stats'].includes(r.name) ? r.name : 'apps')) a.setAttribute('aria-current', 'page');
+    if (a.dataset.route === (['account', 'stats', 'inbox', 'report'].includes(r.name) ? r.name : 'apps')) a.setAttribute('aria-current', 'page');
     else a.removeAttribute('aria-current');
   });
   document.title = r.app ? `${r.app.name} — Яйца Клауд` : 'Яйца Клауд — все приложения';
@@ -832,6 +962,10 @@ view.addEventListener('click', e => {
     });
   }
   else if (t.dataset.reply) toggleReplyForm(t);
+  else if (t.dataset.delMessage) {
+    if (!confirm('Удалить сообщение?')) return;
+    attempt(() => fs.deleteDoc(fs.doc(db, 'messages', t.dataset.delMessage)));
+  }
   else if (t.dataset.delComment) {
     if (!confirm('Удалить комментарий?')) return;
     attempt(async () => {
@@ -865,6 +999,7 @@ view.addEventListener('click', e => {
 view.addEventListener('submit', e => {
   e.preventDefault();
   if (e.target.id === 'edit-form') return attempt(() => saveItem(e.target));
+  if (e.target.id === 'report-form') return attempt(() => sendReport(e.target));
   if (e.target.classList.contains('comment-form')) return attempt(() => addComment(e.target));
   if (e.target.id === 'profile-form') {
     return attempt(() => saveProfile({ name: e.target.elements.name.value.trim() }));
