@@ -162,7 +162,9 @@ h1, h2, p, ul { margin: 0; }
 }
 .comment-form textarea:focus { outline: 0; border-color: var(--accent); }
 .comment-form .btn { cursor: pointer; }
-#comment-list { display: flex; flex-direction: column; gap: 12px; }
+#comment-list, .replies { display: flex; flex-direction: column; gap: 12px; }
+.replies { margin-left: 32px; }
+.comment-body .comment-form { margin-top: 6px; }
 .comment { display: flex; gap: 12px; padding: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
 .comment-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .comment-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }

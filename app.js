@@ -249,14 +249,15 @@ function renderApp(a) {
 /* ---------- Комментарии ---------- */
 
 const commentForm = () => (user ? `
-  <form id="comment-form" class="comment-form">
+  <form class="comment-form">
     <label class="sr" for="comment-text">Комментарий</label>
     <textarea id="comment-text" name="text" rows="3" maxlength="1000" required placeholder="Напишите комментарий"></textarea>
     <button class="btn primary">Отправить</button>
   </form>` : '<p class="empty"><a class="link" href="#account">Войдите</a>, чтобы оставить комментарий или лайк.</p>');
 
 // Имя, фото и текст пишут посетители: в разметку только через esc, картинка только https или data:image.
-const commentItem = c => {
+// rootId: ответы живут одной веткой под верхним комментарием, ответ на ответ идёт туда же.
+const commentItem = (c, rootId = c.id) => {
   const likes = c.likedBy || [];
   const liked = !!user && likes.includes(user.uid);
   const photo = /^(https:\/\/|data:image\/)/.test(c.photo || '') ? esc(c.photo) : '';
@@ -272,6 +273,7 @@ const commentItem = c => {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="${liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.2-9.1C1.7 7.8 3.8 5 6.8 5c2 0 3.6 1.1 5.2 3 1.6-1.9 3.2-3 5.2-3 3 0 5.1 2.8 4 5.9C19.5 15.4 12 20 12 20z"/></svg>
             ${likes.length}
           </button>
+          <button type="button" class="link linkbtn" data-reply="${esc(rootId)}" data-name="${esc(c.name)}" data-nested="${rootId !== c.id}">Ответить</button>
           ${user && (c.uid === user.uid || isAdmin) ? `<button type="button" class="link linkbtn" data-del-comment="${esc(c.id)}">Удалить</button>` : ''}
         </div>
       </div>
@@ -294,12 +296,36 @@ async function loadComments(appId) {
     const list = snap.docs.map(d => ({ id: d.id, ...d.data() }))
       .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
     if (!box()) return;
-    box().innerHTML = list.length ? list.map(commentItem).join('') : '<p class="empty">Пока никто не написал.</p>';
-    document.getElementById('comment-count').textContent = list.length ? `(${list.length})` : '';
+    // ponytail: у удалённого комментария ответы остаются в базе, но не показываются.
+    const roots = list.filter(c => !c.parentId);
+    const replies = id => list.filter(c => c.parentId === id).reverse();
+    const shown = roots.reduce((n, c) => n + 1 + replies(c.id).length, 0);
+    box().innerHTML = shown ? roots.map(c => {
+      const thread = replies(c.id).map(r => commentItem(r, c.id)).join('');
+      return commentItem(c) + (thread ? `<div class="replies">${thread}</div>` : '');
+    }).join('') : '<p class="empty">Пока никто не написал.</p>';
+    document.getElementById('comment-count').textContent = shown ? `(${shown})` : '';
   } catch (e) {
     console.error(e);
     if (box()) box().innerHTML = '<p class="empty">Комментарии сейчас недоступны.</p>';
   }
+}
+
+function toggleReplyForm(button) {
+  if (!user) { location.hash = 'account'; return; }
+  const body = button.closest('.comment-body');
+  const open = body.querySelector('.comment-form');
+  if (open) { open.remove(); return; }
+  const form = document.createElement('form');
+  form.className = 'comment-form';
+  form.dataset.parent = button.dataset.reply;
+  form.innerHTML = `
+    <textarea name="text" rows="2" maxlength="1000" required aria-label="Ответ" placeholder="Напишите ответ"></textarea>
+    <button class="btn primary">Ответить</button>`;
+  body.append(form);
+  const input = form.elements.text;
+  if (button.dataset.nested === 'true') input.value = `${button.dataset.name}, `;
+  input.focus();
 }
 
 async function addComment(form) {
@@ -315,6 +341,7 @@ async function addComment(form) {
     text,
     createdAt: fs.serverTimestamp(),
     likedBy: [],
+    ...(form.dataset.parent ? { parentId: form.dataset.parent } : {}),
   });
   form.reset();
   await loadComments(appId);
@@ -683,6 +710,7 @@ view.addEventListener('click', e => {
       await loadComments(route().app.id);
     });
   }
+  else if (t.dataset.reply) toggleReplyForm(t);
   else if (t.dataset.delComment) {
     if (!confirm('Удалить комментарий?')) return;
     attempt(async () => {
@@ -716,7 +744,7 @@ view.addEventListener('click', e => {
 view.addEventListener('submit', e => {
   e.preventDefault();
   if (e.target.id === 'edit-form') return attempt(() => saveItem(e.target));
-  if (e.target.id === 'comment-form') return attempt(() => addComment(e.target));
+  if (e.target.classList.contains('comment-form')) return attempt(() => addComment(e.target));
   if (e.target.id === 'profile-form') {
     return attempt(() => saveProfile({ name: e.target.elements.name.value.trim() }));
   }

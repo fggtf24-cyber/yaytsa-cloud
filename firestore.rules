@@ -31,7 +31,7 @@ service cloud.firestore {
     match /comments/{id} {
       allow read: if true;
       allow create: if request.auth != null
-        && request.resource.data.keys().hasOnly(['appId', 'uid', 'name', 'photo', 'text', 'createdAt', 'likedBy'])
+        && request.resource.data.keys().hasOnly(['appId', 'uid', 'name', 'photo', 'text', 'createdAt', 'likedBy', 'parentId'])
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.appId is string
         && request.resource.data.appId.size() <= 100
@@ -43,7 +43,9 @@ service cloud.firestore {
         && request.resource.data.text.size() > 0
         && request.resource.data.text.size() <= 1000
         && request.resource.data.createdAt == request.time
-        && request.resource.data.likedBy == [];
+        && request.resource.data.likedBy == []
+        && (!('parentId' in request.resource.data)
+          || (request.resource.data.parentId is string && request.resource.data.parentId.size() <= 100));
       allow update: if request.auth != null && togglesOwnLike();
       allow delete: if request.auth != null
         && (resource.data.uid == request.auth.uid || isAdmin());
