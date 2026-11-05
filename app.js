@@ -1,11 +1,10 @@
-// Программы добавляют админы прямо на сайте. APPS — стартовый список. Категории-вкладки строятся из поля cat сами.
+// Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
 // site — необязательно: если поля нет, кнопки «Сайт» не будет.
 const APPS = [
   {
     id: 'smooth-cursor',
     name: 'Smooth Cursor',
-    cat: 'Видео',
     icon: 'assets/smooth-cursor.png',
     demo: 'assets/smooth-cursor-demo.mp4',
     desc: 'Плавный курсор для записей экрана в OBS, как в Screen Studio. Клики попадают точно в цель.',
@@ -30,7 +29,6 @@ const APPS = [
   {
     id: 'voicetype',
     name: 'VoiceType',
-    cat: 'Звук',
     icon: 'assets/voicetype.png',
     desc: 'Голосовой ввод в любое окно по горячей клавише. Работает на вашем компьютере, без облака и лимитов.',
     file: 'https://github.com/brlk33/Voice-Type/raw/main/VoiceType-Setup.exe',
@@ -171,11 +169,10 @@ const promo = `
 
 function renderApps() {
   const q = search.value.trim().toLowerCase();
-  const found = a => !q || `${a.name} ${a.author} ${a.desc} ${a.cat}`.toLowerCase().includes(q);
+  const found = a => !q || `${a.name} ${a.author} ${a.desc}`.toLowerCase().includes(q);
   const onProjects = cat === PROJECTS_TAB;
-  const cats = [...new Set(apps.map(a => a.cat))];
-  const list = onProjects ? projects.filter(found) : apps.filter(a => (cat === 'all' || a.cat === cat) && found(a));
-  const tabs = [['all', 'Все приложения'], ...cats.map(c => [c, c]), [PROJECTS_TAB, 'Другие проекты']];
+  const list = (onProjects ? projects : apps).filter(found);
+  const tabs = [['all', 'Все приложения'], [PROJECTS_TAB, 'Другие проекты']];
   const add = onProjects ? ['projects', 'Добавить проект'] : ['apps', 'Добавить программу'];
 
   view.innerHTML = `
@@ -186,7 +183,7 @@ function renderApps() {
     <section class="section">
       <h1>${onProjects ? 'Другие наши проекты' : 'Программы с яйцами'}</h1>
       ${list.length
-        ? `<div class="grid">${cat === 'all' && !q ? promo : ''}${list.map(onProjects ? projectCard : card).join('')}</div>`
+        ? `<div class="grid">${!onProjects && !q ? promo : ''}${list.map(onProjects ? projectCard : card).join('')}</div>`
         : '<p class="empty">Ничего не нашлось.</p>'}
     </section>`;
 }
@@ -354,7 +351,6 @@ const FIELDS = {
   apps: [
     ['name', 'Название', 'text*'],
     ['author', 'Автор', 'text'],
-    ['cat', 'Категория (новая появится вкладкой)', 'text*'],
     ['desc', 'Описание', 'area*'],
     ['file', 'Ссылка на .exe', 'url*'],
     ['size', 'Размер после установки, например 130 МБ', 'text'],
