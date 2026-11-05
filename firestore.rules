@@ -28,6 +28,15 @@ service cloud.firestore {
         && request.resource.data.likedBy.size() == after.size()
         && after.difference(before).union(before.difference(after)) == [request.auth.uid].toSet();
     }
+    // Смена имени или фото в профиле обновляет свои комментарии, менять в них что-то ещё нельзя.
+    function changesOwnProfile() {
+      return resource.data.uid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'photo'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 80
+        && request.resource.data.photo is string
+        && request.resource.data.photo.size() <= 100000;
+    }
     match /comments/{id} {
       allow read: if true;
       allow create: if request.auth != null
@@ -46,7 +55,7 @@ service cloud.firestore {
         && request.resource.data.likedBy == []
         && (!('parentId' in request.resource.data)
           || (request.resource.data.parentId is string && request.resource.data.parentId.size() <= 100));
-      allow update: if request.auth != null && togglesOwnLike();
+      allow update: if request.auth != null && (togglesOwnLike() || changesOwnProfile());
       allow delete: if request.auth != null
         && (resource.data.uid == request.auth.uid || isAdmin());
     }
