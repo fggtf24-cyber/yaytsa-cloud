@@ -150,9 +150,11 @@ export const EN = {
   'Программа': 'Program',
   'Сообщение': 'Message',
   'Отправить автору': 'Send to author',
-  'Отправлено. Сообщение получит {name}.': 'Sent. {name} will receive the message.',
-  'Сообщения видят только админы, вошедшие через Google.': 'Only admins signed in with Google can see messages.',
-  'Пока ничего не пришло. Сюда попадают баги и идеи по программам, где автор вы.': 'Nothing here yet. Bugs and ideas for programs you author arrive here.',
+  'Отправлено. Сообщение получит {name}, ответ появится в разделе «Сообщения».': 'Sent. {name} will receive it, and the reply will appear in Messages.',
+  ', чтобы видеть сообщения.': ' to see messages.',
+  'Вы написали автору программы': 'You wrote to the program author',
+  'Сообщение от {name}': 'Message from {name}',
+  'Пока сообщений нет. Здесь будут ваши баги и идеи, ответы на них и письма по вашим программам.': 'No messages yet. Your bugs and ideas, replies to them and messages about your programs will appear here.',
 
   // Статистика
   'Статистику видят только админы, вошедшие через Google.': 'Only admins signed in with Google can see statistics.',

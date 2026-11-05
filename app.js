@@ -1,4 +1,4 @@
-import { EN } from './i18n.js?v=13';
+import { EN } from './i18n.js?v=15';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -217,8 +217,9 @@ let isAdmin = false;
 let authState = 'loading';    // loading | ready | failed
 let contentState = 'loading'; // loading | ready | failed
 let authors = {};   // uid админа -> { name }: публичные имена для поля «Автор»
-let messages = [];  // личка админа
-let stopMessages = null;
+let messages = [];  // личка: полученные и отправленные
+let replies = [];   // ответы в личке
+let stopMessages = [];
 let notifications = [];
 let stopNotifications = null;
 let profile = {};  // users/<uid>: name, photo
@@ -564,7 +565,8 @@ const likesWord = n => {
 const noteTitle = n => {
   const count = n.people.length;
   const names = n.people.slice(0, 2).map(p => `<b>${esc(p)}</b>`);
-  if (count === 1) return T(n.type === 'like' ? 'Лайк от {name}' : 'Ответ от {name}', { name: names[0] });
+  const single = { like: 'Лайк от {name}', dm: 'Сообщение от {name}' }[n.type] || 'Ответ от {name}';
+  if (count === 1) return T(single, { name: names[0] });
   const [a, b] = names;
   const who = count === 2 ? T('{a} и {b}', { a, b }) : T('{a}, {b} и ещё {n}', { a, b, n: count - 2 });
   return `${who}: ${count} ${likesWord(count)}`;
@@ -572,7 +574,7 @@ const noteTitle = n => {
 
 // fromName и text пишут посетители: только через esc.
 const noteItem = n => `
-  <a class="note${n.read ? '' : ' unread'}" href="#app/${esc(n.appId)}/${esc(n.commentId)}">
+  <a class="note${n.read ? '' : ' unread'}" href="${n.type === 'dm' ? '#inbox' : `#app/${esc(n.appId)}/${esc(n.commentId)}`}">
     <span>${noteTitle(n)}</span>
     ${n.text ? `<span class="note-text">${esc(n.text)}</span>` : ''}
     <span class="note-time">${when(n.createdAt)}</span>
@@ -631,7 +633,7 @@ const FIELDS = {
 };
 
 function renderEditor(kind, id) {
-  const note = text => { view.innerHTML = `<section class="section"><p class="empty">${text}</p></section>`; };
+  const note = text => { view.innerHTML = `<section class="section panel"><p class="empty">${text}</p></section>`; };
   if (authState === 'loading' || contentState === 'loading') return note(T('Загрузка…'));
   if (contentState === 'failed') return note(T('Не удалось загрузить данные. Обновите страницу.'));
   if (!isAdmin) return note(T('Редактировать могут только админы, вошедшие через Google.'));
@@ -663,7 +665,7 @@ function renderEditor(kind, id) {
     return `<label class="field">${T(label)}${control}</label>`;
   };
   view.innerHTML = `
-    <section class="section account editor">
+    <section class="section panel account editor">
       <h1>${id === 'new' ? T('Новая запись') : T('Изменить: {name}', { name: esc(item.name) })}</h1>
       <form id="edit-form" class="account" data-kind="${kind}" data-id="${esc(id)}">
         ${FIELDS[kind].filter(f => !f[3]).map(field).join('')}
@@ -743,13 +745,13 @@ async function checkAdmin(u) {
 
 function renderAccount() {
   if (authState !== 'ready') {
-    view.innerHTML = `<section class="section"><h1>${T('Аккаунт')}</h1><p class="empty">${
+    view.innerHTML = `<section class="section panel"><h1>${T('Аккаунт')}</h1><p class="empty">${
       T(authState === 'loading' ? 'Загрузка…' : 'Сервис входа сейчас недоступен. Скачивать программы можно и без аккаунта.')}</p></section>`;
     return;
   }
   if (user) {
     view.innerHTML = `
-      <section class="section account">
+      <section class="section panel account">
         <h1>${T('Профиль')}</h1>
         <div class="profile-head">
           <span class="avatar big" id="big-avatar"></span>
@@ -774,7 +776,7 @@ function renderAccount() {
   }
   const reg = authMode === 'register';
   view.innerHTML = `
-    <section class="section account">
+    <section class="section panel account">
       <h1>${T(reg ? 'Создать аккаунт' : 'Вход')}</h1>
       <div class="tabs" role="group" aria-label="${T('Вход или регистрация')}">
         <button type="button" data-mode="login" aria-pressed="${!reg}">${T('Вход')}</button>
@@ -840,7 +842,7 @@ async function photoToDataUrl(file, size = 128, type = 'image/jpeg') {
 /* ---------- Баги и идеи ---------- */
 
 function renderReport(appId) {
-  const note = html => { view.innerHTML = `<section class="section"><h1>${T('Сообщить о баге или идее')}</h1><p class="empty">${html}</p></section>`; };
+  const note = html => { view.innerHTML = `<section class="section panel"><h1>${T('Сообщить о баге или идее')}</h1><p class="empty">${html}</p></section>`; };
   if (authState === 'loading' || contentState === 'loading') return note(T('Загрузка…'));
   if (!user) return note(`<a class="link" href="#account">${T('Войдите')}</a>${T(', чтобы написать автору программы.')}`);
   if (!apps.some(authorName)) return note(T('Пока ни у одной программы не указан автор.'));
@@ -848,7 +850,7 @@ function renderReport(appId) {
     ? `<option value="${esc(a.id)}" ${a.id === appId ? 'selected' : ''}>${T('{name} (автор: {author})', { name: esc(nm(a)), author: esc(authorName(a)) })}</option>`
     : `<option disabled>${T('{name} (автор не указан)', { name: esc(nm(a)) })}</option>`);
   view.innerHTML = `
-    <section class="section account editor">
+    <section class="section panel account editor">
       <h1>${T('Сообщить о баге или идее')}</h1>
       <form id="report-form" class="account">
         <label class="field">${T('Что это')}
@@ -883,63 +885,115 @@ async function sendReport(form) {
     read: false,
   });
   form.reset();
-  say(T('Отправлено. Сообщение получит {name}.', { name: authorName(app) }), true);
+  say(T('Отправлено. Сообщение получит {name}, ответ появится в разделе «Сообщения».', { name: authorName(app) }), true);
 }
 
+// Сообщения видят оба участника: автор получает, отправитель видит свои и ответы на них.
 function watchMessages(u) {
-  stopMessages?.();
-  stopMessages = null;
+  stopMessages.forEach(stop => stop());
+  stopMessages = [];
   messages = [];
+  replies = [];
   if (u) {
-    stopMessages = fs.onSnapshot(
-      fs.query(fs.collection(db, 'messages'), fs.where('to', '==', u.uid)),
-      snap => {
-        messages = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-          .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-        drawInboxCount();
-        if (route().name === 'inbox') renderInbox();
-      },
-      console.error,
-    );
+    const lists = { to: [], from: [] };
+    const update = () => {
+      const byId = new Map([...lists.to, ...lists.from].map(m => [m.id, m]));
+      messages = [...byId.values()].sort((x, y) => (y.createdAt?.toMillis() || 0) - (x.createdAt?.toMillis() || 0));
+      drawInboxCount();
+      if (route().name === 'inbox') renderInbox();
+    };
+    const rows = snap => snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const col = name => fs.collection(db, name);
+    stopMessages = [
+      ...['to', 'from'].map(side => fs.onSnapshot(
+        fs.query(col('messages'), fs.where(side, '==', u.uid)),
+        snap => { lists[side] = rows(snap); update(); },
+        console.error,
+      )),
+      fs.onSnapshot(
+        fs.query(col('replies'), fs.where('participants', 'array-contains', u.uid)),
+        snap => { replies = rows(snap); update(); },
+        console.error,
+      ),
+    ];
   }
   drawInboxCount();
 }
 
 function drawInboxCount() {
-  const unread = messages.filter(m => !m.read).length;
+  const unread = messages.filter(m => m.to === user?.uid && !m.read).length;
   const count = document.getElementById('inbox-count');
   count.hidden = !unread;
   count.textContent = unread > 9 ? '9+' : unread;
 }
 
-// Имя, почту и текст пишут посетители: только через esc.
-const messageItem = m => `
-  <article class="comment">
-    <div class="comment-body">
-      <div class="comment-head">
-        <span class="tag ${m.type === 'idea' ? 'idea' : 'bug'}">${T(m.type === 'idea' ? 'Идея' : 'Баг')}</span>
-        <a class="link" href="#app/${esc(m.appId)}">${esc(m.appName)}</a>
-        <span>${when(m.createdAt)}</span>
+// Имена, почту и текст пишут посетители: только через esc.
+const replyItem = r => `
+  <div class="comment-body reply-item">
+    <div class="comment-head"><b>${esc(r.name)}</b><span>${when(r.createdAt)}</span></div>
+    <p>${esc(r.text)}</p>
+  </div>`;
+
+const messageItem = m => {
+  const mine = m.to === user.uid;
+  const thread = replies.filter(r => r.messageId === m.id)
+    .sort((x, y) => (x.createdAt?.toMillis() || Infinity) - (y.createdAt?.toMillis() || Infinity));
+  return `
+    <article class="comment">
+      <div class="comment-body">
+        <div class="comment-head">
+          <span class="tag ${m.type === 'idea' ? 'idea' : 'bug'}">${T(m.type === 'idea' ? 'Идея' : 'Баг')}</span>
+          <a class="link" href="#app/${esc(m.appId)}">${esc(m.appName)}</a>
+          <span>${when(m.createdAt)}</span>
+        </div>
+        <p>${esc(m.text)}</p>
+        <div class="comment-head">${mine ? `<b>${esc(m.fromName)}</b><span>${esc(m.fromEmail)}</span>` : `<span>${T('Вы написали автору программы')}</span>`}</div>
+        ${thread.length ? `<div class="thread">${thread.map(replyItem).join('')}</div>` : ''}
+        <form class="comment-form message-reply" data-id="${esc(m.id)}">
+          <textarea name="text" rows="2" maxlength="2000" required aria-label="${T('Ответ')}" placeholder="${T('Напишите ответ')}"></textarea>
+          <button class="btn primary">${T('Ответить')}</button>
+        </form>
+        ${mine ? `<div class="comment-actions"><button type="button" class="link linkbtn" data-del-message="${esc(m.id)}">${T('Удалить')}</button></div>` : ''}
       </div>
-      <p>${esc(m.text)}</p>
-      <div class="comment-head"><b>${esc(m.fromName)}</b><span>${esc(m.fromEmail)}</span></div>
-      <div class="comment-actions"><button type="button" class="link linkbtn" data-del-message="${esc(m.id)}">${T('Удалить')}</button></div>
-    </div>
-  </article>`;
+    </article>`;
+};
 
 function renderInbox() {
-  const note = text => { view.innerHTML = `<section class="section"><h1>${T('Сообщения')}</h1><p class="empty">${text}</p></section>`; };
+  const note = html => { view.innerHTML = `<section class="section panel"><h1>${T('Сообщения')}</h1><p class="empty">${html}</p></section>`; };
   if (authState === 'loading') return note(T('Загрузка…'));
-  if (!isAdmin) return note(T('Сообщения видят только админы, вошедшие через Google.'));
+  if (!user) return note(`<a class="link" href="#account">${T('Войдите')}</a>${T(', чтобы видеть сообщения.')}`);
+  // Список обновляется сам, поэтому недописанные ответы переносим в новую разметку.
+  const drafts = new Map([...view.querySelectorAll('.message-reply')].map(f => [f.dataset.id, f.elements.text.value]));
+  const active = document.activeElement?.closest?.('.message-reply')?.dataset.id;
   view.innerHTML = `
-    <section class="section inbox">
+    <section class="section panel inbox">
       <h1>${T('Сообщения')}</h1>
-      ${messages.map(messageItem).join('') || `<p class="empty">${T('Пока ничего не пришло. Сюда попадают баги и идеи по программам, где автор вы.')}</p>`}
+      ${messages.map(messageItem).join('') || `<p class="empty">${T('Пока сообщений нет. Здесь будут ваши баги и идеи, ответы на них и письма по вашим программам.')}</p>`}
       <p id="msg" class="msg" role="alert"></p>
     </section>`;
-  messages.filter(m => !m.read).forEach(m => {
+  view.querySelectorAll('.message-reply').forEach(f => {
+    f.elements.text.value = drafts.get(f.dataset.id) || '';
+    if (f.dataset.id === active) f.elements.text.focus();
+  });
+  messages.filter(m => m.to === user.uid && !m.read).forEach(m => {
     fs.updateDoc(fs.doc(db, 'messages', m.id), { read: true }).catch(console.error);
   });
+}
+
+async function sendReply(form) {
+  const text = form.elements.text.value.trim();
+  const m = messages.find(x => x.id === form.dataset.id);
+  if (!text || !m) return;
+  await fs.addDoc(fs.collection(db, 'replies'), {
+    messageId: m.id,
+    participants: [m.to, m.from],
+    from: user.uid,
+    name: myName(),
+    text,
+    createdAt: fs.serverTimestamp(),
+  });
+  form.reset();
+  notify('dm', m.id, m.to === user.uid ? m.from : m.to, m.appId, text);
 }
 
 /* ---------- Статистика ---------- */
@@ -961,7 +1015,7 @@ function countVisit() {
 }
 
 async function renderStats() {
-  const note = text => { view.innerHTML = `<section class="section"><h1>${T('Статистика')}</h1><p class="empty">${text}</p></section>`; };
+  const note = text => { view.innerHTML = `<section class="section panel"><h1>${T('Статистика')}</h1><p class="empty">${text}</p></section>`; };
   if (authState === 'loading') return note(T('Загрузка…'));
   if (!isAdmin) return note(T('Статистику видят только админы, вошедшие через Google.'));
   note(T('Загрузка…'));
@@ -990,7 +1044,7 @@ async function renderStats() {
   const days = [...Array(14)].map((_, i) => since(i + 1));
 
   view.innerHTML = `
-    <section class="section">
+    <section class="section panel stats">
       <h1>${T('Статистика')}</h1>
       <div class="table-box"><table>
         <thead><tr><th></th>${periods.map(([label]) => `<th scope="col">${label}</th>`).join('')}</tr></thead>
@@ -1047,12 +1101,12 @@ async function initFirebase() {
       user = u;
       authState = 'ready';
       watchNotifications(u);
-      watchMessages(isAdmin ? u : null);
+      watchMessages(u);
       if (isAdmin) await syncAuthor().catch(console.error);
       if (u) syncMyComments().catch(console.error);
       drawAvatar(avatar);
       document.getElementById('rail-stats').hidden = !isAdmin;
-      document.getElementById('rail-inbox').hidden = !isAdmin;
+      document.getElementById('rail-inbox').hidden = !u;
       render();
     });
   } catch (e) {
@@ -1159,6 +1213,7 @@ view.addEventListener('submit', e => {
   e.preventDefault();
   if (e.target.id === 'edit-form') return attempt(() => saveItem(e.target));
   if (e.target.id === 'report-form') return attempt(() => sendReport(e.target));
+  if (e.target.classList.contains('message-reply')) return attempt(() => sendReply(e.target));
   if (e.target.classList.contains('comment-form')) return attempt(() => addComment(e.target));
   if (e.target.id === 'profile-form') {
     return attempt(() => saveProfile({ name: e.target.elements.name.value.trim() }));
