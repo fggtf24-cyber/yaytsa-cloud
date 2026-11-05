@@ -61,13 +61,22 @@ service cloud.firestore {
     }
     // Уведомления: читает и отмечает прочитанным только получатель. Создать можно только про настоящий комментарий
     // этого получателя. У лайка id постоянный и обновлять его чужому нельзя, поэтому повторного уведомления не будет.
+    function isDmPartner(messageId, to) {
+      let m = get(/databases/$(database)/documents/messages/$(messageId)).data;
+      return (m.to == to && m.from == request.auth.uid) || (m.from == to && m.to == request.auth.uid);
+    }
+    function isRealTarget(n) {
+      return n.type == 'dm'
+        ? isDmPartner(n.commentId, n.to)
+        : get(/databases/$(database)/documents/comments/$(n.commentId)).data.uid == n.to;
+    }
     match /notifications/{id} {
       allow read: if request.auth != null && resource.data.to == request.auth.uid;
       allow create: if request.auth != null
         && request.resource.data.keys().hasOnly(['to', 'from', 'fromName', 'type', 'appId', 'commentId', 'text', 'createdAt', 'read'])
         && request.resource.data.from == request.auth.uid
         && request.resource.data.to != request.auth.uid
-        && request.resource.data.type in ['reply', 'like']
+        && request.resource.data.type in ['reply', 'like', 'dm']
         && request.resource.data.fromName is string
         && request.resource.data.fromName.size() <= 80
         && request.resource.data.appId is string
@@ -78,7 +87,7 @@ service cloud.firestore {
         && request.resource.data.text.size() <= 120
         && request.resource.data.createdAt == request.time
         && request.resource.data.read == false
-        && get(/databases/$(database)/documents/comments/$(request.resource.data.commentId)).data.uid == request.resource.data.to
+        && isRealTarget(request.resource.data)
         && (request.resource.data.type != 'like'
           || id == 'like_' + request.resource.data.commentId + '_' + request.auth.uid);
       allow update: if request.auth != null
@@ -95,9 +104,11 @@ service cloud.firestore {
         && request.resource.data.name.size() > 0
         && request.resource.data.name.size() <= 80;
     }
-    // Личка: баг или идею получает только автор программы, он же читает и удаляет.
+    // Личка: баг или идею получает только автор программы. Видят оба участника, удаляет автор.
     match /messages/{id} {
-      allow read, delete: if request.auth != null && resource.data.to == request.auth.uid;
+      allow read: if request.auth != null
+        && (resource.data.to == request.auth.uid || resource.data.from == request.auth.uid);
+      allow delete: if request.auth != null && resource.data.to == request.auth.uid;
       allow create: if request.auth != null
         && request.resource.data.keys().hasOnly(['to', 'from', 'fromName', 'fromEmail', 'type', 'appId', 'appName', 'text', 'createdAt', 'read'])
         && request.resource.data.from == request.auth.uid
@@ -118,6 +129,25 @@ service cloud.firestore {
         && resource.data.to == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
         && request.resource.data.read == true;
+    }
+    // Ответы в личке: пишут и читают только два участника сообщения.
+    function isMessageMember(messageId, participants) {
+      let m = get(/databases/$(database)/documents/messages/$(messageId)).data;
+      return request.auth.uid in [m.to, m.from] && participants == [m.to, m.from];
+    }
+    match /replies/{id} {
+      allow read: if request.auth != null && request.auth.uid in resource.data.participants;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['messageId', 'participants', 'from', 'name', 'text', 'createdAt'])
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.messageId is string
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 80
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 2000
+        && request.resource.data.createdAt == request.time
+        && isMessageMember(request.resource.data.messageId, request.resource.data.participants);
     }
     // Счётчики: visits_<день> и dl_<программа>_<день>. Любой может прибавить ровно 1, читают только админы.
     match /stats/{id} {
