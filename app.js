@@ -88,6 +88,10 @@ const view = document.getElementById('view');
 const search = document.getElementById('search');
 const avatar = document.getElementById('avatar');
 const toastEl = document.getElementById('toast');
+const bellWrap = document.getElementById('bell-wrap');
+const bell = document.getElementById('bell');
+const bellCount = document.getElementById('bell-count');
+const bellPanel = document.getElementById('bell-panel');
 
 const PROJECTS_TAB = 'projects';
 let cat = 'all';
@@ -100,6 +104,8 @@ let user = null;
 let isAdmin = false;
 let authState = 'loading';    // loading | ready | failed
 let contentState = 'loading'; // loading | ready | failed
+let notifications = [];
+let stopNotifications = null;
 let profile = {};  // users/<uid>: name, photo
 let apps = APPS;
 let projects = PROJECTS;
@@ -252,25 +258,26 @@ const commentForm = () => (user ? `
     <button class="btn primary">Отправить</button>
   </form>` : '<p class="empty"><a class="link" href="#account">Войдите</a>, чтобы оставить комментарий или лайк.</p>');
 
+const when = ts => ts?.toDate?.().toLocaleString('ru-RU', { dateStyle: 'medium', timeStyle: 'short' }) || '';
+
 // Имя, фото и текст пишут посетители: в разметку только через esc, картинка только https или data:image.
 // rootId: ответы живут одной веткой под верхним комментарием, ответ на ответ идёт туда же.
 const commentItem = (c, rootId = c.id) => {
   const likes = c.likedBy || [];
   const liked = !!user && likes.includes(user.uid);
   const photo = /^(https:\/\/|data:image\/)/.test(c.photo || '') ? esc(c.photo) : '';
-  const date = c.createdAt?.toDate?.().toLocaleDateString('ru-RU') || '';
   return `
-    <article class="comment">
+    <article class="comment" id="c-${esc(c.id)}">
       <span class="avatar">${photo ? `<img src="${photo}" alt="" referrerpolicy="no-referrer">` : esc(String(c.name || 'П')[0])}</span>
       <div class="comment-body">
-        <div class="comment-head"><b>${esc(c.name)}</b><span>${date}</span></div>
+        <div class="comment-head"><b>${esc(c.name)}</b><span>${when(c.createdAt)}</span></div>
         <p>${esc(c.text)}</p>
         <div class="comment-actions">
-          <button type="button" class="like" data-like="${esc(c.id)}" aria-pressed="${liked}" aria-label="Нравится, сейчас ${likes.length}">
+          <button type="button" class="like" data-like="${esc(c.id)}" data-uid="${esc(c.uid)}" aria-pressed="${liked}" aria-label="Нравится, сейчас ${likes.length}">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="${liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.2-9.1C1.7 7.8 3.8 5 6.8 5c2 0 3.6 1.1 5.2 3 1.6-1.9 3.2-3 5.2-3 3 0 5.1 2.8 4 5.9C19.5 15.4 12 20 12 20z"/></svg>
             ${likes.length}
           </button>
-          <button type="button" class="link linkbtn" data-reply="${esc(rootId)}" data-name="${esc(c.name)}" data-nested="${rootId !== c.id}">Ответить</button>
+          <button type="button" class="link linkbtn" data-reply="${esc(rootId)}" data-target="${esc(c.id)}" data-uid="${esc(c.uid)}" data-name="${esc(c.name)}" data-nested="${rootId !== c.id}">Ответить</button>
           ${user && (c.uid === user.uid || isAdmin) ? `<button type="button" class="link linkbtn" data-del-comment="${esc(c.id)}">Удалить</button>` : ''}
         </div>
       </div>
@@ -302,6 +309,12 @@ async function loadComments(appId) {
       return commentItem(c) + (thread ? `<div class="replies">${thread}</div>` : '');
     }).join('') : '<p class="empty">Пока никто не написал.</p>';
     document.getElementById('comment-count').textContent = shown ? `(${shown})` : '';
+    const target = document.getElementById(`c-${route().commentId}`);
+    if (target) {
+      target.scrollIntoView({ block: 'center' });
+      target.classList.add('flash');
+      history.replaceState(null, '', `#app/${appId}`); // иначе каждый лайк снова прокручивал бы сюда
+    }
   } catch (e) {
     console.error(e);
     if (box()) box().innerHTML = '<p class="empty">Комментарии сейчас недоступны.</p>';
@@ -316,6 +329,8 @@ function toggleReplyForm(button) {
   const form = document.createElement('form');
   form.className = 'comment-form';
   form.dataset.parent = button.dataset.reply;
+  form.dataset.target = button.dataset.target;
+  form.dataset.uid = button.dataset.uid;
   form.innerHTML = `
     <textarea name="text" rows="2" maxlength="1000" required aria-label="Ответ" placeholder="Напишите ответ"></textarea>
     <button class="btn primary">Ответить</button>`;
@@ -340,8 +355,79 @@ async function addComment(form) {
     likedBy: [],
     ...(form.dataset.parent ? { parentId: form.dataset.parent } : {}),
   });
+  if (form.dataset.parent) notify('reply', form.dataset.target, form.dataset.uid, appId, text);
   form.reset();
   await loadComments(appId);
+}
+
+/* ---------- Уведомления ---------- */
+
+// Сервера нет: уведомление пишет браузер того, кто ответил или лайкнул. Правила проверяют, что оно настоящее.
+// У лайка id постоянный, поэтому «снял и поставил снова» второго уведомления не даст: такую запись правила отклонят.
+function notify(type, commentId, to, appId, text = '') {
+  if (to === user.uid) return;
+  const col = fs.collection(db, 'notifications');
+  const ref = type === 'like' ? fs.doc(col, `like_${commentId}_${user.uid}`) : fs.doc(col);
+  fs.setDoc(ref, {
+    to,
+    from: user.uid,
+    fromName: (displayName() || 'Пользователь').slice(0, 80),
+    type,
+    appId,
+    commentId,
+    text: text.slice(0, 120),
+    createdAt: fs.serverTimestamp(),
+    read: false,
+  }).catch(() => {}); // комментарий или лайк уже сохранён, без уведомления он не пострадает
+}
+
+function watchNotifications(u) {
+  stopNotifications?.();
+  stopNotifications = null;
+  notifications = [];
+  if (u) {
+    // ponytail: тянем все уведомления человека и сортируем в браузере, индекс не нужен. Показываем последние 30.
+    stopNotifications = fs.onSnapshot(
+      fs.query(fs.collection(db, 'notifications'), fs.where('to', '==', u.uid)),
+      snap => {
+        notifications = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0))
+          .slice(0, 30);
+        drawBell();
+      },
+      console.error,
+    );
+  }
+  drawBell();
+}
+
+// fromName и text пишут посетители: только через esc.
+const noteItem = n => `
+  <a class="note${n.read ? '' : ' unread'}" href="#app/${esc(n.appId)}/${esc(n.commentId)}">
+    <span>${n.type === 'like' ? 'Лайк' : 'Ответ'} от <b>${esc(n.fromName)}</b></span>
+    ${n.text ? `<span class="note-text">${esc(n.text)}</span>` : ''}
+    <span class="note-time">${when(n.createdAt)}</span>
+  </a>`;
+
+function drawBell() {
+  const unread = notifications.filter(n => !n.read).length;
+  bellWrap.hidden = !user;
+  bellCount.hidden = !unread;
+  bellCount.textContent = unread > 9 ? '9+' : unread;
+  bell.setAttribute('aria-label', unread ? `Уведомления, новых: ${unread}` : 'Уведомления');
+  if (!bellPanel.hidden) {
+    bellPanel.innerHTML = notifications.map(noteItem).join('') || '<p class="empty">Пока нет уведомлений.</p>';
+  }
+}
+
+function toggleBell(open) {
+  bellPanel.hidden = !open;
+  bell.setAttribute('aria-expanded', open);
+  drawBell();
+  if (!open) return;
+  notifications.filter(n => !n.read).forEach(n => {
+    fs.updateDoc(fs.doc(db, 'notifications', n.id), { read: true }).catch(console.error);
+  });
 }
 
 /* ---------- Редактор (только админы) ---------- */
@@ -645,6 +731,7 @@ async function initFirebase() {
       [isAdmin, profile] = await Promise.all([checkAdmin(u), loadProfile(u)]);
       user = u;
       authState = 'ready';
+      watchNotifications(u);
       drawAvatar(avatar);
       document.getElementById('rail-stats').hidden = !isAdmin;
       render();
@@ -664,7 +751,7 @@ function route() {
   if (name === 'account' || name === 'stats') return { name };
   if (name === 'edit' && FIELDS[a] && b) return { name, kind: a, id: b };
   const app = name === 'app' && apps.find(x => x.id === a);
-  return app ? { name: 'app', app } : { name: 'apps' };
+  return app ? { name: 'app', app, commentId: b } : { name: 'apps' };
 }
 
 function render() {
@@ -700,10 +787,14 @@ view.addEventListener('click', e => {
   }
   else if (t.dataset.like) {
     if (!user) { location.hash = 'account'; return; }
-    const change = t.getAttribute('aria-pressed') === 'true' ? fs.arrayRemove : fs.arrayUnion;
+    const adding = t.getAttribute('aria-pressed') !== 'true';
+    const appId = route().app.id;
     attempt(async () => {
-      await fs.updateDoc(fs.doc(db, 'comments', t.dataset.like), { likedBy: change(user.uid) });
-      await loadComments(route().app.id);
+      await fs.updateDoc(fs.doc(db, 'comments', t.dataset.like), {
+        likedBy: (adding ? fs.arrayUnion : fs.arrayRemove)(user.uid),
+      });
+      if (adding) notify('like', t.dataset.like, t.dataset.uid, appId);
+      await loadComments(appId);
     });
   }
   else if (t.dataset.reply) toggleReplyForm(t);
@@ -748,6 +839,11 @@ view.addEventListener('submit', e => {
   const go = authMode === 'register' ? fb.createUserWithEmailAndPassword : fb.signInWithEmailAndPassword;
   attempt(() => go(auth, email.trim(), password));
 });
+
+bell.addEventListener('click', () => toggleBell(bellPanel.hidden));
+bellPanel.addEventListener('click', e => { if (e.target.closest('a')) toggleBell(false); });
+document.addEventListener('click', e => { if (!bellPanel.hidden && !bellWrap.contains(e.target)) toggleBell(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !bellPanel.hidden) toggleBell(false); });
 
 view.addEventListener('change', e => {
   if (e.target.id !== 'photo' || !e.target.files[0]) return;

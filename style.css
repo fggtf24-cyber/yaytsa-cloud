@@ -47,6 +47,29 @@ h1, h2, p, ul { margin: 0; }
 .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .avatar.big { width: 88px; height: 88px; font-size: 34px; }
 
+/* Уведомления */
+.bell-wrap { position: relative; flex: none; }
+.bell {
+  position: relative; width: 44px; height: 44px; border: 0; border-radius: 50%; background: none; color: #E0E0E0;
+  display: flex; align-items: center; justify-content: center;
+}
+.bell:hover, .bell[aria-expanded=true] { background: #2A2A2A; }
+.bell-count {
+  position: absolute; top: 4px; right: 2px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px;
+  background: #E5352B; color: #fff; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;
+}
+.bell-panel {
+  position: absolute; right: 0; top: 48px; z-index: 20; width: min(340px, calc(100vw - 32px)); max-height: 420px; overflow-y: auto;
+  background: var(--card); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 30px rgba(0, 0, 0, .5);
+}
+.bell-panel .empty { padding: 16px; }
+.note { display: flex; flex-direction: column; gap: 3px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.note:last-child { border-bottom: 0; }
+.note:hover { background: #2C2C2C; }
+.note.unread { box-shadow: inset 3px 0 0 var(--accent); }
+.note-text { color: var(--muted); overflow-wrap: anywhere; }
+.note-time { font-size: 12px; color: #BDBDBD; }
+
 /* Левая панель и контент */
 .shell { flex: 1; display: flex; min-height: 0; }
 .rail { flex: 0 0 76px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 0; }
@@ -166,6 +189,7 @@ h1, h2, p, ul { margin: 0; }
 .replies { margin-left: 32px; }
 .comment-body .comment-form { margin-top: 6px; }
 .comment { display: flex; gap: 12px; padding: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
+.comment.flash { border-color: var(--accent); }
 .comment-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .comment-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
 .comment-head span { font-size: 12px; color: #BDBDBD; }

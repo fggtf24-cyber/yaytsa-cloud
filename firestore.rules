@@ -50,6 +50,33 @@ service cloud.firestore {
       allow delete: if request.auth != null
         && (resource.data.uid == request.auth.uid || isAdmin());
     }
+    // Уведомления: читает и отмечает прочитанным только получатель. Создать можно только про настоящий комментарий
+    // этого получателя. У лайка id постоянный и обновлять его чужому нельзя, поэтому повторного уведомления не будет.
+    match /notifications/{id} {
+      allow read: if request.auth != null && resource.data.to == request.auth.uid;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['to', 'from', 'fromName', 'type', 'appId', 'commentId', 'text', 'createdAt', 'read'])
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.to != request.auth.uid
+        && request.resource.data.type in ['reply', 'like']
+        && request.resource.data.fromName is string
+        && request.resource.data.fromName.size() <= 80
+        && request.resource.data.appId is string
+        && request.resource.data.appId.size() <= 100
+        && request.resource.data.commentId is string
+        && request.resource.data.commentId.size() <= 100
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 120
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.read == false
+        && get(/databases/$(database)/documents/comments/$(request.resource.data.commentId)).data.uid == request.resource.data.to
+        && (request.resource.data.type != 'like'
+          || id == 'like_' + request.resource.data.commentId + '_' + request.auth.uid);
+      allow update: if request.auth != null
+        && resource.data.to == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
+        && request.resource.data.read == true;
+    }
     // Счётчики: visits_<день> и dl_<программа>_<день>. Любой может прибавить ровно 1, читают только админы.
     match /stats/{id} {
       allow read: if isAdmin();
