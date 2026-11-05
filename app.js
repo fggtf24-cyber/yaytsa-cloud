@@ -83,7 +83,7 @@ const AUTH_ERRORS = {
   'auth/network-request-failed': 'Нет связи с сервером. Проверьте интернет.',
   'auth/popup-blocked': 'Браузер заблокировал окно входа. Разрешите всплывающие окна.',
   'auth/account-exists-with-different-credential': 'Эта почта уже зарегистрирована другим способом.',
-  'permission-denied': 'Нет прав: войдите через Google с почтой админа.',
+  'permission-denied': 'Нет прав на это действие. Для правок войдите через Google с почтой админа.',
 };
 
 const view = document.getElementById('view');
@@ -237,8 +237,87 @@ function renderApp(a) {
             ${demo}
           </div>` : (demo ? `<div class="use">${demo}</div>` : '')}
         ${a.needs?.length ? `<h2>Что нужно</h2><div class="use"><div class="use-text">${list(a.needs)}</div></div>` : ''}
+        <h2>Комментарии <span id="comment-count"></span></h2>
+        ${commentForm()}
+        <p id="msg" class="msg" role="alert"></p>
+        <div id="comment-list" data-app="${esc(a.id)}"><p class="empty">Загрузка…</p></div>
       </div>
     </div>`;
+  loadComments(a.id);
+}
+
+/* ---------- Комментарии ---------- */
+
+const commentForm = () => (user ? `
+  <form id="comment-form" class="comment-form">
+    <label class="sr" for="comment-text">Комментарий</label>
+    <textarea id="comment-text" name="text" rows="3" maxlength="1000" required placeholder="Напишите комментарий"></textarea>
+    <button class="btn primary">Отправить</button>
+  </form>` : '<p class="empty"><a class="link" href="#account">Войдите</a>, чтобы оставить комментарий или лайк.</p>');
+
+// Имя, фото и текст пишут посетители: в разметку только через esc, картинка только https или data:image.
+const commentItem = c => {
+  const likes = c.likedBy || [];
+  const liked = !!user && likes.includes(user.uid);
+  const photo = /^(https:\/\/|data:image\/)/.test(c.photo || '') ? esc(c.photo) : '';
+  const date = c.createdAt?.toDate?.().toLocaleDateString('ru-RU') || '';
+  return `
+    <article class="comment">
+      <span class="avatar">${photo ? `<img src="${photo}" alt="" referrerpolicy="no-referrer">` : esc(String(c.name || 'П')[0])}</span>
+      <div class="comment-body">
+        <div class="comment-head"><b>${esc(c.name)}</b><span>${date}</span></div>
+        <p>${esc(c.text)}</p>
+        <div class="comment-actions">
+          <button type="button" class="like" data-like="${esc(c.id)}" aria-pressed="${liked}" aria-label="Нравится, сейчас ${likes.length}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="${liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.2-9.1C1.7 7.8 3.8 5 6.8 5c2 0 3.6 1.1 5.2 3 1.6-1.9 3.2-3 5.2-3 3 0 5.1 2.8 4 5.9C19.5 15.4 12 20 12 20z"/></svg>
+            ${likes.length}
+          </button>
+          ${user && (c.uid === user.uid || isAdmin) ? `<button type="button" class="link linkbtn" data-del-comment="${esc(c.id)}">Удалить</button>` : ''}
+        </div>
+      </div>
+    </article>`;
+};
+
+// ponytail: грузим все комментарии программы и сортируем в браузере, индекс не нужен.
+// Когда их станут тысячи, понадобится составной индекс и подгрузка порциями.
+async function loadComments(appId) {
+  const box = () => {
+    const el = document.getElementById('comment-list');
+    return el?.dataset.app === appId ? el : null;
+  };
+  if (!fs) {
+    if (authState === 'failed') box().innerHTML = '<p class="empty">Комментарии сейчас недоступны.</p>';
+    return;
+  }
+  try {
+    const snap = await fs.getDocs(fs.query(fs.collection(db, 'comments'), fs.where('appId', '==', appId)));
+    const list = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+    if (!box()) return;
+    box().innerHTML = list.length ? list.map(commentItem).join('') : '<p class="empty">Пока никто не написал.</p>';
+    document.getElementById('comment-count').textContent = list.length ? `(${list.length})` : '';
+  } catch (e) {
+    console.error(e);
+    if (box()) box().innerHTML = '<p class="empty">Комментарии сейчас недоступны.</p>';
+  }
+}
+
+async function addComment(form) {
+  const text = form.elements.text.value.trim();
+  if (!text) return;
+  const appId = route().app.id;
+  // ponytail: имя и фото копируются в комментарий, поэтому смена профиля старые комментарии не меняет.
+  await fs.addDoc(fs.collection(db, 'comments'), {
+    appId,
+    uid: user.uid,
+    name: (displayName() || 'Пользователь').slice(0, 80),
+    photo: profile.photo || user.photoURL || '',
+    text,
+    createdAt: fs.serverTimestamp(),
+    likedBy: [],
+  });
+  form.reset();
+  await loadComments(appId);
 }
 
 /* ---------- Редактор (только админы) ---------- */
@@ -596,6 +675,21 @@ view.addEventListener('click', e => {
     count(`dl_${t.dataset.id}`);
     toast('Скачивание началось. Если Windows покажет SmartScreen: «Подробнее», затем «Выполнить в любом случае».');
   }
+  else if (t.dataset.like) {
+    if (!user) { location.hash = 'account'; return; }
+    const change = t.getAttribute('aria-pressed') === 'true' ? fs.arrayRemove : fs.arrayUnion;
+    attempt(async () => {
+      await fs.updateDoc(fs.doc(db, 'comments', t.dataset.like), { likedBy: change(user.uid) });
+      await loadComments(route().app.id);
+    });
+  }
+  else if (t.dataset.delComment) {
+    if (!confirm('Удалить комментарий?')) return;
+    attempt(async () => {
+      await fs.deleteDoc(fs.doc(db, 'comments', t.dataset.delComment));
+      await loadComments(route().app.id);
+    });
+  }
   else if (t.id === 'delete') {
     if (!confirm('Удалить запись с сайта?')) return;
     const { kind, id } = view.querySelector('#edit-form').dataset;
@@ -622,6 +716,7 @@ view.addEventListener('click', e => {
 view.addEventListener('submit', e => {
   e.preventDefault();
   if (e.target.id === 'edit-form') return attempt(() => saveItem(e.target));
+  if (e.target.id === 'comment-form') return attempt(() => addComment(e.target));
   if (e.target.id === 'profile-form') {
     return attempt(() => saveProfile({ name: e.target.elements.name.value.trim() }));
   }

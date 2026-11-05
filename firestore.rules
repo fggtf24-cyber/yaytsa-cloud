@@ -19,6 +19,35 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+    // Комментарии: пишет вошедший пользователь, удаляет автор или админ.
+    // Менять можно только likedBy и только свой лайк: ровно один свой uid туда или обратно.
+    function togglesOwnLike() {
+      let before = resource.data.likedBy.toSet();
+      let after = request.resource.data.likedBy.toSet();
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likedBy'])
+        && request.resource.data.likedBy.size() == after.size()
+        && after.difference(before).union(before.difference(after)) == [request.auth.uid].toSet();
+    }
+    match /comments/{id} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['appId', 'uid', 'name', 'photo', 'text', 'createdAt', 'likedBy'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.appId is string
+        && request.resource.data.appId.size() <= 100
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 80
+        && request.resource.data.photo is string
+        && request.resource.data.photo.size() <= 100000
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 1000
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.likedBy == [];
+      allow update: if request.auth != null && togglesOwnLike();
+      allow delete: if request.auth != null
+        && (resource.data.uid == request.auth.uid || isAdmin());
+    }
     // Счётчики: visits_<день> и dl_<программа>_<день>. Любой может прибавить ровно 1, читают только админы.
     match /stats/{id} {
       allow read: if isAdmin();
