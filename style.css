@@ -1,5 +1,5 @@
 :root {
-  --accent: #FFC531;
+  --accent: #1473E6;
   --bg: #0B0B0B;
   --panel: #1B1B1B;
   --card: #232323;
@@ -8,6 +8,7 @@
   --muted: #D0D0D0;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { color-scheme: dark; }
 body {
   margin: 0; min-height: 100vh; display: flex; flex-direction: column;
@@ -24,7 +25,7 @@ h1, h2, p, ul { margin: 0; }
 /* Верхняя панель */
 .top {
   display: flex; flex-wrap: wrap; align-items: center; gap: 12px 32px;
-  padding: 10px 20px; border-top: 2px solid var(--accent);
+  padding: 10px 20px;
 }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 19px; letter-spacing: -.02em; }
 .top-nav { flex-grow: 1; font-weight: 600; }
@@ -38,10 +39,13 @@ h1, h2, p, ul { margin: 0; }
 .search input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; }
 .search input::placeholder { color: #9A9A9A; }
 .avatar {
-  flex: none; width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--accent);
-  background: #2A2A2A; font-weight: 700; font-size: 13px;
+  flex: none; width: 34px; height: 34px; border-radius: 50%;
+  background: #2A2A2A; font-weight: 700; font-size: 13px; overflow: hidden;
   display: flex; align-items: center; justify-content: center; text-transform: uppercase;
 }
+
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.avatar.big { width: 88px; height: 88px; font-size: 34px; }
 
 /* Левая панель и контент */
 .shell { flex: 1; display: flex; min-height: 0; }
@@ -79,7 +83,7 @@ h1, h2, p, ul { margin: 0; }
 .card h2 a:hover { text-decoration: underline; }
 .card p { flex: 1; color: var(--muted); }
 .card-foot { display: flex; align-items: center; gap: 14px; }
-.card-foot .dl { margin-left: auto; }
+.card-foot .dl, .card-foot .open { margin-left: auto; }
 .link { font-weight: 600; color: var(--muted); }
 .link:hover { color: #fff; text-decoration: underline; }
 .btn {
@@ -89,6 +93,10 @@ h1, h2, p, ul { margin: 0; }
 .btn:hover { background: #E8E8E8; color: #141414; }
 .btn.primary { background: #1473E6; border-color: #1473E6; color: #fff; }
 .btn.primary:hover { background: #0D66D0; border-color: #0D66D0; color: #fff; }
+.btn.danger { border-color: #FF8A7A; color: #FFB199; }
+.btn.danger:hover { background: #FF8A7A; color: #141414; }
+.tabs-add { margin-left: auto; align-self: center; }
+.card p.author, .app-head p.author { flex: none; font-size: 13px; color: #BDBDBD; }
 .empty { color: var(--muted); }
 
 /* Промо-плитка */
@@ -99,35 +107,72 @@ h1, h2, p, ul { margin: 0; }
   position: absolute; right: -18px; top: 8px; width: 150px; height: 150px;
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; transform: rotate(-12deg);
 }
-.eggs i { border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%; }
+.eggs i { border-radius: 50%; }
 
 /* Страница программы */
-.back { align-self: flex-start; }
-.app-head { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; }
-.app-head img { width: 72px; height: 72px; border-radius: 14px; }
-.app-head > div { flex: 1 1 280px; }
-.app-head h1 { font-size: 28px; font-weight: 800; letter-spacing: -.02em; }
-.app-head p { color: var(--muted); font-size: 15px; max-width: 620px; }
-.app-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
-.app-actions .btn { padding: 10px 26px; font-size: 15px; }
-/* Гифка 540×608: показываем мельче родного размера, иначе видно низкое разрешение */
-.app-body { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; }
-.demo { flex: 0 1 380px; min-width: 0; max-width: 100%; height: auto; border-radius: 6px; border: 1px solid var(--line); display: block; }
-.facts { flex: 1 1 320px; min-width: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
-.demo + .facts { grid-template-columns: 1fr; }
-.facts h2 { font-size: 16px; font-weight: 700; }
-.facts ul { padding-left: 18px; color: var(--muted); display: grid; gap: 6px; }
-.card.fact { min-height: 0; }
-.card.fact h2 { flex: none; }
+.app-bar {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  min-height: 44px; border-bottom: 1px solid #2E2E2E; font-weight: 700; font-size: 15px;
+}
+.app-back { position: absolute; left: 8px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
+.app-page {
+  display: flex; flex-wrap: wrap; align-items: flex-start; gap: 24px;
+  max-width: 1280px; margin: 0 auto; padding: 32px 28px;
+}
+.app-side {
+  flex: 0 1 320px; min-width: 0; position: sticky; top: 16px; display: flex; flex-direction: column; gap: 16px;
+  padding: 24px; background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+}
+.app-title { display: flex; align-items: center; gap: 20px; }
+.app-title img { width: 56px; height: 56px; border-radius: 10px; }
+.app-title h1 { font-size: 24px; font-weight: 700; }
+.app-platform {
+  width: max-content; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding-bottom: 8px; border-bottom: 2px solid var(--text); font-size: 12px; font-weight: 700;
+}
+.app-desc { color: var(--muted); }
+.app-meta { list-style: none; padding: 0; display: grid; gap: 12px; color: var(--muted); }
+.app-meta li { display: flex; align-items: center; gap: 10px; }
+.app-meta i {
+  flex: none; width: 18px; height: 18px; border: 1.5px solid #8A8A8A; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 11px; font-weight: 700;
+}
+.app-meta i.ok { border-color: #3DBE6C; color: #3DBE6C; }
+.app-side .btn.primary { padding: 10px 26px; font-size: 15px; text-align: center; }
+.app-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; }
+.app-links:empty { display: none; }
+.app-main { flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.app-main h2 { font-size: 15px; font-weight: 700; color: var(--muted); }
+.app-main h2:not(:first-child) { margin-top: 14px; }
+.use { display: flex; flex-wrap: wrap; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+/* Гифка 540×608: держим не больше родного размера, иначе видно низкое разрешение */
+.use img { flex: 0 1 340px; min-width: 0; max-width: 100%; height: auto; display: block; margin-left: auto; }
+.use-text { flex: 1 1 260px; min-width: 0; padding: 28px; display: flex; flex-direction: column; gap: 16px; justify-content: center; }
+.use-lead { padding-left: 14px; border-left: 2px solid var(--text); font-weight: 700; }
+.use-text ul { list-style: none; padding: 0; display: grid; gap: 14px; color: var(--muted); }
 
-/* Аккаунт */
+/* Статистика */
+.table-box { overflow-x: auto; max-width: 720px; }
+.table-box table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.table-box th, .table-box td { padding: 10px 14px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.table-box th:first-child { text-align: left; font-weight: 600; }
+.table-box thead th { color: var(--muted); font-weight: 600; }
+.stats-sub { font-size: 16px; font-weight: 700; }
+
+/* Аккаунт и редактор */
+.profile-head { display: flex; align-items: center; gap: 18px; }
+.profile-photo { display: flex; flex-direction: column; gap: 8px; }
+.profile-photo .btn { cursor: pointer; }
+.profile-photo .btn:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
 .account { max-width: 400px; display: flex; flex-direction: column; gap: 14px; }
 .account .tabs { padding: 0; border: 0; }
+.editor, .editor .account { max-width: 640px; }
 .field { display: flex; flex-direction: column; gap: 6px; font-weight: 600; }
-.field input {
+.field input, .field textarea {
   padding: 10px 14px; background: var(--card); border: 1.5px solid #4A4A4A; border-radius: 6px; font-weight: 400;
 }
-.field input:focus { outline: 0; border-color: var(--accent); }
+.field textarea { resize: vertical; font: inherit; }
+.field input:focus, .field textarea:focus { outline: 0; border-color: var(--accent); }
 .account .btn { padding: 10px 20px; text-align: center; cursor: pointer; }
 .google { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .or { text-align: center; color: #9A9A9A; }
@@ -152,4 +197,6 @@ h1, h2, p, ul { margin: 0; }
   .content { border-top-right-radius: 16px; }
   .tabs { padding: 14px 16px; }
   .section { padding: 20px 16px; }
+  .app-page { padding: 20px 16px; }
+  .app-side { position: static; flex-basis: 100%; }
 }

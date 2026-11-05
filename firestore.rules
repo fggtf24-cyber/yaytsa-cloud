@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Только вход через Google: по почте с паролем можно зарегистрировать чужой адрес.
+    function isGoogle() {
+      return request.auth != null
+        && request.auth.token.firebase.sign_in_provider == 'google.com'
+        && request.auth.token.email_verified == true;
+    }
+    function isAdmin() {
+      return isGoogle()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
+    }
+    match /apps/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /projects/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    // Счётчики: visits_<день> и dl_<программа>_<день>. Любой может прибавить ровно 1, читают только админы.
+    match /stats/{id} {
+      allow read: if isAdmin();
+      allow create: if id.matches('^(visits|dl_[A-Za-z0-9-]+)_[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.keys().hasOnly(['n'])
+        && request.resource.data.n == 1;
+      allow update: if request.resource.data.keys().hasOnly(['n'])
+        && request.resource.data.n == resource.data.n + 1;
+    }
+    // Профиль: имя и аватарка (сжатая картинка строкой). Видит и меняет только владелец.
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name', 'photo'])
+        && request.resource.data.get('name', '').size() <= 80
+        && request.resource.data.get('photo', '').size() <= 100000;
+    }
+    // Админ = документ admins/<почта>. Список читать нельзя, только проверить себя. Меняется из консоли.
+    match /admins/{email} {
+      allow get: if isGoogle() && request.auth.token.email == email;
+    }
+  }
+}
