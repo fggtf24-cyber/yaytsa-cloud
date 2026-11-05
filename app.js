@@ -386,13 +386,12 @@ function watchNotifications(u) {
   stopNotifications = null;
   notifications = [];
   if (u) {
-    // ponytail: тянем все уведомления человека и сортируем в браузере, индекс не нужен. Показываем последние 30.
+    // ponytail: тянем все уведомления человека и сортируем в браузере, индекс не нужен.
     stopNotifications = fs.onSnapshot(
       fs.query(fs.collection(db, 'notifications'), fs.where('to', '==', u.uid)),
       snap => {
         notifications = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-          .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0))
-          .slice(0, 30);
+          .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
         drawBell();
       },
       console.error,
@@ -401,22 +400,56 @@ function watchNotifications(u) {
   drawBell();
 }
 
+// Лайки одного комментария сливаются в одну строку, как на YouTube. Список уже отсортирован: первым идёт самый новый.
+function groupNotes(list) {
+  const groups = new Map();
+  for (const n of list) {
+    const key = n.type === 'like' ? `like_${n.commentId}` : n.id;
+    const group = groups.get(key);
+    if (group) {
+      group.people.push(n.fromName);
+      group.read &&= n.read;
+      group.text ||= n.text;
+    } else {
+      groups.set(key, { ...n, people: [n.fromName] });
+    }
+  }
+  return [...groups.values()].slice(0, 30);
+}
+
+const likesWord = n => {
+  const tens = n % 100;
+  const last = n % 10;
+  if (tens > 10 && tens < 20) return 'лайков';
+  if (last === 1) return 'лайк';
+  return last > 1 && last < 5 ? 'лайка' : 'лайков';
+};
+
+const noteTitle = n => {
+  const count = n.people.length;
+  const names = n.people.slice(0, 2).map(p => `<b>${esc(p)}</b>`);
+  if (count === 1) return `${n.type === 'like' ? 'Лайк' : 'Ответ'} от ${names[0]}`;
+  const who = count === 2 ? names.join(' и ') : `${names.join(', ')} и ещё ${count - 2}`;
+  return `${who}: ${count} ${likesWord(count)}`;
+};
+
 // fromName и text пишут посетители: только через esc.
 const noteItem = n => `
   <a class="note${n.read ? '' : ' unread'}" href="#app/${esc(n.appId)}/${esc(n.commentId)}">
-    <span>${n.type === 'like' ? 'Лайк' : 'Ответ'} от <b>${esc(n.fromName)}</b></span>
+    <span>${noteTitle(n)}</span>
     ${n.text ? `<span class="note-text">${esc(n.text)}</span>` : ''}
     <span class="note-time">${when(n.createdAt)}</span>
   </a>`;
 
 function drawBell() {
-  const unread = notifications.filter(n => !n.read).length;
+  const groups = groupNotes(notifications);
+  const unread = groups.filter(n => !n.read).length;
   bellWrap.hidden = !user;
   bellCount.hidden = !unread;
   bellCount.textContent = unread > 9 ? '9+' : unread;
   bell.setAttribute('aria-label', unread ? `Уведомления, новых: ${unread}` : 'Уведомления');
   if (!bellPanel.hidden) {
-    bellPanel.innerHTML = notifications.map(noteItem).join('') || '<p class="empty">Пока нет уведомлений.</p>';
+    bellPanel.innerHTML = groups.map(noteItem).join('') || '<p class="empty">Пока нет уведомлений.</p>';
   }
 }
 
@@ -788,12 +821,13 @@ view.addEventListener('click', e => {
   else if (t.dataset.like) {
     if (!user) { location.hash = 'account'; return; }
     const adding = t.getAttribute('aria-pressed') !== 'true';
+    const commentText = t.closest('.comment-body').querySelector('p').textContent;
     const appId = route().app.id;
     attempt(async () => {
       await fs.updateDoc(fs.doc(db, 'comments', t.dataset.like), {
         likedBy: (adding ? fs.arrayUnion : fs.arrayRemove)(user.uid),
       });
-      if (adding) notify('like', t.dataset.like, t.dataset.uid, appId);
+      if (adding) notify('like', t.dataset.like, t.dataset.uid, appId, commentText);
       await loadComments(appId);
     });
   }
