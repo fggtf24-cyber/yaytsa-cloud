@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Яйца Клауд — все приложения</title>
+<meta name="description" content="Бесплатные программы для Windows: Smooth Cursor, VoiceType и другие.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="eggGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFC531"/><stop offset="0.5" stop-color="#FF4F7A"/><stop offset="1" stop-color="#6E4BFF"/>
+    </linearGradient>
+    <symbol id="logo" viewBox="0 0 40 40">
+      <rect width="40" height="40" rx="10" fill="url(#eggGrad)"/>
+      <ellipse cx="14.2" cy="24" rx="6.2" ry="7.6" fill="none" stroke="#fff" stroke-width="3"/>
+      <ellipse cx="25.8" cy="24.6" rx="6.2" ry="7.6" fill="none" stroke="#fff" stroke-width="3"/>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="top">
+  <a class="brand" href="#apps" aria-label="Яйца Клауд — на главную">
+    <svg width="34" height="34" aria-hidden="true"><use href="#logo"/></svg>
+    <span>Яйца Клауд</span>
+  </a>
+  <nav class="top-nav" aria-label="Разделы"><a href="#apps">Творчество и дизайн</a></nav>
+  <div class="top-right">
+    <label class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#BDBDBD" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <span class="sr">Поиск по кладке</span>
+      <input id="search" type="search" placeholder="Поиск по кладке">
+    </label>
+    <a id="avatar" class="avatar" href="#account" aria-label="Аккаунт">Я</a>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="rail" aria-label="Навигация">
+    <a href="#apps" data-route="apps">
+      <span class="rail-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><ellipse cx="7.5" cy="8" rx="3.2" ry="4"/><ellipse cx="16.5" cy="8" rx="3.2" ry="4"/><ellipse cx="7.5" cy="17" rx="3.2" ry="4"/><ellipse cx="16.5" cy="17" rx="3.2" ry="4"/></svg></span>Приложения
+    </a>
+    <a href="#account" data-route="account">
+      <span class="rail-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 4-7 8-7s7 2 8 7"/></svg></span>Аккаунт
+    </a>
+  </nav>
+  <main id="view" class="content" tabindex="-1"></main>
+</div>
+
+<div id="toast" class="toast" role="status" hidden></div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
