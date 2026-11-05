@@ -77,6 +77,39 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
         && request.resource.data.read == true;
     }
+    // Публичные имена админов для поля «Автор». Каждый пишет только себя.
+    match /authors/{uid} {
+      allow read: if true;
+      allow write: if isAdmin() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 80;
+    }
+    // Личка: баг или идею получает только автор программы, он же читает и удаляет.
+    match /messages/{id} {
+      allow read, delete: if request.auth != null && resource.data.to == request.auth.uid;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['to', 'from', 'fromName', 'fromEmail', 'type', 'appId', 'appName', 'text', 'createdAt', 'read'])
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.type in ['bug', 'idea']
+        && request.resource.data.fromName is string
+        && request.resource.data.fromName.size() <= 80
+        && request.resource.data.fromEmail == request.auth.token.email
+        && request.resource.data.appId is string
+        && request.resource.data.appName is string
+        && request.resource.data.appName.size() <= 100
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 2000
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.read == false
+        && get(/databases/$(database)/documents/apps/$(request.resource.data.appId)).data.authorUid == request.resource.data.to;
+      allow update: if request.auth != null
+        && resource.data.to == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
+        && request.resource.data.read == true;
+    }
     // Счётчики: visits_<день> и dl_<программа>_<день>. Любой может прибавить ровно 1, читают только админы.
     match /stats/{id} {
       allow read: if isAdmin();
