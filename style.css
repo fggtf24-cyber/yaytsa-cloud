@@ -52,6 +52,12 @@ h1, h2, p, ul { margin: 0; }
   background: #E5352B; color: #fff; font-size: 10px; font-weight: 700; line-height: 16px; text-align: center;
 }
 
+.lang {
+  flex: none; min-width: 44px; height: 44px; padding: 0 8px; border: 0; border-radius: 22px; background: none;
+  color: #E0E0E0; font-weight: 700; font-size: 13px;
+}
+.lang:hover { background: #2A2A2A; }
+
 /* Уведомления */
 .bell-wrap { position: relative; flex: none; }
 .bell {
@@ -212,6 +218,7 @@ h1, h2, p, ul { margin: 0; }
 .inbox { max-width: 760px; }
 .tag { padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 700; }
 .comment-head span.tag.bug { background: #E5352B; color: #fff; }
+.comment-head span.tag.admin { background: #1473E6; color: #fff; }
 .comment-head span.tag.idea { background: #1473E6; color: #fff; }
 
 /* Статистика */

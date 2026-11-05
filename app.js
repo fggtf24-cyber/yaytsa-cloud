@@ -1,3 +1,5 @@
+import { EN } from './i18n.js?v=11';
+
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
 // site — необязательно: если поля нет, кнопки «Сайт» не будет.
@@ -8,8 +10,10 @@ const APPS = [
     icon: 'assets/smooth-cursor.png',
     demo: 'assets/smooth-cursor-demo.mp4',
     desc: 'Плавный курсор для записей экрана в OBS, как в Screen Studio. Клики попадают точно в цель.',
+    descEn: 'A smooth cursor for OBS screen recordings, like in Screen Studio. Clicks land exactly on target.',
     file: 'https://github.com/fggtf24-cyber/smooth-cursor-obs/releases/latest/download/SmoothCursor-Setup.exe',
     size: '130 МБ',
+    sizeEn: '130 MB',
     repo: 'https://github.com/fggtf24-cyber/smooth-cursor-obs',
     // site: 'https://smoothcursor.ru/', // ponytail: хостинг пока лежит, раскомментировать (или вписать в редакторе), когда поднимут
     features: [
@@ -25,14 +29,29 @@ const APPS = [
       'ffmpeg: если его нет, программа скачает сама (около 100 МБ)',
       'Права администратора не нужны',
     ],
+    featuresEn: [
+      'Record with F9: OBS captures video while the app logs the cursor at 240 Hz',
+      'Smooths out jerky mouse movement',
+      'The cursor squeezes and tilts slightly on click',
+      'Motion blur on fast movement',
+      'Updates itself on launch',
+    ],
+    needsEn: [
+      'Windows, 64-bit',
+      'OBS Studio 30 or newer',
+      'ffmpeg: if missing, the app downloads it (about 100 MB)',
+      'No administrator rights needed',
+    ],
   },
   {
     id: 'voicetype',
     name: 'VoiceType',
     icon: 'assets/voicetype.png',
     desc: 'Голосовой ввод в любое окно по горячей клавише. Работает на вашем компьютере, без облака и лимитов.',
+    descEn: 'Voice typing into any window with a hotkey. Runs on your computer, no cloud and no limits. Speech recognition is tuned for Russian.',
     file: 'https://github.com/brlk33/Voice-Type/raw/main/VoiceType-Setup.exe',
     size: 'Около 7 ГБ',
+    sizeEn: 'About 7 GB',
     repo: 'https://github.com/brlk33/Voice-Type',
     features: [
       'Диктовка: держите правый Ctrl и говорите, текст появится там, где стоит курсор',
@@ -49,6 +68,62 @@ const APPS = [
       'Около 7 ГБ на диске',
       'Интернет на время установки: 10–20 минут, установщик сам скачает всё нужное',
     ],
+    featuresEn: [
+      'Dictation: hold right Ctrl and speak, the text appears at the cursor',
+      'Long recordings: text is recognized as you record',
+      'Files: audio and video of any length to text',
+      'YouTube: video text from a link',
+      'Clean speech: removes filler sounds and repeats',
+      'Replacement dictionary for terms',
+      'Updates itself on launch',
+    ],
+    needsEn: [
+      'Windows 10 or 11, 64-bit',
+      'NVIDIA graphics card recommended, it runs slower on the CPU',
+      'About 7 GB of disk space',
+      'Internet during installation: 10–20 minutes, the installer downloads everything it needs',
+    ],
+  },
+  {
+    id: 'yaytsechist',
+    name: 'Яйцечист',
+    nameEn: 'Yaytsechist',
+    icon: 'assets/yaytsechist.png',
+    desc: 'Чистит Windows от мусора, показывает, что занимает место на диске, и ускоряет отклик в играх.',
+    descEn: 'Cleans junk from Windows, shows what takes up disk space and improves game responsiveness.',
+    file: 'https://github.com/fggtf24-cyber/yaytsechist/releases/latest/download/Yaytsechist.exe',
+    size: '31 МБ',
+    sizeEn: '31 MB',
+    portable: true,
+    repo: 'https://github.com/fggtf24-cyber/yaytsechist',
+    features: [
+      'Оптимизация для игр: свой план питания, таймер 0.5 мс, отключение Game DVR. Всё возвращается одной кнопкой',
+      'Очистка диска: временные файлы, кэш обновлений, браузеров и лаунчеров, отчёты об ошибках, корзина',
+      'Место на диске: схема из прямоугольников, папки по размеру, самые большие файлы, поиск, выгрузка в CSV',
+      'Очистка памяти: вручную, по порогу загрузки или по расписанию',
+      'Работа в фоне: значок в трее и запуск вместе с Windows',
+      'Обновляется сама при запуске',
+    ],
+    needs: [
+      'Windows 10 или 11, 64-бит',
+      'Права администратора: программа попросит их при запуске',
+      'Часть настроек оптимизации требует перезагрузки',
+      'Очистка диска удаляет файлы навсегда, в корзину отправляет только вкладка «Место на диске»',
+    ],
+    featuresEn: [
+      'Game optimization: custom power plan, 0.5 ms timer, Game DVR off. One button restores everything',
+      'Disk cleanup: temp files, update, browser and launcher caches, error reports, recycle bin',
+      'Disk space: treemap, folders by size, largest files, search, CSV export',
+      'Memory cleanup: manual, by load threshold or on a schedule',
+      'Background mode: tray icon and start with Windows',
+      'Updates itself on launch',
+    ],
+    needsEn: [
+      'Windows 10 or 11, 64-bit',
+      'Administrator rights: the app asks for them on launch',
+      'Some optimization settings need a restart',
+      'Disk cleanup deletes files permanently, only the Disk space tab sends them to the recycle bin',
+    ],
   },
 ];
 
@@ -58,6 +133,7 @@ const PROJECTS = [
     id: 'soundcloud',
     name: '52swag jams',
     desc: 'Наша музыка на SoundCloud.',
+    descEn: 'Our music on SoundCloud.',
     url: 'https://soundcloud.com/f-fggt/sets/52swag-jams',
   },
 ];
@@ -93,6 +169,42 @@ const bell = document.getElementById('bell');
 const bellCount = document.getElementById('bell-count');
 const bellPanel = document.getElementById('bell-panel');
 
+// Язык: сохранённый выбор, иначе язык браузера.
+function savedLang() {
+  try {
+    const stored = localStorage.getItem('lang');
+    if (stored === 'ru' || stored === 'en') return stored;
+  } catch { /* приватный режим: просто не запомним */ }
+  return navigator.language?.toLowerCase().startsWith('ru') ? 'ru' : 'en';
+}
+let lang = savedLang();
+
+// Перевод интерфейса: ключ в словаре EN — сама русская строка.
+const T = (text, vars = {}) => (lang === 'en' ? EN[text] ?? text : text).replace(/\{(\w+)\}/g, (_, k) => vars[k]);
+// Перевод содержимого: поле descEn и другие, если заполнено, иначе русский текст.
+const tr = (item, field) => (lang === 'en' && item[`${field}En`]?.length ? item[`${field}En`] : item[field]);
+const nm = a => tr(a, 'name');
+
+function applyStaticText() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-t]').forEach(el => { el.textContent = T(el.dataset.t); });
+  document.querySelectorAll('[data-t-placeholder]').forEach(el => { el.placeholder = T(el.dataset.tPlaceholder); });
+  document.querySelectorAll('[data-t-label]').forEach(el => { el.setAttribute('aria-label', T(el.dataset.tLabel)); });
+  const button = document.getElementById('lang');
+  button.textContent = lang === 'ru' ? 'EN' : 'RU';
+  button.setAttribute('aria-label', T(lang === 'ru' ? 'Переключить на английский' : 'Переключить на русский'));
+  if (auth) auth.languageCode = lang;
+  if (!user) avatar.textContent = initial();
+}
+
+function setLang(next) {
+  lang = next;
+  try { localStorage.setItem('lang', next); } catch { /* приватный режим */ }
+  applyStaticText();
+  drawBell();
+  render();
+}
+
 const PROJECTS_TAB = 'projects';
 let cat = 'all';
 let authMode = 'login';
@@ -120,31 +232,31 @@ const icon = a => safeUrl(a.icon) || 'assets/favicon.svg';
 
 /* ---------- Приложения ---------- */
 
-const platform = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#BDBDBD" stroke-width="1.8" role="img" aria-label="Для компьютера"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M9 20h6M12 16v4"/></svg>';
-const download = (a, cls = 'btn') => `<a class="${cls} dl" data-id="${esc(a.id)}" href="${safeUrl(a.file)}" aria-label="Скачать ${esc(a.name)}">Скачать</a>`;
-const siteLink = a => (safeUrl(a.site) ? `<a class="link" href="${safeUrl(a.site)}" target="_blank" rel="noopener">Сайт</a>` : '');
-const editLink = (kind, a) => (isAdmin ? `<a class="link" href="#edit/${kind}/${esc(a.id)}" aria-label="Изменить ${esc(a.name)}">Изменить</a>` : '');
+const platform = () => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#BDBDBD" stroke-width="1.8" role="img" aria-label="${T('Для компьютера')}"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M9 20h6M12 16v4"/></svg>`;
+const download = (a, cls = 'btn') => `<a class="${cls} dl" data-id="${esc(a.id)}" href="${safeUrl(a.file)}" aria-label="${T('Скачать {name}', { name: esc(nm(a)) })}">${T('Скачать')}</a>`;
+const siteLink = a => (safeUrl(a.site) ? `<a class="link" href="${safeUrl(a.site)}" target="_blank" rel="noopener">${T('Сайт')}</a>` : '');
+const editLink = (kind, a) => (isAdmin ? `<a class="link" href="#edit/${kind}/${esc(a.id)}" aria-label="${T('Изменить {name}', { name: esc(nm(a)) })}">${T('Изменить')}</a>` : '');
 const media = a => {
   const src = safeUrl(a.demo);
   if (!src) return '';
   return /\.(mp4|webm)(\?|$)/i.test(src)
-    ? `<video src="${src}" autoplay muted loop playsinline aria-label="${esc(a.name)} в работе"></video>`
-    : `<img src="${src}" alt="${esc(a.name)} в работе">`;
+    ? `<video src="${src}" autoplay muted loop playsinline aria-label="${T('{name} в работе', { name: esc(nm(a)) })}"></video>`
+    : `<img src="${src}" alt="${T('{name} в работе', { name: esc(nm(a)) })}">`;
 };
 const authorName = a => authors[a.authorUid]?.name || '';
-const authorLine = a => (authorName(a) ? `<p class="author">Автор: ${esc(authorName(a))}</p>` : '');
+const authorLine = a => (authorName(a) ? `<p class="author">${T('Автор: {name}', { name: esc(authorName(a)) })}</p>` : '');
 
 const card = a => `
   <article class="card">
     <div class="card-head">
       <img src="${icon(a)}" alt="">
-      <h2><a href="#app/${esc(a.id)}">${esc(a.name)}</a></h2>
-      ${platform}
+      <h2><a href="#app/${esc(a.id)}">${esc(nm(a))}</a></h2>
+      ${platform()}
     </div>
     ${authorLine(a)}
-    <p>${esc(a.desc)}</p>
+    <p>${esc(tr(a, 'desc'))}</p>
     <div class="card-foot">
-      <a class="link" href="#app/${esc(a.id)}" aria-label="Подробнее о ${esc(a.name)}">Подробнее</a>
+      <a class="link" href="#app/${esc(a.id)}" aria-label="${T('Подробнее о {name}', { name: esc(nm(a)) })}">${T('Подробнее')}</a>
       ${siteLink(a)}
       ${editLink('apps', a)}
       ${download(a)}
@@ -153,24 +265,24 @@ const card = a => `
 
 // Ссылка на soundcloud.com в проекте сама превращается в плеер.
 const soundcloud = p => (/^https:\/\/soundcloud\.com\//.test(p.url || '') ? `
-  <iframe class="player" title="Плеер: ${esc(p.name)}" allow="autoplay; encrypted-media"
+  <iframe class="player" title="${T('Плеер: {name}', { name: esc(p.name) })}" allow="autoplay; encrypted-media"
     src="https://w.soundcloud.com/player/?url=${encodeURIComponent(p.url)}&color=%231473e6&show_comments=false&show_teaser=false&visual=true"></iframe>` : '');
 
 const projectCard = p => `
   <article class="card${soundcloud(p) ? ' wide' : ''}">
     <div class="card-head"><h2>${esc(p.name)}</h2></div>
-    <p>${esc(p.desc)}</p>
+    <p>${esc(tr(p, 'desc'))}</p>
     ${soundcloud(p)}
     <div class="card-foot">
       ${editLink('projects', p)}
-      <a class="btn open" href="${safeUrl(p.url)}" target="_blank" rel="noopener" aria-label="Открыть ${esc(p.name)}">Открыть</a>
+      <a class="btn open" href="${safeUrl(p.url)}" target="_blank" rel="noopener" aria-label="${T('Открыть {name}', { name: esc(p.name) })}">${T('Открыть')}</a>
     </div>
   </article>`;
 
-const promo = `
+const promo = () => `
   <article class="card promo">
     <svg width="28" height="28" aria-hidden="true"><use href="#logo"/></svg>
-    <p>Все программы бесплатные. Без подписки.</p>
+    <p>${T('Все программы бесплатные. Без подписки.')}</p>
     <div class="eggs" aria-hidden="true">
       ${['#6FA8FF', '#FFB347', '#A58BFF', '#FF6F91', '#FFFFFF', '#6BE3B4', '#5ED0F0', '#FF8A5B', '#FFC531']
         .map(c => `<i style="background:${c}"></i>`).join('')}
@@ -179,55 +291,57 @@ const promo = `
 
 function renderApps() {
   const q = search.value.trim().toLowerCase();
-  const found = a => !q || `${a.name} ${authorName(a)} ${a.desc}`.toLowerCase().includes(q);
+  const found = a => !q || `${a.name} ${nm(a)} ${authorName(a)} ${tr(a, 'desc')}`.toLowerCase().includes(q);
   const onProjects = cat === PROJECTS_TAB;
   const list = (onProjects ? projects : apps).filter(found);
-  const tabs = [['all', 'Все приложения'], [PROJECTS_TAB, 'Другие проекты']];
-  const add = onProjects ? ['projects', 'Добавить проект'] : ['apps', 'Добавить программу'];
+  const tabs = [['all', T('Все приложения')], [PROJECTS_TAB, T('Другие проекты')]];
+  const add = onProjects ? ['projects', T('Добавить проект')] : ['apps', T('Добавить программу')];
 
   view.innerHTML = `
-    <div class="tabs" role="group" aria-label="Категории">
+    <div class="tabs" role="group" aria-label="${T('Категории')}">
       ${tabs.map(([id, label]) => `<button type="button" data-cat="${esc(id)}" aria-pressed="${id === cat}">${esc(label)}</button>`).join('')}
       ${isAdmin ? `<a class="btn tabs-add" href="#edit/${add[0]}/new">${add[1]}</a>` : ''}
     </div>
     <section class="section">
-      <h1>${onProjects ? 'Другие наши проекты' : 'Программы с яйцами'}</h1>
+      <h1>${T(onProjects ? 'Другие наши проекты' : 'Программы с яйцами')}</h1>
       ${list.length
-        ? `<div class="grid">${!onProjects && !q ? promo : ''}${list.map(onProjects ? projectCard : card).join('')}</div>`
-        : '<p class="empty">Ничего не нашлось.</p>'}
+        ? `<div class="grid">${!onProjects && !q ? promo() : ''}${list.map(onProjects ? projectCard : card).join('')}</div>`
+        : `<p class="empty">${T('Ничего не нашлось.')}</p>`}
     </section>`;
 }
 
 function renderApp(a) {
   const list = items => `<ul>${items.map(i => `<li>${esc(i)}</li>`).join('')}</ul>`;
   const demo = media(a);
-  const features = a.features || [];
+  const features = tr(a, 'features') || [];
+  const needs = tr(a, 'needs') || [];
+  const size = tr(a, 'size');
   const isWindows = /Windows/.test(navigator.userAgent);
   view.innerHTML = `
     <div class="app-bar">
-      <a class="app-back" href="#apps" aria-label="Все приложения">
+      <a class="app-back" href="#apps" aria-label="${T('Все приложения')}">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
       </a>
-      <span>${esc(a.name)}</span>
+      <span>${esc(nm(a))}</span>
     </div>
     <div class="app-page">
       <aside class="app-side">
         <div class="app-title">
           <img src="${icon(a)}" alt="">
-          <h1>${esc(a.name)}</h1>
+          <h1>${esc(nm(a))}</h1>
         </div>
         <div class="app-platform">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M9 20h6M12 16v4"/></svg>
-          Настольные ПК
+          ${T('Настольные ПК')}
         </div>
-        <p class="app-desc">${esc(a.desc)}</p>
+        <p class="app-desc">${esc(tr(a, 'desc'))}</p>
         <ul class="app-meta">
-          <li>${isWindows ? '<i class="ok">✓</i>Работает на этом устройстве' : '<i>!</i>Только для Windows'}</li>
-          ${a.size ? `<li><i>↓</i>${esc(a.size)} после установки</li>` : ''}
-          ${authorName(a) ? `<li><i>@</i>Автор: ${esc(authorName(a))}</li>` : ''}
+          <li>${isWindows ? `<i class="ok">✓</i>${T('Работает на этом устройстве')}` : `<i>!</i>${T('Только для Windows')}`}</li>
+          ${size ? `<li><i>↓</i>${T(a.portable ? '{size}, установка не нужна' : '{size} после установки', { size: esc(size) })}</li>` : ''}
+          ${authorName(a) ? `<li><i>@</i>${T('Автор: {name}', { name: esc(authorName(a)) })}</li>` : ''}
         </ul>
         ${download(a, 'btn primary')}
-        ${authorName(a) ? `<a class="btn report-link" href="#report/${esc(a.id)}">Сообщить о баге или идее</a>` : ''}
+        ${authorName(a) ? `<a class="btn report-link" href="#report/${esc(a.id)}">${T('Сообщить о баге или идее')}</a>` : ''}
         <div class="app-links">
           ${siteLink(a)}
           ${safeUrl(a.repo) ? `<a class="link" href="${safeUrl(a.repo)}" target="_blank" rel="noopener">GitHub</a>` : ''}
@@ -236,7 +350,7 @@ function renderApp(a) {
       </aside>
       <div class="app-main">
         ${features.length ? `
-          <h2>Основное использование</h2>
+          <h2>${T('Основное использование')}</h2>
           <div class="use">
             <div class="use-text">
               <p class="use-lead">${esc(features[0])}</p>
@@ -244,11 +358,11 @@ function renderApp(a) {
             </div>
             ${demo}
           </div>` : (demo ? `<div class="use">${demo}</div>` : '')}
-        ${a.needs?.length ? `<h2>Что нужно</h2><div class="use"><div class="use-text">${list(a.needs)}</div></div>` : ''}
-        <h2>Комментарии <span id="comment-count"></span></h2>
+        ${needs.length ? `<h2>${T('Что нужно')}</h2><div class="use"><div class="use-text">${list(needs)}</div></div>` : ''}
+        <h2>${T('Комментарии')} <span id="comment-count"></span></h2>
         ${commentForm()}
         <p id="msg" class="msg" role="alert"></p>
-        <div id="comment-list" data-app="${esc(a.id)}"><p class="empty">Загрузка…</p></div>
+        <div id="comment-list" data-app="${esc(a.id)}"><p class="empty">${T('Загрузка…')}</p></div>
       </div>
     </div>`;
   loadComments(a.id);
@@ -258,12 +372,12 @@ function renderApp(a) {
 
 const commentForm = () => (user ? `
   <form class="comment-form">
-    <label class="sr" for="comment-text">Комментарий</label>
-    <textarea id="comment-text" name="text" rows="3" maxlength="1000" required placeholder="Напишите комментарий"></textarea>
-    <button class="btn primary">Отправить</button>
-  </form>` : '<p class="empty"><a class="link" href="#account">Войдите</a>, чтобы оставить комментарий или лайк.</p>');
+    <label class="sr" for="comment-text">${T('Комментарий')}</label>
+    <textarea id="comment-text" name="text" rows="3" maxlength="1000" required placeholder="${T('Напишите комментарий')}"></textarea>
+    <button class="btn primary">${T('Отправить')}</button>
+  </form>` : `<p class="empty"><a class="link" href="#account">${T('Войдите')}</a>${T(', чтобы оставить комментарий или лайк.')}</p>`);
 
-const when = ts => ts?.toDate?.().toLocaleString('ru-RU', { dateStyle: 'medium', timeStyle: 'short' }) || '';
+const when = ts => ts?.toDate?.().toLocaleString(lang === 'en' ? 'en-GB' : 'ru-RU', { dateStyle: 'medium', timeStyle: 'short' }) || '';
 
 // Имя, фото и текст пишут посетители: в разметку только через esc, картинка только https или data:image.
 // rootId: ответы живут одной веткой под верхним комментарием, ответ на ответ идёт туда же.
@@ -275,15 +389,15 @@ const commentItem = (c, rootId = c.id) => {
     <article class="comment" id="c-${esc(c.id)}">
       <span class="avatar">${photo ? `<img src="${photo}" alt="" referrerpolicy="no-referrer">` : esc(String(c.name || 'П')[0])}</span>
       <div class="comment-body">
-        <div class="comment-head"><b>${esc(c.name)}</b><span>${when(c.createdAt)}</span></div>
+        <div class="comment-head"><b>${esc(c.name)}</b>${authors[c.uid] ? `<span class="tag admin">${T('Админ')}</span>` : ''}<span>${when(c.createdAt)}</span></div>
         <p>${esc(c.text)}</p>
         <div class="comment-actions">
-          <button type="button" class="like" data-like="${esc(c.id)}" data-uid="${esc(c.uid)}" aria-pressed="${liked}" aria-label="Нравится, сейчас ${likes.length}">
+          <button type="button" class="like" data-like="${esc(c.id)}" data-uid="${esc(c.uid)}" aria-pressed="${liked}" aria-label="${T('Нравится, сейчас {n}', { n: likes.length })}">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="${liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.2-9.1C1.7 7.8 3.8 5 6.8 5c2 0 3.6 1.1 5.2 3 1.6-1.9 3.2-3 5.2-3 3 0 5.1 2.8 4 5.9C19.5 15.4 12 20 12 20z"/></svg>
             ${likes.length}
           </button>
-          <button type="button" class="link linkbtn" data-reply="${esc(rootId)}" data-target="${esc(c.id)}" data-uid="${esc(c.uid)}" data-name="${esc(c.name)}" data-nested="${rootId !== c.id}">Ответить</button>
-          ${user && (c.uid === user.uid || isAdmin) ? `<button type="button" class="link linkbtn" data-del-comment="${esc(c.id)}">Удалить</button>` : ''}
+          <button type="button" class="link linkbtn" data-reply="${esc(rootId)}" data-target="${esc(c.id)}" data-uid="${esc(c.uid)}" data-name="${esc(c.name)}" data-nested="${rootId !== c.id}">${T('Ответить')}</button>
+          ${user && (c.uid === user.uid || isAdmin) ? `<button type="button" class="link linkbtn" data-del-comment="${esc(c.id)}">${T('Удалить')}</button>` : ''}
         </div>
       </div>
     </article>`;
@@ -297,7 +411,7 @@ async function loadComments(appId) {
     return el?.dataset.app === appId ? el : null;
   };
   if (!fs) {
-    if (authState === 'failed') box().innerHTML = '<p class="empty">Комментарии сейчас недоступны.</p>';
+    if (authState === 'failed') box().innerHTML = `<p class="empty">${T('Комментарии сейчас недоступны.')}</p>`;
     return;
   }
   try {
@@ -312,7 +426,7 @@ async function loadComments(appId) {
     box().innerHTML = shown ? roots.map(c => {
       const thread = replies(c.id).map(r => commentItem(r, c.id)).join('');
       return commentItem(c) + (thread ? `<div class="replies">${thread}</div>` : '');
-    }).join('') : '<p class="empty">Пока никто не написал.</p>';
+    }).join('') : `<p class="empty">${T('Пока никто не написал.')}</p>`;
     document.getElementById('comment-count').textContent = shown ? `(${shown})` : '';
     const target = document.getElementById(`c-${route().commentId}`);
     if (target) {
@@ -322,7 +436,7 @@ async function loadComments(appId) {
     }
   } catch (e) {
     console.error(e);
-    if (box()) box().innerHTML = '<p class="empty">Комментарии сейчас недоступны.</p>';
+    if (box()) box().innerHTML = `<p class="empty">${T('Комментарии сейчас недоступны.')}</p>`;
   }
 }
 
@@ -337,8 +451,8 @@ function toggleReplyForm(button) {
   form.dataset.target = button.dataset.target;
   form.dataset.uid = button.dataset.uid;
   form.innerHTML = `
-    <textarea name="text" rows="2" maxlength="1000" required aria-label="Ответ" placeholder="Напишите ответ"></textarea>
-    <button class="btn primary">Ответить</button>`;
+    <textarea name="text" rows="2" maxlength="1000" required aria-label="${T('Ответ')}" placeholder="${T('Напишите ответ')}"></textarea>
+    <button class="btn primary">${T('Ответить')}</button>`;
   body.append(form);
   const input = form.elements.text;
   if (button.dataset.nested === 'true') input.value = `${button.dataset.name}, `;
@@ -349,12 +463,11 @@ async function addComment(form) {
   const text = form.elements.text.value.trim();
   if (!text) return;
   const appId = route().app.id;
-  // ponytail: имя и фото копируются в комментарий, поэтому смена профиля старые комментарии не меняет.
   await fs.addDoc(fs.collection(db, 'comments'), {
     appId,
     uid: user.uid,
-    name: (displayName() || 'Пользователь').slice(0, 80),
-    photo: profile.photo || user.photoURL || '',
+    name: myName(),
+    photo: myPhoto(),
     text,
     createdAt: fs.serverTimestamp(),
     likedBy: [],
@@ -363,6 +476,22 @@ async function addComment(form) {
   if (form.dataset.parent) notify('reply', form.dataset.target, form.dataset.uid, appId, text);
   form.reset();
   await loadComments(appId);
+}
+
+// Имя и фото лежат в самом комментарии, чтобы читать его без лишних запросов.
+// При входе и смене профиля обновляем их во всех своих комментариях.
+async function syncMyComments() {
+  const name = myName();
+  const photo = myPhoto();
+  const snap = await fs.getDocs(fs.query(fs.collection(db, 'comments'), fs.where('uid', '==', user.uid)));
+  // ponytail: в одной пачке Firestore до 500 записей, остальные обновятся при следующем входе.
+  const stale = snap.docs.filter(d => d.data().name !== name || d.data().photo !== photo).slice(0, 500);
+  if (!stale.length) return;
+  const batch = fs.writeBatch(db);
+  stale.forEach(d => batch.update(d.ref, { name, photo }));
+  await batch.commit();
+  const { app } = route();
+  if (app) await loadComments(app.id);
 }
 
 /* ---------- Уведомления ---------- */
@@ -376,7 +505,7 @@ function notify(type, commentId, to, appId, text = '') {
   fs.setDoc(ref, {
     to,
     from: user.uid,
-    fromName: (displayName() || 'Пользователь').slice(0, 80),
+    fromName: myName(),
     type,
     appId,
     commentId,
@@ -423,6 +552,7 @@ function groupNotes(list) {
 }
 
 const likesWord = n => {
+  if (lang === 'en') return n === 1 ? 'like' : 'likes';
   const tens = n % 100;
   const last = n % 10;
   if (tens > 10 && tens < 20) return 'лайков';
@@ -433,8 +563,9 @@ const likesWord = n => {
 const noteTitle = n => {
   const count = n.people.length;
   const names = n.people.slice(0, 2).map(p => `<b>${esc(p)}</b>`);
-  if (count === 1) return `${n.type === 'like' ? 'Лайк' : 'Ответ'} от ${names[0]}`;
-  const who = count === 2 ? names.join(' и ') : `${names.join(', ')} и ещё ${count - 2}`;
+  if (count === 1) return T(n.type === 'like' ? 'Лайк от {name}' : 'Ответ от {name}', { name: names[0] });
+  const [a, b] = names;
+  const who = count === 2 ? T('{a} и {b}', { a, b }) : T('{a}, {b} и ещё {n}', { a, b, n: count - 2 });
   return `${who}: ${count} ${likesWord(count)}`;
 };
 
@@ -452,9 +583,9 @@ function drawBell() {
   bellWrap.hidden = !user;
   bellCount.hidden = !unread;
   bellCount.textContent = unread > 9 ? '9+' : unread;
-  bell.setAttribute('aria-label', unread ? `Уведомления, новых: ${unread}` : 'Уведомления');
+  bell.setAttribute('aria-label', unread ? T('Уведомления, новых: {n}', { n: unread }) : T('Уведомления'));
   if (!bellPanel.hidden) {
-    bellPanel.innerHTML = groups.map(noteItem).join('') || '<p class="empty">Пока нет уведомлений.</p>';
+    bellPanel.innerHTML = groups.map(noteItem).join('') || `<p class="empty">${T('Пока нет уведомлений.')}</p>`;
   }
 }
 
@@ -474,31 +605,37 @@ function toggleBell(open) {
 const FIELDS = {
   apps: [
     ['name', 'Название', 'text*'],
+    ['nameEn', 'Название (English)', 'text'],
     ['authorUid', 'Автор (аккаунт админа)', 'author'],
     ['desc', 'Описание', 'area*'],
+    ['descEn', 'Описание (English)', 'area'],
     ['file', 'Ссылка на .exe', 'url*'],
     ['size', 'Размер после установки, например 130 МБ', 'text'],
+    ['sizeEn', 'Размер (English), например 130 MB', 'text'],
     ['site', 'Сайт программы', 'url'],
     ['repo', 'GitHub', 'url'],
     ['icon', 'Ссылка на иконку', 'url'],
     ['demo', 'Ссылка на картинку, гифку или .mp4', 'url'],
     ['features', 'Что умеет (один пункт на строку)', 'lines'],
+    ['featuresEn', 'Что умеет (English, один пункт на строку)', 'lines'],
     ['needs', 'Что нужно (один пункт на строку)', 'lines'],
+    ['needsEn', 'Что нужно (English, один пункт на строку)', 'lines'],
   ],
   projects: [
     ['name', 'Название', 'text*'],
     ['desc', 'Описание', 'area'],
+    ['descEn', 'Описание (English)', 'area'],
     ['url', 'Ссылка', 'url*'],
   ],
 };
 
 function renderEditor(kind, id) {
   const note = text => { view.innerHTML = `<section class="section"><p class="empty">${text}</p></section>`; };
-  if (authState === 'loading' || contentState === 'loading') return note('Загрузка…');
-  if (contentState === 'failed') return note('Не удалось загрузить данные. Обновите страницу.');
-  if (!isAdmin) return note('Редактировать могут только админы, вошедшие через Google.');
+  if (authState === 'loading' || contentState === 'loading') return note(T('Загрузка…'));
+  if (contentState === 'failed') return note(T('Не удалось загрузить данные. Обновите страницу.'));
+  if (!isAdmin) return note(T('Редактировать могут только админы, вошедшие через Google.'));
   const item = id === 'new' ? {} : (kind === 'apps' ? apps : projects).find(x => x.id === id);
-  if (!item) return note('Такой записи нет.');
+  if (!item) return note(T('Такой записи нет.'));
 
   const field = ([key, label, type]) => {
     const required = type.endsWith('*') ? 'required' : '';
@@ -506,22 +643,22 @@ function renderEditor(kind, id) {
     const value = Array.isArray(item[key]) ? item[key].join('\n') : item[key] ?? '';
     const control = t === 'author' ? `
       <select name="${key}">
-        <option value="">Не указан</option>
+        <option value="">${T('Не указан')}</option>
         ${Object.entries(authors).map(([uid, a]) => `<option value="${esc(uid)}" ${uid === value ? 'selected' : ''}>${esc(a.name)}</option>`).join('')}
       </select>`
       : t === 'area' || t === 'lines'
       ? `<textarea name="${key}" rows="${t === 'lines' ? 6 : 3}" ${required}>${esc(value)}</textarea>`
-      : `<input name="${key}" value="${esc(value)}" ${required} ${t === 'url' ? 'pattern="(https://|assets/).+" title="Ссылка должна начинаться с https://"' : ''}>`;
-    return `<label class="field">${label}${control}</label>`;
+      : `<input name="${key}" value="${esc(value)}" ${required} ${t === 'url' ? `pattern="(https://|assets/).+" title="${T('Ссылка должна начинаться с https://')}"` : ''}>`;
+    return `<label class="field">${T(label)}${control}</label>`;
   };
   view.innerHTML = `
     <section class="section account editor">
-      <h1>${id === 'new' ? 'Новая запись' : `Изменить: ${esc(item.name)}`}</h1>
+      <h1>${id === 'new' ? T('Новая запись') : T('Изменить: {name}', { name: esc(item.name) })}</h1>
       <form id="edit-form" class="account" data-kind="${kind}" data-id="${esc(id)}">
         ${FIELDS[kind].map(field).join('')}
-        <button class="btn primary">Сохранить</button>
+        <button class="btn primary">${T('Сохранить')}</button>
       </form>
-      ${id === 'new' ? '' : '<button type="button" class="btn danger" id="delete">Удалить</button>'}
+      ${id === 'new' ? '' : `<button type="button" class="btn danger" id="delete">${T('Удалить')}</button>`}
       <p id="msg" class="msg" role="alert"></p>
     </section>`;
 }
@@ -590,29 +727,29 @@ async function checkAdmin(u) {
 
 function renderAccount() {
   if (authState !== 'ready') {
-    view.innerHTML = `<section class="section"><h1>Аккаунт</h1><p class="empty">${
-      authState === 'loading' ? 'Загрузка…' : 'Сервис входа сейчас недоступен. Скачивать программы можно и без аккаунта.'}</p></section>`;
+    view.innerHTML = `<section class="section"><h1>${T('Аккаунт')}</h1><p class="empty">${
+      T(authState === 'loading' ? 'Загрузка…' : 'Сервис входа сейчас недоступен. Скачивать программы можно и без аккаунта.')}</p></section>`;
     return;
   }
   if (user) {
     view.innerHTML = `
       <section class="section account">
-        <h1>Профиль</h1>
+        <h1>${T('Профиль')}</h1>
         <div class="profile-head">
           <span class="avatar big" id="big-avatar"></span>
           <div class="profile-photo">
-            <label class="btn">Загрузить фото<input id="photo" class="sr" type="file" accept="image/*"></label>
-            ${profile.photo ? '<button type="button" class="link linkbtn" id="photo-remove">Убрать фото</button>' : ''}
+            <label class="btn">${T('Загрузить фото')}<input id="photo" class="sr" type="file" accept="image/*"></label>
+            ${profile.photo ? `<button type="button" class="link linkbtn" id="photo-remove">${T('Убрать фото')}</button>` : ''}
           </div>
         </div>
         <form id="profile-form" class="account">
-          <label class="field">Имя<input name="name" maxlength="80" autocomplete="name"></label>
-          <button class="btn primary">Сохранить</button>
+          <label class="field">${T('Имя')}<input name="name" maxlength="80" autocomplete="name"></label>
+          <button class="btn primary">${T('Сохранить')}</button>
         </form>
         <p id="who" class="empty"></p>
-        ${isAdmin ? '<p class="msg ok">Вы админ: кнопки «Изменить» и «Добавить» есть в каталоге, цифры в разделе «Статистика».</p>' : ''}
+        ${isAdmin ? `<p class="msg ok">${T('Вы админ: кнопки «Изменить» и «Добавить» есть в каталоге, цифры в разделе «Статистика».')}</p>` : ''}
         <p id="msg" class="msg" role="alert"></p>
-        <button type="button" class="btn" id="logout">Выйти</button>
+        <button type="button" class="btn" id="logout">${T('Выйти')}</button>
       </section>`;
     view.querySelector('#who').textContent = user.email;
     view.querySelector('[name=name]').value = displayName();
@@ -622,35 +759,39 @@ function renderAccount() {
   const reg = authMode === 'register';
   view.innerHTML = `
     <section class="section account">
-      <h1>${reg ? 'Создать аккаунт' : 'Вход'}</h1>
-      <div class="tabs" role="group" aria-label="Вход или регистрация">
-        <button type="button" data-mode="login" aria-pressed="${!reg}">Вход</button>
-        <button type="button" data-mode="register" aria-pressed="${reg}">Регистрация</button>
+      <h1>${T(reg ? 'Создать аккаунт' : 'Вход')}</h1>
+      <div class="tabs" role="group" aria-label="${T('Вход или регистрация')}">
+        <button type="button" data-mode="login" aria-pressed="${!reg}">${T('Вход')}</button>
+        <button type="button" data-mode="register" aria-pressed="${reg}">${T('Регистрация')}</button>
       </div>
       <button type="button" class="btn google" id="google">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M21 12.2h-9M20.6 12.2a8.8 8.8 0 1 1-2.6-6.3"/></svg>
-        Продолжить с Google
+        ${T('Продолжить с Google')}
       </button>
-      <p class="or">или</p>
+      <p class="or">${T('или')}</p>
       <form id="auth-form" class="account">
-        <label class="field">Почта
+        <label class="field">${T('Почта')}
           <input name="email" type="email" required autocomplete="email">
         </label>
-        <label class="field">Пароль
+        <label class="field">${T('Пароль')}
           <input name="password" type="password" required minlength="6" autocomplete="${reg ? 'new-password' : 'current-password'}">
         </label>
-        <button class="btn primary">${reg ? 'Создать аккаунт' : 'Войти'}</button>
+        <button class="btn primary">${T(reg ? 'Создать аккаунт' : 'Войти')}</button>
       </form>
-      ${reg ? '' : '<button type="button" class="link linkbtn" id="reset">Забыли пароль?</button>'}
+      ${reg ? '' : `<button type="button" class="link linkbtn" id="reset">${T('Забыли пароль?')}</button>`}
       <p id="msg" class="msg" role="alert"></p>
     </section>`;
 }
 
 const displayName = () => profile.name || user?.displayName || '';
+const myName = () => (displayName() || 'Пользователь').slice(0, 80);
+const myPhoto = () => profile.photo || user?.photoURL || '';
+
+const initial = () => (displayName() || user?.email || '')[0] || (lang === 'en' ? 'Me' : 'Я');
 
 function drawAvatar(el) {
   const src = profile.photo || user?.photoURL;
-  el.textContent = src ? '' : (displayName() || user?.email || 'Я')[0];
+  el.textContent = src ? '' : initial();
   if (!src) return;
   const img = new Image();
   img.src = src;
@@ -663,9 +804,10 @@ async function saveProfile(data) {
   await fs.setDoc(fs.doc(db, 'users', user.uid), data, { merge: true });
   profile = { ...profile, ...data };
   if (isAdmin) await syncAuthor();
+  await syncMyComments();
   drawAvatar(avatar);
   renderAccount();
-  say('Сохранено.', true);
+  say(T('Сохранено.'), true);
 }
 
 // Storage на бесплатном тарифе нет, поэтому фото ужимаем до 128×128 и храним строкой в профиле.
@@ -682,27 +824,27 @@ async function photoToDataUrl(file) {
 /* ---------- Баги и идеи ---------- */
 
 function renderReport(appId) {
-  const note = html => { view.innerHTML = `<section class="section"><h1>Сообщить о баге или идее</h1><p class="empty">${html}</p></section>`; };
-  if (authState === 'loading' || contentState === 'loading') return note('Загрузка…');
-  if (!user) return note('<a class="link" href="#account">Войдите</a>, чтобы написать автору программы.');
-  if (!apps.some(authorName)) return note('Пока ни у одной программы не указан автор.');
+  const note = html => { view.innerHTML = `<section class="section"><h1>${T('Сообщить о баге или идее')}</h1><p class="empty">${html}</p></section>`; };
+  if (authState === 'loading' || contentState === 'loading') return note(T('Загрузка…'));
+  if (!user) return note(`<a class="link" href="#account">${T('Войдите')}</a>${T(', чтобы написать автору программы.')}`);
+  if (!apps.some(authorName)) return note(T('Пока ни у одной программы не указан автор.'));
   const option = a => (authorName(a)
-    ? `<option value="${esc(a.id)}" ${a.id === appId ? 'selected' : ''}>${esc(a.name)} (автор: ${esc(authorName(a))})</option>`
-    : `<option disabled>${esc(a.name)} (автор не указан)</option>`);
+    ? `<option value="${esc(a.id)}" ${a.id === appId ? 'selected' : ''}>${T('{name} (автор: {author})', { name: esc(nm(a)), author: esc(authorName(a)) })}</option>`
+    : `<option disabled>${T('{name} (автор не указан)', { name: esc(nm(a)) })}</option>`);
   view.innerHTML = `
     <section class="section account editor">
-      <h1>Сообщить о баге или идее</h1>
+      <h1>${T('Сообщить о баге или идее')}</h1>
       <form id="report-form" class="account">
-        <label class="field">Что это
-          <select name="type"><option value="bug">Баг</option><option value="idea">Идея</option></select>
+        <label class="field">${T('Что это')}
+          <select name="type"><option value="bug">${T('Баг')}</option><option value="idea">${T('Идея')}</option></select>
         </label>
-        <label class="field">Программа
+        <label class="field">${T('Программа')}
           <select name="appId" required>${apps.map(option).join('')}</select>
         </label>
-        <label class="field">Сообщение
+        <label class="field">${T('Сообщение')}
           <textarea name="text" rows="6" maxlength="2000" required></textarea>
         </label>
-        <button class="btn primary">Отправить автору</button>
+        <button class="btn primary">${T('Отправить автору')}</button>
       </form>
       <p id="msg" class="msg" role="alert"></p>
     </section>`;
@@ -715,7 +857,7 @@ async function sendReport(form) {
   await fs.addDoc(fs.collection(db, 'messages'), {
     to: app.authorUid,
     from: user.uid,
-    fromName: (displayName() || 'Пользователь').slice(0, 80),
+    fromName: myName(),
     fromEmail: user.email || '',
     type,
     appId,
@@ -725,7 +867,7 @@ async function sendReport(form) {
     read: false,
   });
   form.reset();
-  say(`Отправлено. Сообщение получит ${authorName(app)}.`, true);
+  say(T('Отправлено. Сообщение получит {name}.', { name: authorName(app) }), true);
 }
 
 function watchMessages(u) {
@@ -759,24 +901,24 @@ const messageItem = m => `
   <article class="comment">
     <div class="comment-body">
       <div class="comment-head">
-        <span class="tag ${m.type === 'idea' ? 'idea' : 'bug'}">${m.type === 'idea' ? 'Идея' : 'Баг'}</span>
+        <span class="tag ${m.type === 'idea' ? 'idea' : 'bug'}">${T(m.type === 'idea' ? 'Идея' : 'Баг')}</span>
         <a class="link" href="#app/${esc(m.appId)}">${esc(m.appName)}</a>
         <span>${when(m.createdAt)}</span>
       </div>
       <p>${esc(m.text)}</p>
       <div class="comment-head"><b>${esc(m.fromName)}</b><span>${esc(m.fromEmail)}</span></div>
-      <div class="comment-actions"><button type="button" class="link linkbtn" data-del-message="${esc(m.id)}">Удалить</button></div>
+      <div class="comment-actions"><button type="button" class="link linkbtn" data-del-message="${esc(m.id)}">${T('Удалить')}</button></div>
     </div>
   </article>`;
 
 function renderInbox() {
-  const note = text => { view.innerHTML = `<section class="section"><h1>Сообщения</h1><p class="empty">${text}</p></section>`; };
-  if (authState === 'loading') return note('Загрузка…');
-  if (!isAdmin) return note('Сообщения видят только админы, вошедшие через Google.');
+  const note = text => { view.innerHTML = `<section class="section"><h1>${T('Сообщения')}</h1><p class="empty">${text}</p></section>`; };
+  if (authState === 'loading') return note(T('Загрузка…'));
+  if (!isAdmin) return note(T('Сообщения видят только админы, вошедшие через Google.'));
   view.innerHTML = `
     <section class="section inbox">
-      <h1>Сообщения</h1>
-      ${messages.map(messageItem).join('') || '<p class="empty">Пока ничего не пришло. Сюда попадают баги и идеи по программам, где автор вы.</p>'}
+      <h1>${T('Сообщения')}</h1>
+      ${messages.map(messageItem).join('') || `<p class="empty">${T('Пока ничего не пришло. Сюда попадают баги и идеи по программам, где автор вы.')}</p>`}
       <p id="msg" class="msg" role="alert"></p>
     </section>`;
   messages.filter(m => !m.read).forEach(m => {
@@ -803,16 +945,16 @@ function countVisit() {
 }
 
 async function renderStats() {
-  const note = text => { view.innerHTML = `<section class="section"><h1>Статистика</h1><p class="empty">${text}</p></section>`; };
-  if (authState === 'loading') return note('Загрузка…');
-  if (!isAdmin) return note('Статистику видят только админы, вошедшие через Google.');
-  note('Загрузка…');
+  const note = text => { view.innerHTML = `<section class="section"><h1>${T('Статистика')}</h1><p class="empty">${text}</p></section>`; };
+  if (authState === 'loading') return note(T('Загрузка…'));
+  if (!isAdmin) return note(T('Статистику видят только админы, вошедшие через Google.'));
+  note(T('Загрузка…'));
   let snap;
   try {
     snap = await fs.getDocs(fs.collection(db, 'stats'));
   } catch (e) {
     console.error(e);
-    return note('Не удалось загрузить статистику.');
+    return note(T('Не удалось загрузить статистику.'));
   }
   if (route().name !== 'stats') return;
 
@@ -825,29 +967,29 @@ async function renderStats() {
   const sum = (test, from = '') => rows.filter(r => test(r) && r.day >= from).reduce((t, r) => t + r.n, 0);
   const isVisit = r => !r.app;
   const isDownload = r => !!r.app;
-  const periods = [['Сегодня', today()], ['7 дней', since(7)], ['30 дней', since(30)], ['Всё время', '']];
+  const periods = [[T('Сегодня'), today()], [T('7 дней'), since(7)], [T('30 дней'), since(30)], [T('Всё время'), '']];
   const line = (name, test) => `<tr><th scope="row">${esc(name)}</th>${periods.map(([, from]) => `<td>${sum(test, from)}</td>`).join('')}</tr>`;
   const ids = [...new Set([...apps.map(a => a.id), ...rows.filter(isDownload).map(r => r.app)])];
-  const appName = id => apps.find(a => a.id === id)?.name || id;
+  const appName = id => { const a = apps.find(x => x.id === id); return a ? nm(a) : id; };
   const days = [...Array(14)].map((_, i) => since(i + 1));
 
   view.innerHTML = `
     <section class="section">
-      <h1>Статистика</h1>
+      <h1>${T('Статистика')}</h1>
       <div class="table-box"><table>
         <thead><tr><th></th>${periods.map(([label]) => `<th scope="col">${label}</th>`).join('')}</tr></thead>
         <tbody>
-          ${line('Заходы', isVisit)}
-          ${line('Скачивания', isDownload)}
+          ${line(T('Заходы'), isVisit)}
+          ${line(T('Скачивания'), isDownload)}
           ${ids.map(id => line(`↓ ${appName(id)}`, r => r.app === id)).join('')}
         </tbody>
       </table></div>
-      <h2 class="stats-sub">По дням</h2>
+      <h2 class="stats-sub">${T('По дням')}</h2>
       <div class="table-box"><table>
-        <thead><tr><th scope="col">День</th><th scope="col">Заходы</th><th scope="col">Скачивания</th></tr></thead>
+        <thead><tr><th scope="col">${T('День')}</th><th scope="col">${T('Заходы')}</th><th scope="col">${T('Скачивания')}</th></tr></thead>
         <tbody>${days.map(day => `<tr><th scope="row">${day}</th><td>${sum(r => isVisit(r) && r.day === day)}</td><td>${sum(r => isDownload(r) && r.day === day)}</td></tr>`).join('')}</tbody>
       </table></div>
-      <p class="empty">Заход считается один раз за сеанс браузера. Скачивание считается по нажатию кнопки.</p>
+      <p class="empty">${T('Заход считается один раз за сеанс браузера. Скачивание считается по нажатию кнопки.')}</p>
     </section>`;
 }
 
@@ -863,7 +1005,7 @@ async function attempt(fn) {
   } catch (e) {
     if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return;
     console.error(e);
-    say(AUTH_ERRORS[e.code] || 'Не получилось. Попробуйте ещё раз.');
+    say(T(AUTH_ERRORS[e.code] || 'Не получилось. Попробуйте ещё раз.'));
   }
 }
 
@@ -879,7 +1021,7 @@ async function initFirebase() {
     const app = initializeApp(FIREBASE);
     auth = fb.getAuth(app);
     db = fs.getFirestore(app);
-    auth.languageCode = 'ru';
+    auth.languageCode = lang;
     countVisit();
     loadContent()
       .catch(e => { console.error(e); contentState = 'failed'; }) // каталог останется стартовым
@@ -891,6 +1033,7 @@ async function initFirebase() {
       watchNotifications(u);
       watchMessages(isAdmin ? u : null);
       if (isAdmin) await syncAuthor().catch(console.error);
+      if (u) syncMyComments().catch(console.error);
       drawAvatar(avatar);
       document.getElementById('rail-stats').hidden = !isAdmin;
       document.getElementById('rail-inbox').hidden = !isAdmin;
@@ -928,7 +1071,7 @@ function render() {
     if (a.dataset.route === (['account', 'stats', 'inbox', 'report'].includes(r.name) ? r.name : 'apps')) a.setAttribute('aria-current', 'page');
     else a.removeAttribute('aria-current');
   });
-  document.title = r.app ? `${r.app.name} — Яйца Клауд` : 'Яйца Клауд — все приложения';
+  document.title = r.app ? `${nm(r.app)} — ${T('Яйца Клауд')}` : T('Яйца Клауд — все приложения');
 }
 
 let toastTimer;
@@ -946,7 +1089,7 @@ view.addEventListener('click', e => {
   else if (t.dataset.mode) { authMode = t.dataset.mode; renderAccount(); }
   else if (t.classList.contains('dl')) {
     count(`dl_${t.dataset.id}`);
-    toast('Скачивание началось. Если Windows покажет SmartScreen: «Подробнее», затем «Выполнить в любом случае».');
+    toast(T('Скачивание началось. Если Windows покажет SmartScreen: «Подробнее», затем «Выполнить в любом случае».'));
   }
   else if (t.dataset.like) {
     if (!user) { location.hash = 'account'; return; }
@@ -963,18 +1106,18 @@ view.addEventListener('click', e => {
   }
   else if (t.dataset.reply) toggleReplyForm(t);
   else if (t.dataset.delMessage) {
-    if (!confirm('Удалить сообщение?')) return;
+    if (!confirm(T('Удалить сообщение?'))) return;
     attempt(() => fs.deleteDoc(fs.doc(db, 'messages', t.dataset.delMessage)));
   }
   else if (t.dataset.delComment) {
-    if (!confirm('Удалить комментарий?')) return;
+    if (!confirm(T('Удалить комментарий?'))) return;
     attempt(async () => {
       await fs.deleteDoc(fs.doc(db, 'comments', t.dataset.delComment));
       await loadComments(route().app.id);
     });
   }
   else if (t.id === 'delete') {
-    if (!confirm('Удалить запись с сайта?')) return;
+    if (!confirm(T('Удалить запись с сайта?'))) return;
     const { kind, id } = view.querySelector('#edit-form').dataset;
     attempt(async () => {
       await fs.setDoc(fs.doc(db, kind, id), { deleted: true }, { merge: true });
@@ -988,10 +1131,10 @@ view.addEventListener('click', e => {
   else if (t.id === 'google') attempt(() => fb.signInWithPopup(auth, new fb.GoogleAuthProvider()));
   else if (t.id === 'reset') {
     const email = view.querySelector('[name=email]').value.trim();
-    if (!email) return say('Введите почту, и мы пришлём ссылку для сброса пароля.');
+    if (!email) return say(T('Введите почту, и мы пришлём ссылку для сброса пароля.'));
     attempt(async () => {
       await fb.sendPasswordResetEmail(auth, email);
-      say('Если такой аккаунт есть, письмо уже в пути. Проверьте почту.', true);
+      say(T('Если такой аккаунт есть, письмо уже в пути. Проверьте почту.'), true);
     });
   }
 });
@@ -1009,6 +1152,7 @@ view.addEventListener('submit', e => {
   attempt(() => go(auth, email.trim(), password));
 });
 
+document.getElementById('lang').addEventListener('click', () => setLang(lang === 'ru' ? 'en' : 'ru'));
 bell.addEventListener('click', () => toggleBell(bellPanel.hidden));
 bellPanel.addEventListener('click', e => { if (e.target.closest('a')) toggleBell(false); });
 document.addEventListener('click', e => { if (!bellPanel.hidden && !bellWrap.contains(e.target)) toggleBell(false); });
@@ -1019,7 +1163,7 @@ view.addEventListener('change', e => {
   const file = e.target.files[0];
   photoToDataUrl(file)
     .then(photo => attempt(() => saveProfile({ photo })))
-    .catch(() => say('Не получилось открыть эту картинку. Попробуйте JPG или PNG.'));
+    .catch(() => say(T('Не получилось открыть эту картинку. Попробуйте JPG или PNG.')));
 });
 
 search.addEventListener('input', () => {
@@ -1029,5 +1173,6 @@ search.addEventListener('input', () => {
 
 addEventListener('hashchange', () => { render(); scrollTo(0, 0); });
 
+applyStaticText();
 render();
 initFirebase();

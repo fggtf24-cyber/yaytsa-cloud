@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Яйца Клауд — все приложения</title>
-<meta name="description" content="Бесплатные программы для Windows: Smooth Cursor, VoiceType и другие.">
+<meta name="description" content="Бесплатные программы для Windows: Smooth Cursor, VoiceType, Яйцечист и другие.">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=10">
+<link rel="stylesheet" href="style.css?v=11">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -26,16 +26,16 @@
 </svg>
 
 <header class="top">
-  <a class="brand" href="#apps" aria-label="Яйца Клауд — на главную">
+  <a class="brand" href="#apps" data-t-label="Яйца Клауд — на главную" aria-label="Яйца Клауд — на главную">
     <svg width="34" height="34" aria-hidden="true"><use href="#logo"/></svg>
-    <span>Яйца Клауд</span>
+    <span data-t="Яйца Клауд">Яйца Клауд</span>
   </a>
-  <nav class="top-nav" aria-label="Разделы"><a href="#apps">Творчество и дизайн</a></nav>
+  <nav class="top-nav" data-t-label="Разделы" aria-label="Разделы"><a href="#apps" data-t="Творчество и дизайн">Творчество и дизайн</a></nav>
   <div class="top-right">
     <label class="search">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#BDBDBD" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-      <span class="sr">Поиск программ</span>
-      <input id="search" type="search" placeholder="Поиск программ">
+      <span class="sr" data-t="Поиск программ">Поиск программ</span>
+      <input id="search" type="search" data-t-placeholder="Поиск программ" placeholder="Поиск программ">
     </label>
     <div id="bell-wrap" class="bell-wrap" hidden>
       <button type="button" id="bell" class="bell" aria-label="Уведомления" aria-expanded="false">
@@ -44,32 +44,33 @@
       </button>
       <div id="bell-panel" class="bell-panel" hidden></div>
     </div>
-    <a id="avatar" class="avatar" href="#account" aria-label="Аккаунт">Я</a>
+    <button type="button" id="lang" class="lang">EN</button>
+    <a id="avatar" class="avatar" href="#account" data-t-label="Аккаунт" aria-label="Аккаунт">Я</a>
   </div>
 </header>
 
 <div class="shell">
-  <nav class="rail" aria-label="Навигация">
+  <nav class="rail" data-t-label="Навигация" aria-label="Навигация">
     <a href="#apps" data-route="apps">
-      <span class="rail-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><ellipse cx="7.5" cy="8" rx="3.2" ry="4"/><ellipse cx="16.5" cy="8" rx="3.2" ry="4"/><ellipse cx="7.5" cy="17" rx="3.2" ry="4"/><ellipse cx="16.5" cy="17" rx="3.2" ry="4"/></svg></span>Приложения
+      <span class="rail-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><ellipse cx="7.5" cy="8" rx="3.2" ry="4"/><ellipse cx="16.5" cy="8" rx="3.2" ry="4"/><ellipse cx="7.5" cy="17" rx="3.2" ry="4"/><ellipse cx="16.5" cy="17" rx="3.2" ry="4"/></svg></span><span data-t="Приложения">Приложения</span>
     </a>
     <a href="#account" data-route="account">
-      <span class="rail-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 4-7 8-7s7 2 8 7"/></svg></span>Профиль
+      <span class="rail-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 4-7 8-7s7 2 8 7"/></svg></span><span data-t="Профиль">Профиль</span>
     </a>
     <a href="#report" data-route="report">
-      <span class="rail-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M12 8v3M12 13.5v.5"/></svg></span>Сообщить
+      <span class="rail-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M12 8v3M12 13.5v.5"/></svg></span><span data-t="Сообщить">Сообщить</span>
     </a>
     <a href="#inbox" data-route="inbox" id="rail-inbox" hidden>
-      <span class="rail-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 8l9 6 9-6"/></svg><span id="inbox-count" class="rail-count" hidden></span></span>Сообщения
+      <span class="rail-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 8l9 6 9-6"/></svg><span id="inbox-count" class="rail-count" hidden></span></span><span data-t="Сообщения">Сообщения</span>
     </a>
     <a href="#stats" data-route="stats" id="rail-stats" hidden>
-      <span class="rail-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg></span>Статистика
+      <span class="rail-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg></span><span data-t="Статистика">Статистика</span>
     </a>
   </nav>
   <main id="view" class="content" tabindex="-1"></main>
 </div>
 
 <div id="toast" class="toast" role="status" hidden></div>
-<script type="module" src="app.js?v=10"></script>
+<script type="module" src="app.js?v=11"></script>
 </body>
 </html>
