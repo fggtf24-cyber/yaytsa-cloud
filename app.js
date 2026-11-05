@@ -1,4 +1,4 @@
-import { EN } from './i18n.js?v=12';
+import { EN } from './i18n.js?v=13';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -228,7 +228,8 @@ let projects = PROJECTS;
 // Всё, что вводят в редакторе, попадает в разметку только через esc и safeUrl.
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 const safeUrl = u => (/^(https:\/\/|assets\/)/.test(u || '') ? esc(u) : '');
-const icon = a => safeUrl(a.icon) || 'assets/favicon.svg';
+// Иконка: файл сайта, ссылка или картинка, загруженная в редакторе и сохранённая строкой.
+const icon = a => (/^data:image\/(png|jpeg|webp);base64,/.test(a.icon || '') ? esc(a.icon) : safeUrl(a.icon)) || 'assets/favicon.svg';
 
 /* ---------- Приложения ---------- */
 
@@ -601,31 +602,31 @@ function toggleBell(open) {
 
 /* ---------- Редактор (только админы) ---------- */
 
-// [поле, подпись, тип]; * в конце типа — обязательное.
+// [поле, подпись, тип, блок]; * в конце типа — обязательное. Поля с блоком прячутся в сворачиваемую секцию.
 const FIELDS = {
   apps: [
+    ['icon', 'Иконка', 'icon'],
     ['name', 'Название', 'text*'],
-    ['nameEn', 'Название (English)', 'text'],
     ['authorUid', 'Автор (аккаунт админа)', 'author'],
     ['desc', 'Описание', 'area*'],
-    ['descEn', 'Описание (English)', 'area'],
     ['file', 'Ссылка на .exe', 'url*'],
     ['size', 'Размер после установки, например 130 МБ', 'text'],
-    ['sizeEn', 'Размер (English), например 130 MB', 'text'],
-    ['site', 'Сайт программы', 'url'],
-    ['repo', 'GitHub', 'url'],
-    ['icon', 'Иконка: прямая ссылка на картинку https://… или файл сайта assets/…', 'url'],
-    ['demo', 'Ссылка на картинку, гифку или .mp4', 'url'],
     ['features', 'Что умеет (один пункт на строку)', 'lines'],
-    ['featuresEn', 'Что умеет (English, один пункт на строку)', 'lines'],
     ['needs', 'Что нужно (один пункт на строку)', 'lines'],
-    ['needsEn', 'Что нужно (English, один пункт на строку)', 'lines'],
+    ['site', 'Сайт программы', 'url', 'Ссылки и демо'],
+    ['repo', 'GitHub', 'url', 'Ссылки и демо'],
+    ['demo', 'Ссылка на картинку, гифку или .mp4', 'url', 'Ссылки и демо'],
+    ['nameEn', 'Название', 'text', 'Английская версия'],
+    ['descEn', 'Описание', 'area', 'Английская версия'],
+    ['sizeEn', 'Размер, например 130 MB', 'text', 'Английская версия'],
+    ['featuresEn', 'Что умеет (один пункт на строку)', 'lines', 'Английская версия'],
+    ['needsEn', 'Что нужно (один пункт на строку)', 'lines', 'Английская версия'],
   ],
   projects: [
     ['name', 'Название', 'text*'],
     ['desc', 'Описание', 'area'],
-    ['descEn', 'Описание (English)', 'area'],
     ['url', 'Ссылка', 'url*'],
+    ['descEn', 'Описание', 'area', 'Английская версия'],
   ],
 };
 
@@ -641,6 +642,16 @@ function renderEditor(kind, id) {
     const required = type.endsWith('*') ? 'required' : '';
     const t = type.replace('*', '');
     const value = Array.isArray(item[key]) ? item[key].join('\n') : item[key] ?? '';
+    if (t === 'icon') {
+      return `
+        <div class="field">${T(label)}
+          <div class="icon-pick">
+            <img id="icon-preview" src="${icon(item)}" alt="">
+            <label class="btn">${T('Загрузить с компьютера')}<input id="icon-file" class="sr" type="file" accept="image/*"></label>
+          </div>
+          <input type="hidden" name="${key}" value="${esc(value)}">
+        </div>`;
+    }
     const control = t === 'author' ? `
       <select name="${key}">
         <option value="">${T('Не указан')}</option>
@@ -655,7 +666,12 @@ function renderEditor(kind, id) {
     <section class="section account editor">
       <h1>${id === 'new' ? T('Новая запись') : T('Изменить: {name}', { name: esc(item.name) })}</h1>
       <form id="edit-form" class="account" data-kind="${kind}" data-id="${esc(id)}">
-        ${FIELDS[kind].map(field).join('')}
+        ${FIELDS[kind].filter(f => !f[3]).map(field).join('')}
+        ${[...new Set(FIELDS[kind].map(f => f[3]).filter(Boolean))].map(group => `
+          <details class="more">
+            <summary>${T(group)}</summary>
+            <div class="more-body">${FIELDS[kind].filter(f => f[3] === group).map(field).join('')}</div>
+          </details>`).join('')}
         <button class="btn primary">${T('Сохранить')}</button>
       </form>
       ${id === 'new' ? '' : `<button type="button" class="btn danger" id="delete">${T('Удалить')}</button>`}
@@ -810,15 +826,15 @@ async function saveProfile(data) {
   say(T('Сохранено.'), true);
 }
 
-// Storage на бесплатном тарифе нет, поэтому фото ужимаем до 128×128 и храним строкой в профиле.
-async function photoToDataUrl(file) {
+// Storage на бесплатном тарифе нет, поэтому картинки ужимаем в браузере и храним строкой в базе.
+async function photoToDataUrl(file, size = 128, type = 'image/jpeg') {
   const bitmap = await createImageBitmap(file);
   const side = Math.min(bitmap.width, bitmap.height);
   const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = 128;
+  canvas.width = canvas.height = size;
   canvas.getContext('2d').drawImage(bitmap,
-    (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, 128, 128);
-  return canvas.toDataURL('image/jpeg', 0.8);
+    (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, size, size);
+  return canvas.toDataURL(type, 0.8);
 }
 
 /* ---------- Баги и идеи ---------- */
@@ -1159,8 +1175,18 @@ document.addEventListener('click', e => { if (!bellPanel.hidden && !bellWrap.con
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !bellPanel.hidden) toggleBell(false); });
 
 view.addEventListener('change', e => {
-  if (e.target.id !== 'photo' || !e.target.files[0]) return;
-  const file = e.target.files[0];
+  const file = e.target.files?.[0];
+  if (e.target.id === 'icon-file' && file) {
+    photoToDataUrl(file, 192, 'image/png') // PNG, чтобы не терять прозрачность
+      .then(url => {
+        view.querySelector('[name=icon]').value = url;
+        view.querySelector('#icon-preview').src = url;
+        say('');
+      })
+      .catch(() => say(T('Не получилось открыть эту картинку. Попробуйте JPG или PNG.')));
+    return;
+  }
+  if (e.target.id !== 'photo' || !file) return;
   photoToDataUrl(file)
     .then(photo => attempt(() => saveProfile({ photo })))
     .catch(() => say(T('Не получилось открыть эту картинку. Попробуйте JPG или PNG.')));
