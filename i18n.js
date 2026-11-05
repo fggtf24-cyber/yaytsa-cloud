@@ -89,7 +89,7 @@ export const EN = {
   'Размер после установки, например 130 МБ': 'Size after installation, e.g. 130 МБ',
   'Размер (English), например 130 MB': 'Size (English), e.g. 130 MB',
   'Сайт программы': 'Program website',
-  'Ссылка на иконку': 'Icon link',
+  'Иконка: прямая ссылка на картинку https://… или файл сайта assets/…': 'Icon: direct image link https://… or site file assets/…',
   'Ссылка на картинку, гифку или .mp4': 'Link to an image, GIF or .mp4',
   'Что умеет (один пункт на строку)': 'Features in Russian (one per line)',
   'Что умеет (English, один пункт на строку)': 'Features (English, one per line)',

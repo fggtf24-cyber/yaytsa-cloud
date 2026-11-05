@@ -1,4 +1,4 @@
-import { EN } from './i18n.js?v=11';
+import { EN } from './i18n.js?v=12';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -614,7 +614,7 @@ const FIELDS = {
     ['sizeEn', 'Размер (English), например 130 MB', 'text'],
     ['site', 'Сайт программы', 'url'],
     ['repo', 'GitHub', 'url'],
-    ['icon', 'Ссылка на иконку', 'url'],
+    ['icon', 'Иконка: прямая ссылка на картинку https://… или файл сайта assets/…', 'url'],
     ['demo', 'Ссылка на картинку, гифку или .mp4', 'url'],
     ['features', 'Что умеет (один пункт на строку)', 'lines'],
     ['featuresEn', 'Что умеет (English, один пункт на строку)', 'lines'],
