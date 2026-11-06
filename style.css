@@ -940,3 +940,25 @@ body, .content { transition: background-color .12s ease; }
 .r-msg-body { min-width: 0; }
 .r-ticks { flex: none; display: inline-flex; margin-bottom: 2px; color: var(--faint); }
 .r-ticks.read { color: var(--accent); }
+
+/* Группы */
+.r-chat-top { align-items: center; }
+.r-chat-bugs { display: block; padding: 0 16px 10px; font-size: 13px; }
+.r-group-new { width: min(420px, 100%); margin: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+.r-group-new h2 { font-size: 18px; font-weight: 800; }
+.r-group-new .btn { padding: 10px 20px; cursor: pointer; }
+.r-group-who { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.r-group-who b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.r-group-who small { color: var(--sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Чужие сообщения слева, свои справа */
+.r-msg { max-width: 80%; }
+.r-msg:hover { background: none; }
+.r-msg-text { width: fit-content; padding: 7px 12px; border-radius: 16px; background: var(--pill); }
+.r-msg.mine { align-self: flex-end; }
+.r-msg.mine > a, .r-msg.mine > .r-msg-gap, .r-msg.mine .r-meta .r-user { display: none; }
+.r-msg.mine .r-msg-main { align-items: flex-end; }
+.r-msg.mine .r-msg-text { background: var(--accent); color: #fff; }
+.r-msg.mine .r-msg-text .r-link { color: #fff; text-decoration: underline; }
+.r-chat-search { width: auto; margin: 0 16px 10px; padding: 8px 14px; }
+.r-chat-search svg { stroke: var(--sub); }

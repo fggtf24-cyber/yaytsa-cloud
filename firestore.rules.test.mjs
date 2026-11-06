@@ -61,6 +61,25 @@ await no('время нельзя подделать', setDoc(doc(alice, 'presen
 await no('за другого нельзя', setDoc(doc(bob, 'presence', 'alice'), { at: serverTimestamp() }));
 await ok('статус видят все', getDoc(doc(anon, 'presence', 'alice')));
 
+// Группы
+const group = (db, id, owner, members, extra = {}) => setDoc(doc(db, 'chats', id), { group: true, name: 'Яйца', owner, members, lastText: '', lastFrom: owner, lastAt: serverTimestamp(), seen: {}, ...extra });
+await ok('создаю группу', group(alice, 'g1', 'alice', ['alice', 'bob', 'adm']));
+await no('группа за чужого создателя', group(alice, 'g2', 'bob', ['alice', 'bob']));
+await no('группа без меня', group(alice, 'g3', 'alice', ['bob', 'adm']));
+await no('группа без названия', group(alice, 'g4', 'alice', ['alice', 'bob'], { name: '' }));
+await ok('участник пишет в группу', (() => { const b = writeBatch(bob);
+  b.update(doc(bob, 'chats', 'g1'), { lastText: 'hi', lastFrom: 'bob', lastAt: serverTimestamp() });
+  b.set(doc(collection(bob, 'chats', 'g1', 'msgs')), { from: 'bob', text: 'hi', createdAt: serverTimestamp() }); return b.commit(); })());
+await env.withSecurityRulesDisabled(c => setDoc(doc(c.firestore(), 'profiles', 'eve'), { username: 'eve', name: 'e', photo: '', bio: '', createdAt: new Date() }));
+const eve = as('eve');
+await no('чужой не читает группу', getDoc(doc(eve, 'chats', 'g1')));
+await no('чужой не читает сообщения', getDocs(collection(eve, 'chats', 'g1', 'msgs')));
+await no('чужой не пишет в группу', setDoc(doc(collection(eve, 'chats', 'g1', 'msgs')), { from: 'eve', text: 'x', createdAt: serverTimestamp() }));
+await no('участник не меняет состав', updateDoc(doc(bob, 'chats', 'g1'), { members: ['bob', 'adm', 'eve', 'alice'] }));
+await ok('создатель добавляет', updateDoc(doc(alice, 'chats', 'g1'), { members: ['alice', 'bob', 'adm', 'eve'] }));
+await ok('участник выходит', updateDoc(doc(bob, 'chats', 'g1'), { members: ['alice', 'adm', 'eve'] }));
+await no('вышедший не читает', getDoc(doc(bob, 'chats', 'g1')));
+
 // Комментарий к программе
 const ac = (db, uid, likedBy, extra = {}) => setDoc(doc(collection(db, 'comments')), { appId: 'a', uid, name: 'n', photo: '', text: 'x', createdAt: serverTimestamp(), likedBy, ...extra });
 await ok('свой лайк сразу', ac(alice, 'alice', ['alice']));

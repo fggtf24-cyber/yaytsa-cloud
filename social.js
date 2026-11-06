@@ -84,6 +84,9 @@ export function setupSocial(ctx) {
   let stopMsgs = null;
   let roomId = null;           // открытый чат
   let roomPeer = null;
+  let roomGroup = null;        // открытая группа
+  let chatQuery = '';          // поиск в списке чатов
+  let chatPeople = [];         // люди по этому поиску, с кем ещё нет чата
   let roomMsgs = [];
   let thread = null;           // открытый пост: { post, comments, focus }
   let commentSort = 'best';
@@ -1176,6 +1179,77 @@ export function setupSocial(ctx) {
   /* ---------- Чаты ---------- */
 
   const chatId = (a, b) => [a, b].sort().join('_');
+  const groupAva = (g, size) => `<span class="r-ava" style="--s:${size}px;--c:${color(g.id)}" aria-hidden="true">${esc((g.name[0] || '?').toUpperCase())}</span>`;
+
+  const chatForm = () => (pub ? `
+    <form class="r-chat-form" data-s-form="chat">
+      ${emojiBtn()}
+      ${stickerBtn()}
+      <textarea name="text" rows="1" maxlength="2000" required aria-label="${T('Сообщение')}" placeholder="${T('Сообщение')}"></textarea>
+      <button class="r-send" aria-label="${T('Отправить')}">${ICON.send}</button>
+    </form>` : `<a class="r-composer-stub" href="#account">${T('Выберите @имя в профиле, чтобы писать сообщения')}</a>`);
+
+  const newGroupForm = () => `
+    <form class="r-group-new" data-s-form="group">
+      <h2>${T('Новая группа')}</h2>
+      <label class="field">${T('Название')}<input name="name" maxlength="60" required autocomplete="off"></label>
+      <label class="field">${T('Участники')}
+        <input name="people" required autocomplete="off" data-suggest="@" placeholder="@neba @drug">
+        <small class="r-hint">${T('Через пробел, начните с @ и выберите человека из списка.')}</small>
+      </label>
+      <button class="btn primary">${T('Создать группу')}</button>
+    </form>`;
+
+  const groupRoom = g => `
+    <header class="r-room-head">
+      <a class="r-iconbtn r-room-back" href="#chat" aria-label="${T('Все чаты')}">${ICON.back}</a>
+      ${groupAva(g, 36)}
+      <span class="r-group-who"><b>${esc(g.name)}</b><small>${g.members.map(userLabel).join(', ')}</small></span>
+      ${g.owner === me() ? `<button type="button" class="r-pill ghost" data-s-group-add>${ICON.plus}<span>${T('Добавить')}</span></button>` : ''}
+      <button type="button" class="r-pill ghost" data-s-group-leave>${T('Выйти')}</button>
+    </header>
+    <div class="r-msgs" id="chat-msgs" aria-live="polite"></div>
+    ${chatForm()}`;
+
+  async function createGroup(form) {
+    if (needAccount()) return;
+    const name = form.elements.name.value.trim();
+    if (!name) return;
+    try {
+      const people = await uidsByNames(form.elements.people.value);
+      const members = [...new Set([me(), ...people])];
+      if (members.length < 2) return ctx.toast(T('Добавьте хотя бы одного человека.'));
+      const gRef = F().doc(col('chats'));
+      await F().setDoc(gRef, {
+        group: true, name, owner: me(), members, lastText: T('Группа создана'), lastFrom: me(), lastAt: F().serverTimestamp(), seen: { [me()]: F().serverTimestamp() },
+      });
+      location.hash = `group/${gRef.id}`;
+    } catch (e) {
+      if (e.code === 'username/unknown') ctx.toast(T('Такого @имени нет. Проверьте участников.'));
+      else fail(e);
+    }
+  }
+
+  async function addToGroup() {
+    const text = prompt(T('Кого добавить? Напишите @имена через пробел:'), '');
+    if (!text?.trim()) return;
+    try {
+      const uids = await uidsByNames(text);
+      await F().updateDoc(ref('chats', roomId), { members: F().arrayUnion(...uids) });
+      ctx.render();
+    } catch (e) {
+      if (e.code === 'username/unknown') ctx.toast(T('Такого @имени нет. Проверьте участников.'));
+      else fail(e);
+    }
+  }
+
+  async function leaveGroup() {
+    if (!confirm(T('Выйти из группы?'))) return;
+    try {
+      await F().updateDoc(ref('chats', roomId), { members: F().arrayRemove(me()) });
+      location.hash = 'chat';
+    } catch (e) { fail(e); }
+  }
   const peerOf = c => c.members.find(x => x !== me()) || me();
   const unread = c => c.lastFrom !== me() && ms(c.lastAt) > ms(c.seen?.[me()]);
 
@@ -1187,7 +1261,9 @@ export function setupSocial(ctx) {
     stopChats = F().onSnapshot(
       F().query(col('chats'), F().where('members', 'array-contains', me())),
       async snap => {
-        chats = rows(snap).sort((a, b) => (ms(b.lastAt) || Date.now()) - (ms(a.lastAt) || Date.now()));
+        // estimate: своя отметка «прочитано» ещё летит на сервер, но уже считается, иначе чат выглядел бы непрочитанным.
+        chats = snap.docs.map(d => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) }))
+          .sort((a, b) => (ms(b.lastAt) || Date.now()) - (ms(a.lastAt) || Date.now()));
         await loadPeople(chats.map(peerOf));
         ctx.drawInboxCount();
         if (ctx.route().name === 'chat') {
@@ -1201,7 +1277,7 @@ export function setupSocial(ctx) {
     );
   }
 
-  async function renderChat(name) {
+  async function renderChat(name, group = '') {
     if (notReady()) return;
     document.title = `${T('Чаты')} — ${T('Яйца Cloud')}`;
     if (!ctx.user) return note(`<a class="link" href="#account">${T('Войдите')}</a>${T(', чтобы писать сообщения.')}`);
@@ -1214,7 +1290,18 @@ export function setupSocial(ctx) {
       await loadPeople([peer]);
       if (my !== seq) return;
     }
-    const nextRoom = peer ? chatId(me(), peer) : null;
+    let nextGroup = null;
+    if (group && group !== 'new') {
+      try {
+        const d = await F().getDoc(ref('chats', group));
+        if (my !== seq) return;
+        if (d.data()?.group) nextGroup = { id: d.id, ...d.data() };
+      } catch (e) { console.error(e); }
+      if (!nextGroup) return note(T('Группа не найдена.'));
+      await loadPeople(nextGroup.members);
+      if (my !== seq) return;
+    }
+    const nextRoom = nextGroup ? nextGroup.id : peer ? chatId(me(), peer) : null;
     if (nextRoom !== roomId) {
       stopMsgs?.();
       stopMsgs = null;
@@ -1222,30 +1309,32 @@ export function setupSocial(ctx) {
     }
     roomId = nextRoom;
     roomPeer = peer;
+    roomGroup = nextGroup;
+    chatQuery = '';
+    chatPeople = [];
     view.innerHTML = `
-      <div class="r-chat${peer ? ' has-room' : ''}">
+      <div class="r-chat${peer || group ? ' has-room' : ''}">
         <aside class="r-chat-list">
           <div class="r-chat-top">
             <h1>${T('Чаты')}</h1>
-            <a class="link" href="#inbox">${T('Баги и идеи')}</a>
+            <a class="r-pill ghost" href="#group/new">${ICON.plus}<span>${T('Группа')}</span></a>
           </div>
+          <label class="search r-chat-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+            <input id="chat-search" type="search" autocomplete="off" aria-label="${T('Поиск по чатам и людям')}" placeholder="${T('Поиск по чатам и людям')}">
+          </label>
+          <a class="link r-chat-bugs" href="#inbox">${T('Баги и идеи')}</a>
           <div id="chat-items"></div>
         </aside>
         <section class="r-room" aria-label="${T('Переписка')}">
-          ${peer ? `
+          ${group === 'new' ? newGroupForm() : nextGroup ? groupRoom(nextGroup) : peer ? `
             <header class="r-room-head">
               <a class="r-iconbtn r-room-back" href="#chat" aria-label="${T('Все чаты')}">${ICON.back}</a>
               <a class="r-who" href="${profileHref(peer)}">${ava(peer, 36)}<span><b>${esc(shownName(peer))}</b>${handle(peer) ? `<small>@${esc(handle(peer))}</small>` : ''}</span></a>
               ${relation(peer)}
             </header>
             <div class="r-msgs" id="chat-msgs" aria-live="polite"></div>
-            ${pub ? `
-              <form class="r-chat-form" data-s-form="chat">
-                ${emojiBtn()}
-                ${stickerBtn()}
-                <textarea name="text" rows="1" maxlength="2000" required aria-label="${T('Сообщение')}" placeholder="${T('Сообщение')}"></textarea>
-                <button class="r-send" aria-label="${T('Отправить')}">${ICON.send}</button>
-              </form>` : `<a class="r-composer-stub" href="#account">${T('Выберите @имя в профиле, чтобы писать сообщения')}</a>`}`
+            ${chatForm()}`
             : `<div class="r-room-empty"><p class="empty">${T('Выберите чат слева или откройте профиль человека и нажмите «Написать».')}</p></div>`}
         </section>
       </div>`;
@@ -1259,17 +1348,43 @@ export function setupSocial(ctx) {
   function drawChatList() {
     const box = document.getElementById('chat-items');
     if (!box) return;
-    box.innerHTML = chats.map(c => {
+    const found = c => {
+      const peer = peerOf(c);
+      return !chatQuery || `${c.group ? c.name : `${shownName(peer)} ${handle(peer)}`} ${c.lastText}`.toLowerCase().includes(chatQuery);
+    };
+    const known = new Set(chats.filter(c => !c.group).map(peerOf));
+    const people = chatPeople.filter(p => p.uid !== me() && !known.has(p.uid)).map(p => `
+      <a class="r-chat-item" href="#chat/${esc(p.name)}">
+        ${ava(p.uid, 40)}
+        <span class="r-chat-text">
+          <span class="r-chat-line"><b>${esc(shownName(p.uid))}</b></span>
+          <span class="r-chat-last">@${esc(p.name)}</span>
+        </span>
+      </a>`).join('');
+    box.innerHTML = chats.filter(found).map(c => {
       const peer = peerOf(c);
       return `
-        <a class="r-chat-item${c.id === roomId ? ' active' : ''}${unread(c) ? ' unread' : ''}" href="${handle(peer) ? `#chat/${esc(handle(peer))}` : profileHref(peer)}">
-          ${ava(peer, 40)}
+        <a class="r-chat-item${c.id === roomId ? ' active' : ''}${unread(c) ? ' unread' : ''}" href="${c.group ? `#group/${esc(c.id)}` : handle(peer) ? `#chat/${esc(handle(peer))}` : profileHref(peer)}">
+          ${c.group ? groupAva(c, 40) : ava(peer, 40)}
           <span class="r-chat-text">
-            <span class="r-chat-line"><b>${esc(shownName(peer))}</b><small>${ms(c.lastAt) ? ago(c.lastAt) : ''}</small></span>
+            <span class="r-chat-line"><b>${esc(c.group ? c.name : shownName(peer))}</b><small>${ms(c.lastAt) ? ago(c.lastAt) : ''}</small></span>
             <span class="r-chat-last">${c.lastFrom === me() ? `${T('Вы:')} ` : ''}${esc(c.lastText)}</span>
           </span>
         </a>`;
-    }).join('') || `<p class="empty r-note">${T('Переписок пока нет.')}</p>`;
+    }).join('') + people || `<p class="empty r-note">${T(chatQuery ? 'Ничего не нашлось.' : 'Переписок пока нет.')}</p>`;
+  }
+
+  let chatSearchSeq = 0;
+  async function searchChats(text) {
+    chatQuery = text.trim().replace(/^@/, '').toLowerCase();
+    chatPeople = [];
+    drawChatList();
+    const my = ++chatSearchSeq;
+    if (!chatQuery) return;
+    const found = await findPeople(chatQuery).catch(e => { console.error(e); return []; });
+    if (my !== chatSearchSeq) return;
+    chatPeople = found;
+    drawChatList();
   }
 
   function openRoomStream() {
@@ -1291,7 +1406,9 @@ export function setupSocial(ctx) {
     const box = document.getElementById('chat-msgs');
     if (!box) return;
     const stick = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
-    const peerSeen = ms(chats.find(c => c.id === roomId)?.seen?.[roomPeer]);
+    // В группе сообщение прочитано, когда его увидел хотя бы один участник.
+    const seenMap = chats.find(c => c.id === roomId)?.seen || {};
+    const peerSeen = Math.max(0, ...Object.entries(seenMap).filter(([uid]) => uid !== me()).map(([, at]) => ms(at)));
     let html = '';
     let prev = null;
     let lastDay = '';
@@ -1320,13 +1437,17 @@ export function setupSocial(ctx) {
         </div>`;
       prev = m;
     }
-    box.innerHTML = html || `<div class="r-room-hello">${ava(roomPeer, 64)}<b>${esc(shownName(roomPeer))}</b><p class="empty">${T('Это начало вашей переписки.')}</p></div>`;
+    box.innerHTML = html || `<div class="r-room-hello">${roomGroup ? groupAva(roomGroup, 64) : ava(roomPeer, 64)}<b>${esc(roomGroup ? roomGroup.name : shownName(roomPeer))}</b><p class="empty">${T('Это начало вашей переписки.')}</p></div>`;
     if (stick || !roomMsgs.length) box.scrollTop = box.scrollHeight;
   }
 
+  const markedSeen = new Map(); // чат -> время сообщения, которое уже отметили прочитанным
+
   function markSeen() {
     const c = chats.find(x => x.id === roomId);
-    if (!c || !unread(c) || document.hidden) return;
+    // Одно сообщение отмечаем один раз: иначе ответ базы снова вызвал бы запись, и так по кругу.
+    if (!c || !unread(c) || document.hidden || markedSeen.get(c.id) === ms(c.lastAt)) return;
+    markedSeen.set(c.id, ms(c.lastAt));
     F().updateDoc(ref('chats', c.id), { [`seen.${me()}`]: F().serverTimestamp() }).catch(console.error);
   }
 
@@ -1338,13 +1459,9 @@ export function setupSocial(ctx) {
     if (!sticker) input.value = '';
     try {
       const batch = F().writeBatch(ctx.db);
-      batch.set(ref('chats', roomId), {
-        members: [me(), roomPeer].sort(),
-        lastText: text.slice(0, 200) || T('[стикер]'),
-        lastFrom: me(),
-        lastAt: F().serverTimestamp(),
-        seen: { [me()]: F().serverTimestamp() },
-      }, { merge: true });
+      const last = { lastText: text.slice(0, 200) || T('[стикер]'), lastFrom: me(), lastAt: F().serverTimestamp() };
+      if (roomGroup) batch.update(ref('chats', roomId), { ...last, [`seen.${me()}`]: F().serverTimestamp() });
+      else batch.set(ref('chats', roomId), { members: [me(), roomPeer].sort(), ...last, seen: { [me()]: F().serverTimestamp() } }, { merge: true });
       batch.set(F().doc(col('chats', roomId, 'msgs')), { from: me(), text, ...(sticker ? { sticker } : {}), createdAt: F().serverTimestamp() });
       await batch.commit();
       if (!stopMsgs) openRoomStream();
@@ -1493,6 +1610,7 @@ export function setupSocial(ctx) {
     if (name === 'uid' && a) return { name: 'uid', uid: a, social: true };
     if (name === 'submit') return { name: 'submit', appId: a || '', social: true };
     if (name === 'chat') return { name: 'chat', handle: (a || '').toLowerCase(), social: true };
+    if (name === 'group' && a) return { name: 'chat', handle: '', group: a, social: true };
     return null;
   }
 
@@ -1504,7 +1622,7 @@ export function setupSocial(ctx) {
     else if (r.name === 'u') renderProfile(r.handle, r.tab);
     else if (r.name === 'uid') renderUid(r.uid);
     else if (r.name === 'submit') renderSubmit(r.appId);
-    else if (r.name === 'chat') renderChat(r.handle);
+    else if (r.name === 'chat') renderChat(r.handle, r.group);
   }
 
   view.addEventListener('click', e => {
@@ -1541,6 +1659,8 @@ export function setupSocial(ctx) {
     else if (d.sDelComment) deleteComment(d.sDelComment);
     else if (d.sDelCard) deleteProfileComment(d.sDelCard);
     else if (d.sticker) sendSticker(t);
+    else if (d.sGroupAdd !== undefined) addToGroup();
+    else if (d.sGroupLeave !== undefined) leaveGroup();
     else if (d.emoji) insertEmoji(t);
     else if (d.attachClear !== undefined) clearAttach(t.closest('form'));
     else if (d.netAdd !== undefined) {
@@ -1573,6 +1693,7 @@ export function setupSocial(ctx) {
   view.addEventListener('input', e => {
     if (e.target.matches('.r-submit [name=title]')) view.querySelector('.r-counter').textContent = `${e.target.value.length}/300`;
     if (e.target.matches('[data-suggest]')) updateSuggest(e.target);
+    if (e.target.id === 'chat-search') searchChats(e.target.value);
     if (e.target.matches('[name=net]')) e.target.closest('.net-row').querySelector('img').src = netIcon(e.target.value.trim());
     if (e.target.matches('.r-chat-form textarea, .r-composer textarea')) {
       e.target.style.height = 'auto';
@@ -1627,6 +1748,7 @@ export function setupSocial(ctx) {
     if (kind === 'comment') return addComment(form);
     if (kind === 'post') return addPost(form);
     if (kind === 'chat') return sendChat(form);
+    if (kind === 'group') return createGroup(form);
     if (kind === 'edit-post' || kind === 'edit-comment') return saveEdit(form);
   }
 

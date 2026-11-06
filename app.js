@@ -1,5 +1,5 @@
-import { EN, TERMS } from './i18n.js?v=29';
-import { setupSocial, cropImage } from './social.js?v=14';
+import { EN, TERMS } from './i18n.js?v=32';
+import { setupSocial, cropImage } from './social.js?v=16';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -570,6 +570,7 @@ function watchNotifications(u) {
         snap => {
           notifications = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           drawBell();
+          drawInboxCount();
         },
         console.error,
       ),
@@ -601,7 +602,8 @@ function allNotes() {
       id: `b_${b.id}`, type: 'everyone', fromName: b.fromName, appId: b.id, commentId: b.id, text: b.title,
       createdAt: b.createdAt, read: (b.createdAt?.toMillis() || 0) <= seen,
     }));
-  return [...notifications, ...everyone].sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+  // Сообщения считает красный значок у «Сообщений», в колокольчике их нет.
+  return [...notifications.filter(n => n.type !== 'dm'), ...everyone].sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
 }
 
 // Лайки одного комментария сливаются в одну строку, как на YouTube. Список уже отсортирован: первым идёт самый новый.
@@ -635,7 +637,6 @@ const noteTitle = n => {
   const names = n.people.slice(0, 2).map(p => `<b>${esc(p)}</b>`);
   const single = {
     like: 'Лайк от {name}',
-    dm: 'Сообщение от {name}',
     follow: '{name} подписался(-ась) на вас',
     everyone: '{name} отметил(а) всех в посте',
     mod: n.appId ? 'Админ одобрил вашу программу' : 'Админ отклонил вашу программу',
@@ -648,7 +649,6 @@ const noteTitle = n => {
 
 // fromName и text пишут посетители: только через esc.
 const noteHref = n => ({
-  dm: '#inbox',
   follow: `#uid/${esc(n.from)}`,
   treply: `#post/${esc(n.appId)}/${esc(n.commentId)}`,
   everyone: `#post/${esc(n.appId)}`,
@@ -679,7 +679,7 @@ function toggleBell(open) {
   bell.setAttribute('aria-expanded', open);
   drawBell();
   if (!open) return;
-  notifications.filter(n => !n.read).forEach(n => {
+  notifications.filter(n => !n.read && n.type !== 'dm').forEach(n => {
     fs.updateDoc(fs.doc(db, 'notifications', n.id), { read: true }).catch(console.error);
   });
   try { localStorage.setItem('seenBroadcasts', Date.now()); } catch { /* приватный режим */ }
@@ -1345,7 +1345,9 @@ function savedAdminView() {
 }
 
 function drawInboxCount() {
-  const unread = messages.filter(m => m.to === user?.uid && !m.read).length + social.unreadChats();
+  const unread = messages.filter(m => m.to === user?.uid && !m.read).length
+    + notifications.filter(n => n.type === 'dm' && !n.read).length // ответы на баги и идеи
+    + social.unreadChats();
   const count = document.getElementById('inbox-count');
   count.hidden = !unread;
   count.textContent = unread > 9 ? '9+' : unread;
@@ -1401,6 +1403,9 @@ function renderInbox() {
   });
   messages.filter(m => m.to === user.uid && !m.read).forEach(m => {
     fs.updateDoc(fs.doc(db, 'messages', m.id), { read: true }).catch(console.error);
+  });
+  notifications.filter(n => n.type === 'dm' && !n.read).forEach(n => {
+    fs.updateDoc(fs.doc(db, 'notifications', n.id), { read: true }).catch(console.error);
   });
 }
 
