@@ -1,4 +1,5 @@
-import { EN } from './i18n.js?v=15';
+import { EN } from './i18n.js?v=16';
+import { setupSocial, cropImage } from './social.js?v=1';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -247,6 +248,8 @@ const AUTH_ERRORS = {
   'auth/popup-blocked': 'Браузер заблокировал окно входа. Разрешите всплывающие окна.',
   'auth/account-exists-with-different-credential': 'Эта почта уже зарегистрирована другим способом.',
   'permission-denied': 'Нет прав на это действие. Для правок войдите через Google с почтой админа.',
+  'username/invalid': 'Имя пользователя: 3–20 символов, латиница, цифры и _.',
+  'username/taken': 'Это имя уже занято. Попробуйте другое.',
 };
 
 const view = document.getElementById('view');
@@ -320,6 +323,24 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};
 const safeUrl = u => (/^(https:\/\/|assets\/)/.test(u || '') ? esc(u) : '');
 // Иконка: файл сайта, ссылка или картинка, загруженная в редакторе и сохранённая строкой.
 const icon = a => (/^data:image\/(png|jpeg|webp);base64,/.test(a.icon || '') ? esc(a.icon) : safeUrl(a.icon)) || 'assets/favicon.svg';
+
+// Профили, посты, подписки и чаты живут в social.js. Модулю отдаём доступ к общему состоянию через геттеры.
+const social = setupSocial({
+  T, esc, view, nm,
+  get fs() { return fs; },
+  get db() { return db; },
+  get user() { return user; },
+  get isAdmin() { return isAdmin; },
+  get lang() { return lang; },
+  get apps() { return apps; },
+  get authState() { return authState; },
+  route: () => route(),
+  render: () => render(),
+  toast: text => toast(text),
+  notify: (...args) => notify(...args),
+  drawInboxCount: () => drawInboxCount(),
+  drawRail: () => drawRail(),
+});
 
 /* ---------- Приложения ---------- */
 
@@ -450,6 +471,8 @@ function renderApp(a) {
             ${demo}
           </div>` : (demo ? `<div class="use">${demo}</div>` : '')}
         ${needs.length ? `<h2>${T('Что нужно')}</h2><div class="use"><div class="use-text">${list(needs)}</div></div>` : ''}
+        <h2>${T('Обсуждения')}</h2>
+        <div id="app-threads" class="app-threads" data-app="${esc(a.id)}"><p class="empty">${T('Загрузка…')}</p></div>
         <h2>${T('Комментарии')} <span id="comment-count"></span></h2>
         ${commentForm()}
         <p id="msg" class="msg" role="alert"></p>
@@ -457,6 +480,7 @@ function renderApp(a) {
       </div>
     </div>`;
   loadComments(a.id);
+  social.fillAppThreads(a.id);
 }
 
 /* ---------- Комментарии ---------- */
@@ -478,9 +502,9 @@ const commentItem = (c, rootId = c.id) => {
   const photo = /^(https:\/\/|data:image\/)/.test(c.photo || '') ? esc(c.photo) : '';
   return `
     <article class="comment" id="c-${esc(c.id)}">
-      <span class="avatar">${photo ? `<img src="${photo}" alt="" referrerpolicy="no-referrer">` : esc(String(c.name || 'П')[0])}</span>
+      <a class="avatar" href="#uid/${esc(c.uid)}" tabindex="-1" aria-hidden="true">${photo ? `<img src="${photo}" alt="" referrerpolicy="no-referrer">` : esc(String(c.name || 'П')[0])}</a>
       <div class="comment-body">
-        <div class="comment-head"><b>${esc(c.name)}</b>${authors[c.uid] ? `<span class="tag admin">${T('Админ')}</span>` : ''}<span>${when(c.createdAt)}</span></div>
+        <div class="comment-head"><a class="comment-author" href="#uid/${esc(c.uid)}">${esc(c.name)}</a>${authors[c.uid] ? `<span class="tag admin">${T('Админ')}</span>` : ''}<span>${when(c.createdAt)}</span></div>
         <p>${esc(c.text)}</p>
         <div class="comment-actions">
           <button type="button" class="like" data-like="${esc(c.id)}" data-uid="${esc(c.uid)}" aria-pressed="${liked}" aria-label="${T('Нравится, сейчас {n}', { n: likes.length })}">
@@ -592,7 +616,9 @@ async function syncMyComments() {
 function notify(type, commentId, to, appId, text = '') {
   if (to === user.uid) return;
   const col = fs.collection(db, 'notifications');
-  const ref = type === 'like' ? fs.doc(col, `like_${commentId}_${user.uid}`) : fs.doc(col);
+  const ref = type === 'like' ? fs.doc(col, `like_${commentId}_${user.uid}`)
+    : type === 'follow' ? fs.doc(col, `follow_${user.uid}_${to}`)
+    : fs.doc(col);
   fs.setDoc(ref, {
     to,
     from: user.uid,
@@ -654,7 +680,7 @@ const likesWord = n => {
 const noteTitle = n => {
   const count = n.people.length;
   const names = n.people.slice(0, 2).map(p => `<b>${esc(p)}</b>`);
-  const single = { like: 'Лайк от {name}', dm: 'Сообщение от {name}' }[n.type] || 'Ответ от {name}';
+  const single = { like: 'Лайк от {name}', dm: 'Сообщение от {name}', follow: '{name} подписался(-ась) на вас' }[n.type] || 'Ответ от {name}';
   if (count === 1) return T(single, { name: names[0] });
   const [a, b] = names;
   const who = count === 2 ? T('{a} и {b}', { a, b }) : T('{a}, {b} и ещё {n}', { a, b, n: count - 2 });
@@ -662,8 +688,14 @@ const noteTitle = n => {
 };
 
 // fromName и text пишут посетители: только через esc.
+const noteHref = n => ({
+  dm: '#inbox',
+  follow: `#uid/${esc(n.from)}`,
+  treply: `#post/${esc(n.appId)}/${esc(n.commentId)}`,
+}[n.type] || `#app/${esc(n.appId)}/${esc(n.commentId)}`);
+
 const noteItem = n => `
-  <a class="note${n.read ? '' : ' unread'}" href="${n.type === 'dm' ? '#inbox' : `#app/${esc(n.appId)}/${esc(n.commentId)}`}">
+  <a class="note${n.read ? '' : ' unread'}" href="${noteHref(n)}">
     <span>${noteTitle(n)}</span>
     ${n.text ? `<span class="note-text">${esc(n.text)}</span>` : ''}
     <span class="note-time">${when(n.createdAt)}</span>
@@ -856,8 +888,10 @@ function renderAccount() {
             ${profile.photo ? `<button type="button" class="link linkbtn" id="photo-remove">${T('Убрать фото')}</button>` : ''}
           </div>
         </div>
+        ${social.accountNote()}
         <form id="profile-form" class="account">
           <label class="field">${T('Имя')}<input name="name" maxlength="80" autocomplete="name"></label>
+          ${social.accountFields()}
           <button class="btn primary">${T('Сохранить')}</button>
         </form>
         <p id="who" class="empty"></p>
@@ -917,6 +951,7 @@ function drawAvatar(el) {
 async function saveProfile(data) {
   await fs.setDoc(fs.doc(db, 'users', user.uid), data, { merge: true });
   profile = { ...profile, ...data };
+  await social.mirror({ name: myName(), photo: myPhoto().length <= 100000 ? myPhoto() : '' });
   if (isAdmin) await syncAuthor();
   await syncMyComments();
   drawAvatar(avatar);
@@ -1016,8 +1051,13 @@ function watchMessages(u) {
   drawInboxCount();
 }
 
+// «Профиль» в левом меню ведёт на свою публичную страницу, если @имя уже выбрано.
+function drawRail() {
+  document.getElementById('rail-profile').href = user ? social.myHref() : '#account';
+}
+
 function drawInboxCount() {
-  const unread = messages.filter(m => m.to === user?.uid && !m.read).length;
+  const unread = messages.filter(m => m.to === user?.uid && !m.read).length + social.unreadChats();
   const count = document.getElementById('inbox-count');
   count.hidden = !unread;
   count.textContent = unread > 9 ? '9+' : unread;
@@ -1063,7 +1103,7 @@ function renderInbox() {
   const active = document.activeElement?.closest?.('.message-reply')?.dataset.id;
   view.innerHTML = `
     <section class="section panel inbox">
-      <h1>${T('Сообщения')}</h1>
+      <div class="inbox-head"><h1>${T('Баги и идеи')}</h1><a class="link" href="#chat">${T('Чаты')}</a></div>
       ${messages.map(messageItem).join('') || `<p class="empty">${T('Пока сообщений нет. Здесь будут ваши баги и идеи, ответы на них и письма по вашим программам.')}</p>`}
       <p id="msg" class="msg" role="alert"></p>
     </section>`;
@@ -1196,6 +1236,7 @@ async function initFirebase() {
       [isAdmin, profile] = await Promise.all([checkAdmin(u), loadProfile(u)]);
       user = u;
       authState = 'ready';
+      await social.onUser(u);
       watchNotifications(u);
       watchMessages(u);
       if (isAdmin) await syncAuthor().catch(console.error);
@@ -1203,6 +1244,7 @@ async function initFirebase() {
       drawAvatar(avatar);
       document.getElementById('rail-stats').hidden = !isAdmin;
       document.getElementById('rail-inbox').hidden = !u;
+      drawRail();
       render();
     });
   } catch (e) {
@@ -1216,7 +1258,10 @@ async function initFirebase() {
 /* ---------- Навигация и события ---------- */
 
 function route() {
-  const [name, a, b] = location.hash.slice(1).split('/');
+  const parts = location.hash.slice(1).split('/');
+  const s = social.route(parts);
+  if (s) return s;
+  const [name, a, b] = parts;
   if (['account', 'stats', 'inbox'].includes(name)) return { name };
   if (name === 'report') return { name, appId: a };
   if (name === 'edit' && FIELDS[a] && b) return { name, kind: a, id: b };
@@ -1224,8 +1269,15 @@ function route() {
   return app ? { name: 'app', app, commentId: b } : { name: 'apps' };
 }
 
+const RAIL = { feed: 'feed', post: 'feed', submit: 'feed', u: 'account', uid: 'account', chat: 'inbox', inbox: 'inbox', account: 'account', stats: 'stats', report: 'report' };
+
 function render() {
   const r = route();
+  document.querySelectorAll('.rail a').forEach(a => {
+    if (a.dataset.route === (RAIL[r.name] || 'apps')) a.setAttribute('aria-current', 'page');
+    else a.removeAttribute('aria-current');
+  });
+  if (r.social) { social.render(r); return; } // заголовок вкладки social.js ставит сам, когда загрузит данные
   if (r.name === 'account') renderAccount();
   else if (r.name === 'stats') renderStats();
   else if (r.name === 'inbox') renderInbox();
@@ -1233,10 +1285,6 @@ function render() {
   else if (r.name === 'edit') renderEditor(r.kind, r.id);
   else if (r.name === 'app') renderApp(r.app);
   else renderApps();
-  document.querySelectorAll('.rail a').forEach(a => {
-    if (a.dataset.route === (['account', 'stats', 'inbox', 'report'].includes(r.name) ? r.name : 'apps')) a.setAttribute('aria-current', 'page');
-    else a.removeAttribute('aria-current');
-  });
   document.title = r.app ? `${nm(r.app)} — ${T('Яйца Клауд')}` : T('Яйца Клауд — все приложения');
 }
 
@@ -1311,8 +1359,14 @@ view.addEventListener('submit', e => {
   if (e.target.id === 'report-form') return attempt(() => sendReport(e.target));
   if (e.target.classList.contains('message-reply')) return attempt(() => sendReply(e.target));
   if (e.target.classList.contains('comment-form')) return attempt(() => addComment(e.target));
+  if (e.target.dataset.sForm) return social.onSubmit(e.target);
   if (e.target.id === 'profile-form') {
-    return attempt(() => saveProfile({ name: e.target.elements.name.value.trim() }));
+    const f = e.target.elements;
+    const name = f.name.value.trim();
+    return attempt(async () => {
+      await social.saveIdentity({ username: f.username.value, bio: f.bio.value, name: name || myName(), photo: myPhoto() });
+      await saveProfile({ name });
+    });
   }
   const { email, password } = Object.fromEntries(new FormData(e.target));
   const go = authMode === 'register' ? fb.createUserWithEmailAndPassword : fb.signInWithEmailAndPassword;
@@ -1338,8 +1392,9 @@ view.addEventListener('change', e => {
     return;
   }
   if (e.target.id !== 'photo' || !file) return;
-  photoToDataUrl(file)
-    .then(photo => attempt(() => saveProfile({ photo })))
+  e.target.value = ''; // чтобы тот же файл можно было выбрать снова
+  cropImage(file, T)
+    .then(photo => photo && attempt(() => saveProfile({ photo })))
     .catch(() => say(T('Не получилось открыть эту картинку. Попробуйте JPG или PNG.')));
 });
 
