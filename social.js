@@ -788,11 +788,7 @@ export function setupSocial(ctx) {
   setInterval(beat, BEAT);
   document.addEventListener('visibilitychange', beat);
 
-  function presenceLine(at, isMe) {
-    const online = isMe || Date.now() - ms(at) < 2 * BEAT;
-    if (!online && !ms(at)) return '';
-    return `<p class="r-presence${online ? ' online' : ''}">${online ? T('В сети') : T('Был(а) в сети {when}', { when: ago(at) })}</p>`;
-  }
+  const isOnline = (at, isMe) => isMe || Date.now() - ms(at) < 2 * BEAT;
 
   /* ---------- Профиль ---------- */
 
@@ -890,15 +886,14 @@ export function setupSocial(ctx) {
         <div class="r-hero" style="${bannerStyle(uid)}">${isMe ? `<a class="r-iconbtn r-hero-edit" href="#account" aria-label="${T('Изменить шапку')}">${ICON.edit}</a>` : ''}</div>
         <header class="r-phead">
           <div class="r-pava">
-            ${ava(uid, 76)}
-            ${isMe ? `<a class="r-pava-edit" href="#account" aria-label="${T('Изменить аватар')}">${ICON.plus}</a>` : ''}
+            ${ava(uid, 116)}
+            ${isOnline(lastSeen, isMe) ? `<span class="r-online" role="img" title="${T('В сети')}" aria-label="${T('В сети')}"></span>` : ''}
           </div>
           <div class="r-phead-text">
             <h1>${esc(p.name || p.username)}</h1>
-            <p class="r-sub">@${esc(p.username)}${!isMe && followers.has(uid) && !isMutual(uid) ? ` <span class="r-tag">${T('подписан(а) на вас')}</span>` : ''}</p>
-            ${presenceLine(lastSeen, isMe)}
-            ${netLinks(uid)}
+            <p class="r-sub">@${esc(p.username)}${!isOnline(lastSeen, isMe) && ms(lastSeen) ? `<span class="r-dot">•</span><span>${T('Был(а) в сети {when}', { when: ago(lastSeen) })}</span>` : ''}${!isMe && followers.has(uid) && !isMutual(uid) ? ` <span class="r-tag">${T('подписан(а) на вас')}</span>` : ''}</p>
           </div>
+          ${netLinks(uid)}
         </header>
         <div class="r-phead-actions">
           ${isMe
