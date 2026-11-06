@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=19';
+import { EN, TERMS } from './i18n.js?v=20';
 import { setupSocial, cropImage } from './social.js?v=4';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -1449,8 +1449,7 @@ function watchMessages(u) {
 // «Профиль» в левом меню ведёт на свою публичную страницу, если @имя уже выбрано.
 function drawRail() {
   document.getElementById('rail-profile').href = user ? social.myHref() : '#account';
-  document.getElementById('rail-stats').hidden = !isAdmin;
-  document.getElementById('rail-admin').hidden = !isAdmin;
+  document.getElementById('rail-admin-group').hidden = !isAdmin;
 }
 
 function toggleMeMenu(open) {
@@ -1460,6 +1459,7 @@ function toggleMeMenu(open) {
   meMenu.innerHTML = `
     <a role="menuitem" href="${esc(social.myHref())}">${T('Перейти на страницу')}</a>
     <a role="menuitem" href="#account">${T('Редактировать профиль')}</a>
+    <a role="menuitem" href="#report">${T('Сообщить о баге или идее')}</a>
     ${realAdmin ? `<button type="button" role="menuitem" id="view-mode">${T(isAdmin ? 'Вид пользователя' : 'Вид админа')}</button>` : ''}
     <button type="button" role="menuitem" id="me-logout">${T('Выйти')}</button>`;
 }

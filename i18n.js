@@ -408,7 +408,7 @@ export const TERMS = {
     ['Программы сообщества', 'Предлагая программу, вы подтверждаете, что имеете право её распространять и что в ней нет вредоносного кода. К заявке нужно приложить своё селфи и согласиться на его показ: до одобрения его видят только админы, после одобрения все посетители на странице программы. Селфи хранится, пока заявка не удалена. Удалить заявку можете вы сами или админ. Программы сообщества проверяет админ, но скачиваете их вы на свой риск.'],
     ['Правила поведения', 'Нельзя публиковать спам, оскорбления, чужие личные данные, вредоносные файлы и всё, что нарушает закон. Админы могут удалить такие материалы и отказать в заявке.'],
     ['Ответственность', 'Сайт и программы предоставляются как есть. Мы стараемся, чтобы всё работало, но не обещаем, что сайт всегда будет доступен, а программы подойдут именно вам.'],
-    ['Как удалить данные', 'Свои посты, комментарии и заявки вы удаляете сами. Чтобы удалить аккаунт и остальные данные, напишите админам через раздел «Сообщить».'],
+    ['Как удалить данные', 'Свои посты, комментарии и заявки вы удаляете сами. Чтобы удалить аккаунт и остальные данные, напишите админам через пункт «Сообщить о баге или идее» в меню аватарки.'],
     ['Изменения', 'Мы можем обновлять это соглашение. Новая версия начинает действовать, как только появляется на этой странице.'],
   ],
   en: [
@@ -419,7 +419,7 @@ export const TERMS = {
     ['Community programs', 'By suggesting a program, you confirm that you have the right to distribute it and that it contains no malicious code. Your request must include your selfie and your consent to show it: before approval only admins can see it, after approval all visitors can see it on the program page. The selfie is kept until the request is deleted. You or an admin can delete the request. An admin reviews community programs, but you download them at your own risk.'],
     ['Rules of conduct', 'Do not post spam, insults, other people\'s personal data, malicious files or anything illegal. Admins can remove such content and reject requests.'],
     ['Liability', 'The site and programs are provided as is. We try to keep everything working, but we do not promise that the site will always be available or that a program will suit you.'],
-    ['How to delete your data', 'You can delete your own posts, comments and requests. To delete your account and other data, write to the admins through the Report section.'],
+    ['How to delete your data', 'You can delete your own posts, comments and requests. To delete your account and other data, write to the admins through “Report a bug or idea” in the avatar menu.'],
     ['Changes', 'We may update this agreement. A new version takes effect as soon as it appears on this page.'],
   ],
 };

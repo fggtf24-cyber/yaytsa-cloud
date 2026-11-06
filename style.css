@@ -839,13 +839,21 @@ html { scrollbar-gutter: stable; scroll-padding-top: calc(var(--top-h) + 12px); 
     flex-direction: row; flex-wrap: nowrap; justify-content: space-around; gap: 0; overflow-x: auto;
     padding: 4px 0 max(4px, env(safe-area-inset-bottom)); background: var(--bg); border-top: 1px solid var(--line);
   }
-  .rail a { flex: 1 0 64px; width: auto; padding: 4px 0; font-size: 10px; }
+  .rail a { flex: 1 1 56px; min-width: 0; width: auto; padding: 4px 0; font-size: 10px; }
   .shell { padding-bottom: 72px; }
   html { scroll-padding-bottom: 84px; }
   .toast, .cookie { bottom: 84px; }
   .edit-bar { bottom: 80px; }
   .r-chat { height: calc(100vh - var(--top-h) - 72px); min-height: 0; }
   .search-panel { top: calc(var(--top-h) + 4px); }
+}
+
+/* Админские разделы: внизу меню, за линией и серым цветом */
+.rail-admin { margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.rail-admin a:not([aria-current]) { color: var(--faint); }
+.rail-admin a:not([aria-current]) .rail-ico { opacity: .7; }
+@media (max-width: 640px) {
+  .rail-admin { flex: 2 1 112px; min-width: 0; flex-direction: row; gap: 0; margin: 0; padding: 0; border-top: 0; border-left: 1px solid var(--line); }
 }
 
 /* ---------- Светлая тема в духе Creative Cloud ---------- */
