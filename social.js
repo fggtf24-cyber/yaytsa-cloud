@@ -1309,9 +1309,13 @@ export function setupSocial(ctx) {
           ${grouped ? '<span class="r-msg-gap"></span>' : `<a href="${profileHref(m.from)}" tabindex="-1">${ava(m.from, 32)}</a>`}
           <div class="r-msg-main">
             ${grouped ? '' : `<div class="r-meta"><b class="r-user strong">${esc(shownName(m.from))}</b><span>${new Date(t).toLocaleTimeString(ctx.lang === 'en' ? 'en-GB' : 'ru-RU', { hour: '2-digit', minute: '2-digit' })}</span></div>`}
-            ${m.text ? `<div class="r-msg-text">${rich(m.text)}</div>` : ''}
-            ${stickerTag(m.sticker)}
-            ${m.from === me() ? ticks(ms(m.createdAt) && ms(m.createdAt) <= peerSeen) : ''}
+            <div class="r-msg-line">
+              <div class="r-msg-body">
+                ${m.text ? `<div class="r-msg-text">${rich(m.text)}</div>` : ''}
+                ${stickerTag(m.sticker)}
+              </div>
+              ${m.from === me() ? ticks(ms(m.createdAt) && ms(m.createdAt) <= peerSeen) : ''}
+            </div>
           </div>
         </div>`;
       prev = m;

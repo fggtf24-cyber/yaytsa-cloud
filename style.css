@@ -936,5 +936,7 @@ body, .content { transition: background-color .12s ease; }
 .r-presence { display: flex; align-items: center; gap: 6px; margin-top: 2px; font-size: 13px; color: var(--sub); }
 .r-presence.online { color: var(--ok); }
 .r-presence.online::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #3DBE6C; }
-.r-ticks { display: inline-flex; margin-top: 2px; color: var(--faint); }
+.r-msg-line { display: flex; align-items: flex-end; gap: 6px; }
+.r-msg-body { min-width: 0; }
+.r-ticks { flex: none; display: inline-flex; margin-bottom: 2px; color: var(--faint); }
 .r-ticks.read { color: var(--accent); }
