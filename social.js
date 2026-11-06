@@ -721,8 +721,10 @@ export function setupSocial(ctx) {
     Object.assign(c, { body: '', deleted: true, image: '', sticker: '' });
   }
 
+  const askDelete = title => askDialog(T, { title, ok: 'Удалить', danger: true });
+
   async function deleteComment(id) {
-    if (!confirm(T('Удалить комментарий?'))) return;
+    if (!await askDelete(T('Удалить комментарий?'))) return;
     try {
       await eraseComment(thread.comments.find(x => x.id === id));
       drawPost(true);
@@ -732,7 +734,7 @@ export function setupSocial(ctx) {
   // Удаление со страницы профиля. Если пост уже удалён, ветки нет и комментарий стираем совсем.
   async function deleteProfileComment(id) {
     const c = shownComments.get(id);
-    if (!c || !confirm(T('Удалить комментарий?'))) return;
+    if (!c || !await askDelete(T('Удалить комментарий?'))) return;
     try {
       if (postTitles.get(c.postId) === '') await F().deleteDoc(ref('tcomments', id));
       else await eraseComment(c);
@@ -741,7 +743,7 @@ export function setupSocial(ctx) {
   }
 
   async function deletePost() {
-    if (!confirm(T('Удалить пост? Это нельзя отменить.'))) return;
+    if (!await askDelete(T('Удалить пост? Это нельзя отменить.'))) return;
     const { post, comments } = thread;
     try {
       await F().deleteDoc(ref('posts', post.id));
@@ -1237,7 +1239,7 @@ export function setupSocial(ctx) {
   }
 
   async function addToGroup() {
-    const text = prompt(T('Кого добавить? Напишите @имена через пробел:'), '');
+    const text = await askDialog(T, { title: T('Добавить людей'), text: T('Напишите @имена через пробел.'), input: true, placeholder: '@neba @drug', suggest: '@', ok: 'Добавить' });
     if (!text?.trim()) return;
     try {
       const uids = await uidsByNames(text);
@@ -1250,7 +1252,7 @@ export function setupSocial(ctx) {
   }
 
   async function renameGroup() {
-    const name = prompt(T('Новое название группы:'), roomGroup.name)?.trim().slice(0, 60);
+    const name = (await askDialog(T, { title: T('Название группы'), input: true, value: roomGroup.name, ok: 'Сохранить' }))?.trim().slice(0, 60);
     if (!name || name === roomGroup.name) return;
     try {
       await F().updateDoc(ref('chats', roomId), { name });
@@ -1271,7 +1273,7 @@ export function setupSocial(ctx) {
   }
 
   async function leaveGroup() {
-    if (!confirm(T('Выйти из группы?'))) return;
+    if (!await askDialog(T, { title: T('Выйти из группы?'), ok: 'Выйти', danger: true })) return;
     try {
       await F().updateDoc(ref('chats', roomId), { members: F().arrayRemove(me()) });
       location.hash = 'chat';
@@ -1456,13 +1458,11 @@ export function setupSocial(ctx) {
         <div class="r-msg${grouped ? ' grouped' : ''}${m.from === me() ? ' mine' : ''}">
           ${grouped ? '<span class="r-msg-gap"></span>' : `<a href="${profileHref(m.from)}" tabindex="-1">${ava(m.from, 32)}</a>`}
           <div class="r-msg-main">
-            ${grouped ? '' : `<div class="r-meta"><b class="r-user strong">${esc(shownName(m.from))}</b><span>${new Date(t).toLocaleTimeString(ctx.lang === 'en' ? 'en-GB' : 'ru-RU', { hour: '2-digit', minute: '2-digit' })}</span></div>`}
-            <div class="r-msg-line">
-              <div class="r-msg-body">
-                ${m.text ? `<div class="r-msg-text">${rich(m.text)}</div>` : ''}
-                ${stickerTag(m.sticker)}
-              </div>
-              ${m.from === me() ? ticks(ms(m.createdAt) && ms(m.createdAt) <= peerSeen) : ''}
+            ${roomGroup && !grouped && m.from !== me() ? `<div class="r-meta"><b class="r-user strong">${esc(shownName(m.from))}</b></div>` : ''}
+            <div class="r-bubble${m.text ? '' : ' sticker'}">
+              ${m.text ? `<span class="r-msg-text">${rich(m.text)}</span>` : ''}
+              ${stickerTag(m.sticker)}
+              <span class="r-msg-info">${new Date(t).toLocaleTimeString(ctx.lang === 'en' ? 'en-GB' : 'ru-RU', { hour: '2-digit', minute: '2-digit' })}${m.from === me() ? ticks(ms(m.createdAt) && ms(m.createdAt) <= peerSeen) : ''}</span>
             </div>
           </div>
         </div>`;
@@ -1813,6 +1813,40 @@ export function setupSocial(ctx) {
     myHref: () => (pub ? `#u/${pub.username}` : '#account'),
     hasProfile: () => !!pub,
   };
+}
+
+/* ---------- Окно вопроса ---------- */
+
+// Вместо браузерных confirm и prompt. Лежит внутри #view, чтобы в поле работали подсказки @.
+// Возвращает текст поля, true для вопроса без поля, null при отмене.
+export function askDialog(T, { title, text = '', input = false, value = '', placeholder = '', suggest = '', ok = 'Да', danger = false }) {
+  return new Promise(resolve => {
+    const dlg = document.createElement('dialog');
+    dlg.className = 'r-crop r-ask';
+    dlg.innerHTML = `
+      <form method="dialog" class="r-crop-box">
+        <h2></h2>
+        ${text ? '<p class="empty"></p>' : ''}
+        ${input ? `<label class="field"><input name="answer" autocomplete="off" ${suggest ? `data-suggest="${suggest}"` : ''}></label>` : ''}
+        <div class="r-crop-bar">
+          <button type="button" class="btn" data-ask-cancel>${T('Отмена')}</button>
+          <button class="btn ${danger ? 'danger' : 'primary'}" value="yes">${T(ok)}</button>
+        </div>
+      </form>`;
+    dlg.querySelector('h2').textContent = title;
+    if (text) dlg.querySelector('p').textContent = text;
+    const field = dlg.querySelector('input');
+    if (field) { field.value = value; field.placeholder = placeholder; }
+    dlg.querySelector('[data-ask-cancel]').addEventListener('click', () => dlg.close());
+    dlg.addEventListener('close', () => {
+      const yes = dlg.returnValue === 'yes';
+      resolve(yes ? (field ? field.value : true) : null);
+      dlg.remove();
+    });
+    document.getElementById('view').append(dlg);
+    dlg.showModal();
+    field?.focus();
+  });
 }
 
 /* ---------- Картинки ---------- */

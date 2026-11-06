@@ -992,16 +992,32 @@ body, .content { transition: background-color .12s ease; }
   .r-nets { flex-basis: 100%; max-width: none; justify-content: flex-start; padding-bottom: 0; }
 }
 
-/* Переписка: отдельное окно посреди экрана */
-.r-chat {
-  flex: none; width: calc(100% - 48px); max-width: 1060px; height: calc(100vh - var(--top-h) - 48px); margin: 24px auto;
-  background: var(--card2); border: 1px solid var(--line); border-radius: 20px; overflow: hidden;
-  box-shadow: 0 12px 40px var(--shadow);
-}
-.r-chat-list { background: var(--panel); }
+/* Переписка: список слева, сама переписка отдельным окном */
+.r-chat { flex: none; width: calc(100% - 48px); max-width: 1120px; height: calc(100vh - var(--top-h) - 48px); margin: 24px auto; grid-template-columns: 300px minmax(0, 1fr); gap: 20px; }
+.r-chat-list { border-right: 0; }
+.r-room { background: var(--card2); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
 @media (max-width: 760px) {
-  .r-chat { width: 100%; height: calc(100vh - 150px); margin: 0; border: 0; border-radius: 0; box-shadow: none; }
+  .r-chat { width: 100%; height: calc(100vh - 150px); margin: 0; grid-template-columns: 1fr; gap: 0; }
+  .r-room { border: 0; border-radius: 0; }
 }
 @media (max-width: 640px) {
   .r-chat { height: calc(100vh - var(--top-h) - 72px); }
 }
+
+/* Время и галочки внутри сообщения, как в Telegram */
+.r-bubble { width: fit-content; max-width: 100%; padding: 5px 10px; border-radius: 16px; background: var(--pill); }
+.r-msg.mine .r-bubble { background: var(--accent); color: #fff; }
+.r-msg .r-msg-text, .r-msg.mine .r-msg-text { display: inline; width: auto; padding: 0; border-radius: 0; background: none; }
+.r-msg-info { float: right; display: inline-flex; align-items: center; gap: 3px; margin: 5px 0 -1px 10px; font-size: 11px; line-height: 1; color: var(--sub); }
+.r-msg.mine .r-msg-info, .r-msg.mine .r-ticks { color: rgba(255, 255, 255, .8); }
+.r-msg.mine .r-ticks.read { color: #fff; }
+.r-ticks, .r-ticks.read { margin: 0; }
+.r-ticks svg { width: 15px; height: 12px; }
+.r-bubble.sticker { padding: 0; background: none; }
+.r-msg.mine .r-bubble.sticker { background: none; }
+.r-bubble.sticker .r-msg-info { float: none; display: flex; width: fit-content; margin: 2px 0 0 auto; padding: 2px 6px; border-radius: 8px; background: rgba(0, 0, 0, .5); color: #fff; }
+
+/* Окно вопроса */
+.r-ask { overflow: visible; }
+.r-ask .field input { padding: 10px 14px; border-radius: 10px; font-weight: 400; }
+.r-ask .r-crop-bar .btn { cursor: pointer; }

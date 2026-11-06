@@ -1,5 +1,5 @@
-import { EN, TERMS } from './i18n.js?v=34';
-import { setupSocial, cropImage } from './social.js?v=21';
+import { EN, TERMS } from './i18n.js?v=35';
+import { setupSocial, cropImage, askDialog } from './social.js?v=22';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -949,7 +949,7 @@ async function sendSubmission(form) {
 }
 
 async function deleteSubmission(id) {
-  if (!confirm(T('Удалить заявку и селфи? Со страницы программы селфи тоже пропадёт.'))) return;
+  if (!await askDialog(T, { title: T('Удалить заявку и селфи?'), text: T('Со страницы программы селфи тоже пропадёт.'), ok: 'Удалить', danger: true })) return;
   const batch = fs.writeBatch(db);
   batch.delete(fs.doc(db, 'submissions', id));
   batch.delete(fs.doc(db, 'selfies', id));
@@ -1061,7 +1061,7 @@ async function renderAdmin(tab) {
 // Одобренная заявка становится обычной записью каталога, так что страница, комментарии и статистика работают сами.
 async function decide(id, approve) {
   const s = submissions.find(x => x.id === id);
-  const reason = approve ? '' : prompt(T('Причина отказа, её увидит автор:'), '');
+  const reason = approve ? '' : await askDialog(T, { title: T('Отклонить заявку'), text: T('Причину увидит автор.'), input: true, placeholder: T('Причина отказа'), ok: 'Отклонить', danger: true });
   if (!s || reason === null) return;
   const { id: _id, selfie: _selfie, selfiePublic: _public, uid, status: _status, createdAt: _createdAt, reason: _reason, ...fields } = s;
   const batch = fs.writeBatch(db);
@@ -1653,13 +1653,14 @@ view.addEventListener('click', e => {
   else if (t.dataset.reject) attempt(() => decide(t.dataset.reject, false));
   else if (t.dataset.delSub) attempt(() => deleteSubmission(t.dataset.delSub));
   else if (t.dataset.delMessage) {
-    if (!confirm(T('Удалить сообщение?'))) return;
-    attempt(() => fs.deleteDoc(fs.doc(db, 'messages', t.dataset.delMessage)));
+    attempt(async () => {
+      if (await askDialog(T, { title: T('Удалить сообщение?'), ok: 'Удалить', danger: true })) await fs.deleteDoc(fs.doc(db, 'messages', t.dataset.delMessage));
+    });
   }
   else if (t.id === 'delete') {
-    if (!confirm(T('Удалить запись с сайта?'))) return;
     const { kind, id } = view.querySelector('#edit-form').dataset;
     attempt(async () => {
+      if (!await askDialog(T, { title: T('Удалить запись с сайта?'), ok: 'Удалить', danger: true })) return;
       await fs.setDoc(fs.doc(db, kind, id), { deleted: true }, { merge: true });
       await loadContent();
       cat = 'all';
@@ -1681,6 +1682,7 @@ view.addEventListener('click', e => {
 });
 
 view.addEventListener('submit', e => {
+  if (e.target.method === 'dialog') return; // окно вопроса закрывается само
   e.preventDefault();
   if (e.target.id === 'edit-form') return attempt(() => saveItem(e.target));
   if (e.target.id === 'report-form') return attempt(() => sendReport(e.target));
