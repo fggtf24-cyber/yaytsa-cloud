@@ -1,4 +1,4 @@
-// Соцчасть: профили с @именем, посты с ветками комментариев, голоса, подписки и друзья, личные чаты.
+// Соцчасть: профили с @именем, посты с ветками комментариев, голоса, подписки, личные чаты.
 // Сервера нет: всё пишет браузер, а честность записей проверяют правила в firestore.rules.
 
 const USERNAME_RE = /^[a-z0-9_]{1,20}$/;
@@ -305,7 +305,7 @@ export function setupSocial(ctx) {
     if (uid === me()) return '';
     const mine = following.has(uid);
     const theirs = followers.has(uid);
-    const label = mine && theirs ? 'Друзья' : mine ? 'Вы подписаны' : theirs ? 'Подписаться в ответ' : 'Подписаться';
+    const label = mine && theirs ? 'Взаимная подписка' : mine ? 'Вы подписаны' : theirs ? 'Подписаться в ответ' : 'Подписаться';
     return `<button type="button" class="r-pill ${mine ? 'ghost' : 'primary'} ${extra}" data-s-follow="${esc(uid)}" aria-pressed="${mine}">${mine && theirs ? '✓ ' : ''}${T(label)}</button>`;
   }
 
@@ -314,7 +314,6 @@ export function setupSocial(ctx) {
     const id = `${me()}_${uid}`;
     try {
       if (following.has(uid)) {
-        if (isFriend(uid) && !confirm(T('Отписаться? Вы перестанете быть друзьями.'))) return;
         await F().deleteDoc(ref('follows', id));
         following.delete(uid);
       } else {
@@ -331,7 +330,7 @@ export function setupSocial(ctx) {
 
   function relation(uid) {
     if (!ctx.user || uid === me()) return '';
-    if (isFriend(uid)) return `<span class="r-tag friend">${T('друг')}</span>`;
+    if (isFriend(uid)) return `<span class="r-tag friend">${T('взаимно')}</span>`;
     if (following.has(uid)) return `<span class="r-tag">${T('подписка')}</span>`;
     return '';
   }
@@ -392,7 +391,7 @@ export function setupSocial(ctx) {
 
   const SORTS = [['hot', 'Популярное'], ['new', 'Новое'], ['top', 'Лучшее'], ['following', 'Подписки']];
 
-  // Формула «горячего» как у Reddit: голоса по логарифму плюс свежесть. Подписки и друзья поднимаются выше.
+  // Формула «горячего» как у Reddit: голоса по логарифму плюс свежесть. Подписки поднимаются выше, взаимные ещё выше.
   function hot(p) {
     const s = p.score || 0;
     const t = (ms(p.createdAt) || Date.now()) / 1000;
@@ -428,13 +427,13 @@ export function setupSocial(ctx) {
       : T('Пока никто ничего не написал. Будьте первым!');
 
     // Популярные авторы: сумма голосов за их посты в ленте.
-    const karma = new Map();
-    list.forEach(p => karma.set(p.uid, (karma.get(p.uid) || 0) + (p.score || 0) + (p.commentCount || 0)));
-    const top = [...karma].filter(([uid]) => handle(uid) && uid !== me()).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const weight = new Map();
+    list.forEach(p => weight.set(p.uid, (weight.get(p.uid) || 0) + (p.score || 0) + (p.commentCount || 0)));
+    const top = [...weight].filter(([uid]) => handle(uid) && uid !== me()).sort((a, b) => b[1] - a[1]).slice(0, 5);
     const aside = `
       <section class="r-card">
         <h3 class="r-card-title">${T('Лента')}</h3>
-        <p class="r-card-text">${T('Популярные обсуждения со всего сайта. Посты тех, на кого вы подписаны, и друзей стоят выше.')}</p>
+        <p class="r-card-text">${T('Популярные обсуждения со всего сайта. Посты тех, на кого вы подписаны, стоят выше.')}</p>
         <a class="r-pill primary wide" href="#submit">${ICON.plus}<span>${T('Создать пост')}</span></a>
       </section>
       ${top.length ? `
@@ -751,7 +750,7 @@ export function setupSocial(ctx) {
 
   /* ---------- Профиль ---------- */
 
-  const PROFILE_TABS = [['', 'Обзор'], ['posts', 'Посты'], ['comments', 'Комментарии'], ['followers', 'Подписчики'], ['following', 'Подписки'], ['friends', 'Друзья']];
+  const PROFILE_TABS = [['', 'Обзор'], ['posts', 'Посты'], ['comments', 'Комментарии'], ['followers', 'Подписчики'], ['following', 'Подписки']];
 
   async function renderProfile(name, tab) {
     if (notReady()) return;
@@ -788,11 +787,9 @@ export function setupSocial(ctx) {
     comments = comments.filter(c => !c.deleted);
     shownComments.clear();
     comments.forEach(c => shownComments.set(c.id, c));
-    const insSet = new Set(ins);
-    const friends = outs.filter(x => insSet.has(x));
-    const listed = tab === 'followers' ? ins : tab === 'following' ? outs : tab === 'friends' ? friends : [];
+    const listed = tab === 'followers' ? ins : tab === 'following' ? outs : [];
     await Promise.all([
-      loadPeople([...listed, ...friends.slice(0, 8)]),
+      loadPeople(listed),
       Promise.all([...new Set(comments.map(c => c.postId))].filter(id => !postTitles.has(id)).map(async id => {
         try { const d = await F().getDoc(ref('posts', id)); postTitles.set(id, d.exists() ? d.data().title : ''); } catch { postTitles.set(id, ''); }
       })),
@@ -802,7 +799,6 @@ export function setupSocial(ctx) {
     const p = people.get(uid);
     if (!p) return note(T('Пользователь @{name} не найден.', { name: esc(name) }));
     const isMe = uid === me();
-    const karma = posts.reduce((n, x) => n + (x.score || 0), 0) + comments.reduce((n, x) => n + (x.score || 0), 0);
     document.title = `${p.name || p.username} (@${p.username}) — ${T('Яйца Cloud')}`;
 
     const byTime = (a, b) => ms(b.createdAt) - ms(a.createdAt);
@@ -838,7 +834,6 @@ export function setupSocial(ctx) {
       comments: 'Комментариев пока нет.',
       followers: 'Подписчиков пока нет.',
       following: 'Ни на кого не подписан(а).',
-      friends: 'Друзей пока нет. Друзья — это взаимная подписка.',
     }[tab];
 
     const stat = (n, label, href) => `<a class="r-stat" href="${href}"><b>${fmt(n)}</b><span>${T(label)}</span></a>`;
@@ -853,7 +848,7 @@ export function setupSocial(ctx) {
           </div>
           <div class="r-phead-text">
             <h1>${esc(p.name || p.username)}</h1>
-            <p class="r-sub">@${esc(p.username)}${!isMe && followers.has(uid) ? ` <span class="r-tag">${T(isFriend(uid) ? 'друг' : 'подписан(а) на вас')}</span>` : ''}</p>
+            <p class="r-sub">@${esc(p.username)}${!isMe && followers.has(uid) ? ` <span class="r-tag">${T(isFriend(uid) ? 'взаимно' : 'подписан(а) на вас')}</span>` : ''}</p>
             ${netLinks(uid)}
           </div>
         </header>
@@ -861,7 +856,7 @@ export function setupSocial(ctx) {
           ${isMe
             ? `<a class="r-pill ghost" href="#account">${T('Изменить профиль')}</a>`
             : `${followBtn(uid)}<a class="r-pill ghost" href="#chat/${esc(p.username)}">${ICON.chat}<span>${T('Написать')}</span></a>`}
-          <span class="r-sub">${T('Подписчики')}: <b>${fmt(ins.length)}</b> · ${T('Друзья')}: <b>${fmt(friends.length)}</b></span>
+          <span class="r-sub">${T('Подписчики')}: <b>${fmt(ins.length)}</b> · ${T('Подписки')}: <b>${fmt(outs.length)}</b></span>
         </div>
         <nav class="r-tabs" aria-label="${T('Разделы профиля')}">
           ${PROFILE_TABS.map(([id, label]) => `<a href="${base}${id ? `/${id}` : ''}" aria-current="${id === tab ? 'page' : 'false'}">${T(label)}</a>`).join('')}
@@ -879,16 +874,11 @@ export function setupSocial(ctx) {
         </div>
         ${p.bio ? `<p class="r-card-text">${rich(p.bio)}</p>` : ''}
         <div class="r-stats">
-          <div class="r-stat"><b>${fmt(karma)}</b><span>${T('Карма')}</span></div>
           ${stat(ins.length, 'Подписчики', `${base}/followers`)}
           ${stat(outs.length, 'Подписки', `${base}/following`)}
-          ${stat(friends.length, 'Друзья', `${base}/friends`)}
           <div class="r-stat"><b>${fmt(posts.length)}</b><span>${T('Посты')}</span></div>
           <div class="r-stat"><b>${esc(day(p.createdAt) || '—')}</b><span>${T('На сайте с')}</span></div>
         </div>
-        ${friends.length ? `
-          <h3 class="r-card-title small">${T('Друзья')}</h3>
-          <div class="r-faces">${friends.slice(0, 8).map(x => `<a href="${profileHref(x)}" title="${esc(shownName(x))}">${ava(x, 36)}</a>`).join('')}</div>` : ''}
       </section>`;
     view.innerHTML = page(main, aside);
   }

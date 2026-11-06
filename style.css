@@ -510,7 +510,6 @@ a.r-user:hover, .r-who:hover .r-user, .r-app:hover, .r-ptitle:hover { text-decor
 .r-stat b { font-size: 14px; font-weight: 700; }
 .r-stat span { font-size: 12px; color: var(--sub); }
 a.r-stat:hover b { text-decoration: underline; }
-.r-faces { display: flex; flex-wrap: wrap; gap: 6px; }
 .r-pcomment .r-meta svg { flex: none; color: var(--sub); }
 .r-ptitle { font-weight: 700; color: var(--text); font-size: 13px; }
 
