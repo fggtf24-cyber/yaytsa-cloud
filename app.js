@@ -1,5 +1,5 @@
 import { EN, TERMS } from './i18n.js?v=17';
-import { setupSocial, cropImage } from './social.js?v=3';
+import { setupSocial, cropImage } from './social.js?v=4';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -1242,27 +1242,47 @@ function renderAccount() {
   }
   if (user) {
     view.innerHTML = `
-      <section class="section panel account">
-        <h1>${T('Профиль')}</h1>
-        ${social.bannerField()}
-        <div class="profile-head">
-          <span class="avatar big" id="big-avatar"></span>
-          <div class="profile-photo">
-            <label class="btn">${T('Загрузить фото')}<input id="photo" class="sr" type="file" accept="image/*"></label>
-            ${profile.photo ? `<button type="button" class="link linkbtn" id="photo-remove">${T('Убрать фото')}</button>` : ''}
+      <section class="section panel edit">
+        <header class="edit-top">
+          <h1>${T('Редактирование профиля')}</h1>
+          ${social.accountNote()}
+        </header>
+        <div class="edit-profile">
+          ${social.bannerField()}
+          <div class="edit-id">
+            <span class="avatar big" id="big-avatar"></span>
+            <div class="edit-who">
+              <b>${esc(displayName() || T('Пользователь'))}</b>
+              <small>${social.handleOf(user.uid) ? `@${esc(social.handleOf(user.uid))}` : esc(user.email)}</small>
+            </div>
+            <div class="profile-photo">
+              <label class="btn">${T('Загрузить фото')}<input id="photo" class="sr" type="file" accept="image/*"></label>
+              ${profile.photo ? `<button type="button" class="link linkbtn" id="photo-remove">${T('Убрать фото')}</button>` : ''}
+            </div>
           </div>
         </div>
-        ${social.accountNote()}
-        <form id="profile-form" class="account">
-          <label class="field">${T('Имя')}<input name="name" maxlength="80" autocomplete="name"></label>
-          ${social.accountFields()}
-          <button class="btn primary">${T('Сохранить')}</button>
+        <form id="profile-form" class="edit-form">
+          <section class="edit-card">
+            <div class="edit-title"><h2>${T('Основное')}</h2><p>${T('Так вас видят другие люди на сайте.')}</p></div>
+            <div class="edit-fields">
+              <label class="field">${T('Имя')}<input name="name" maxlength="80" autocomplete="name"></label>
+              ${social.accountFields()}
+            </div>
+          </section>
+          ${social.netFields()}
+          <div class="edit-bar">
+            <p id="msg" class="msg" role="alert"></p>
+            <button class="btn primary">${T('Сохранить')}</button>
+          </div>
         </form>
-        <p id="who" class="empty"></p>
-        ${isAdmin ? `<p class="msg ok">${T('Вы админ: кнопки «Изменить» и «Добавить» есть в каталоге, цифры в разделе «Статистика».')}</p>` : ''}
-        <p id="msg" class="msg" role="alert"></p>
-        <button type="button" class="btn" id="logout">${T('Выйти')}</button>
-        <a class="link" href="#terms">${T('Пользовательское соглашение')}</a>
+        <section class="edit-card edit-account">
+          <div class="edit-title"><h2>${T('Аккаунт')}</h2><p id="who"></p></div>
+          ${isAdmin ? `<p class="msg ok">${T('Вы админ: кнопки «Изменить» и «Добавить» есть в каталоге, цифры в разделе «Статистика».')}</p>` : ''}
+          <div class="edit-account-actions">
+            <a class="link" href="#terms">${T('Пользовательское соглашение')}</a>
+            <button type="button" class="btn" id="logout">${T('Выйти')}</button>
+          </div>
+        </section>
       </section>`;
     view.querySelector('#who').textContent = user.email;
     view.querySelector('[name=name]').value = displayName();
@@ -1437,7 +1457,8 @@ function toggleMeMenu(open) {
   meMenu.innerHTML = `
     <a role="menuitem" href="${esc(social.myHref())}">${T('Перейти на страницу')}</a>
     <a role="menuitem" href="#account">${T('Редактировать профиль')}</a>
-    ${realAdmin ? `<button type="button" role="menuitem" id="view-mode">${T(isAdmin ? 'Вид пользователя' : 'Вид админа')}</button>` : ''}`;
+    ${realAdmin ? `<button type="button" role="menuitem" id="view-mode">${T(isAdmin ? 'Вид пользователя' : 'Вид админа')}</button>` : ''}
+    <button type="button" role="menuitem" id="me-logout">${T('Выйти')}</button>`;
 }
 
 // Настоящие права остаются в правилах базы: переключатель только прячет админские кнопки.
@@ -1799,6 +1820,7 @@ avatar.addEventListener('click', e => {
 });
 meMenu.addEventListener('click', e => {
   if (e.target.id === 'view-mode') setAdminView(!isAdmin);
+  if (e.target.id === 'me-logout') fb.signOut(auth).catch(console.error);
   if (e.target.closest('a, button')) toggleMeMenu(false);
 });
 document.addEventListener('click', e => { if (!meMenu.hidden && !e.target.closest('#me-wrap')) toggleMeMenu(false); });

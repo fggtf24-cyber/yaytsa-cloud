@@ -1276,25 +1276,27 @@ export function setupSocial(ctx) {
         value="${esc(pub?.username || '')}" ${pub ? 'required' : ''} title="${T('1–20 символов: латиница, цифры и _')}"></span>
       <small class="r-hint">${T('1–20 символов: латиница, цифры и _. По нему вас находят и упоминают.')}</small>
     </label>
-    <label class="field">${T('О себе')}<textarea name="bio" rows="3" maxlength="300">${esc(pub?.bio || '')}</textarea></label>
-    <details class="more">
-      <summary>${T('Соцсети')}</summary>
-      <div class="more-body">
-        <small class="r-hint">${T('Значки появятся в вашем профиле. Вставьте ссылку на свою страницу.')}</small>
-        ${NETS.map(([id, label]) => `
-          <label class="field net-field"><img src="assets/net/${id}.svg" alt="" width="18" height="18">${label}
-            <input name="net_${id}" inputmode="url" autocomplete="off" value="${esc(pub?.links?.[id] || '')}"></label>`).join('')}
-      </div>
-    </details>`;
+    <label class="field wide">${T('О себе')}<textarea name="bio" rows="4" maxlength="300">${esc(pub?.bio || '')}</textarea></label>`;
 
-  const bannerField = () => (pub ? `
-    <div class="r-banner-edit">
-      <div class="r-banner big" style="${bannerStyle(me())}"></div>
-      <div class="profile-photo">
-        <label class="btn">${T('Загрузить шапку')}<input id="banner" class="sr" type="file" accept="image/*"></label>
-        ${pub.banner ? `<button type="button" class="link linkbtn" id="banner-remove">${T('Убрать шапку')}</button>` : ''}
+  const netFields = () => `
+    <section class="edit-card">
+      <div class="edit-title"><h2>${T('Соцсети')}</h2><p>${T('Значки появятся в вашем профиле. Вставьте ссылку на свою страницу.')}</p></div>
+      <div class="edit-fields">
+        ${NETS.map(([id, label, hosts]) => `
+          <label class="net-row"><img src="assets/net/${id}.svg" alt="" width="20" height="20"><span class="sr">${label}</span>
+            <input name="net_${id}" inputmode="url" autocomplete="off" placeholder="${hosts[0]}/…" value="${esc(pub?.links?.[id] || '')}"></label>`).join('')}
       </div>
-    </div>` : '');
+    </section>`;
+
+  // Шапка без @имени тоже видна, но загрузить свою можно только в готовый публичный профиль.
+  const bannerField = () => `
+    <div class="r-banner edit-hero" style="${pub ? bannerStyle(me()) : `--c:${color(me())}`}">
+      ${pub ? `
+        <div class="edit-hero-actions">
+          ${pub.banner ? `<button type="button" class="glass" id="banner-remove">${T('Убрать шапку')}</button>` : ''}
+          <label class="glass">${T('Загрузить шапку')}<input id="banner" class="sr" type="file" accept="image/*"></label>
+        </div>` : ''}
+    </div>`;
 
   function readLinks(form) {
     const links = {};
@@ -1515,6 +1517,7 @@ export function setupSocial(ctx) {
     onSubmit,
     fillAppThreads,
     accountFields,
+    netFields,
     accountNote,
     bannerField,
     readLinks,

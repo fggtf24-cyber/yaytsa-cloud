@@ -669,14 +669,10 @@ a.r-stat:hover b { text-decoration: underline; }
 .r-hero-edit:hover { background: rgba(0, 0, 0, .75); }
 .r-profile .r-phead { align-items: flex-start; margin-top: -34px; padding: 0 12px; }
 .r-profile .r-phead-text { padding-top: 40px; }
-.r-banner-edit { display: flex; flex-direction: column; gap: 10px; }
-.r-banner-edit .r-banner { margin: 0; height: 110px; border-radius: 12px; }
 .r-nets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .r-net { width: 34px; height: 34px; border-radius: 50%; background: var(--pill); display: flex; align-items: center; justify-content: center; }
 .r-net:hover { background: var(--pill-hover); }
-.r-net img, .net-field img { filter: var(--icon-filter); }
-.net-field { display: grid; grid-template-columns: 18px 1fr; align-items: center; gap: 6px 8px; }
-.net-field input { grid-column: 1 / -1; }
+.r-net img, .net-row img { filter: var(--icon-filter); }
 .r-crop.wide .r-crop-stage { max-width: 100%; }
 .r-crop.tall .r-crop-stage { max-width: 240px; }
 .r-crop.wide .r-crop-stage::after, .r-crop.tall .r-crop-stage::after { border-radius: 0; box-shadow: none; }
@@ -763,6 +759,65 @@ a, button, summary, input, textarea, select, .card, .comment, .rail-ico, .r-post
 .emoji-panel button { aspect-ratio: 1; padding: 0; border: 0; border-radius: 8px; background: none; font-size: 19px; line-height: 1; }
 .emoji-panel button:hover { background: var(--pill); }
 .r-chat-form .emoji-panel { top: auto; bottom: calc(100% + 6px); }
+
+/* ---------- Редактирование профиля ---------- */
+.panel.edit { max-width: 920px; margin: 0 auto; padding-top: 32px; padding-bottom: 48px; gap: 24px; }
+.edit-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; }
+.section.edit h1 { font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
+.edit-profile { background: var(--card); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
+.r-banner.edit-hero { position: relative; margin: 0; height: clamp(150px, 24vw, 230px); }
+.edit-hero-actions { position: absolute; right: 16px; top: 16px; display: flex; gap: 8px; }
+.glass {
+  padding: 8px 14px; border: 0; border-radius: 999px; background: rgba(0, 0, 0, .55); color: #fff; font-weight: 600; font-size: 13px;
+  cursor: pointer; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+}
+.glass:hover { background: rgba(0, 0, 0, .75); }
+.glass:focus-within { outline: 2px solid #fff; outline-offset: 2px; }
+.edit-id { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 20px; padding: 0 28px 24px; }
+.edit-id .avatar.big { width: 124px; height: 124px; margin-top: -48px; font-size: 44px; box-shadow: 0 0 0 5px var(--card); position: relative; }
+.edit-who { flex: 1; min-width: 160px; display: flex; flex-direction: column; gap: 2px; padding-top: 14px; }
+.edit-who b { font-size: 22px; font-weight: 800; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.edit-who small { font-size: 14px; color: var(--sub); overflow-wrap: anywhere; }
+.edit-id .profile-photo { padding-top: 14px; }
+.edit-form { display: flex; flex-direction: column; gap: 24px; }
+.edit-card { display: flex; flex-direction: column; gap: 22px; padding: 28px; background: var(--card); border: 1px solid var(--line); border-radius: 20px; }
+.edit-title h2 { font-size: 17px; font-weight: 700; }
+.edit-title p { margin-top: 4px; color: var(--sub); overflow-wrap: anywhere; }
+.edit-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.edit-fields .wide { grid-column: 1 / -1; }
+.edit-fields .field { font-size: 13px; color: var(--sub); }
+.edit-fields .field input, .edit-fields .field textarea, .edit-fields .r-at { font-size: 15px; color: var(--text); }
+.edit-fields .field > input, .edit-fields .field > textarea, .edit-fields .r-at, .net-row {
+  background: var(--bg); border: 1px solid var(--line); border-radius: 12px;
+}
+.edit-fields .field > input, .edit-fields .field > textarea { padding: 12px 14px; }
+.edit-fields .field .r-at input { padding: 12px 14px 12px 4px; }
+.edit-fields .field > input:focus, .edit-fields .field > textarea:focus, .edit-fields .r-at:focus-within, .net-row:focus-within { border-color: var(--accent); }
+.net-row { display: flex; align-items: center; gap: 12px; padding: 0 14px; }
+.net-row img { flex: none; opacity: .85; }
+.net-row input { flex: 1; min-width: 0; padding: 12px 0; border: 0; outline: 0; background: none; font-size: 14px; }
+.net-row input::placeholder { color: var(--faint); }
+.edit-bar {
+  position: sticky; bottom: 16px; z-index: 5; display: flex; align-items: center; justify-content: flex-end; gap: 16px;
+  padding: 12px 12px 12px 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--glass);
+  backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6);
+}
+.edit-bar .msg { flex: 1; }
+.edit-bar .btn { padding: 10px 28px; cursor: pointer; }
+.edit-account { gap: 16px; }
+.edit-account-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.edit-account-actions .btn { padding: 8px 22px; cursor: pointer; }
+@media (max-width: 640px) {
+  .panel.edit { padding-top: 20px; gap: 16px; }
+  .edit-profile, .edit-card { border-radius: 16px; }
+  .edit-card { padding: 20px; }
+  .edit-id { padding: 0 20px 20px; }
+  .edit-id .avatar.big { width: 96px; height: 96px; margin-top: -40px; font-size: 34px; }
+  .edit-who { flex-basis: 100%; padding-top: 0; }
+  .edit-id .profile-photo { padding-top: 0; }
+  .edit-fields { grid-template-columns: minmax(0, 1fr); }
+  .edit-hero-actions { right: 10px; top: 10px; }
+}
 
 /* ---------- Светлая тема в духе Creative Cloud ---------- */
 html[data-theme=light] {

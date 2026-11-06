@@ -194,6 +194,9 @@ export const EN = {
 
   // Профиль
   'Изменить шапку': 'Change banner',
+  'Редактирование профиля': 'Edit profile',
+  'Основное': 'General',
+  'Так вас видят другие люди на сайте.': 'This is how other people see you on the site.',
   'Загрузить шапку': 'Upload banner',
   'Убрать шапку': 'Remove banner',
   'Соцсети': 'Social links',
