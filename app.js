@@ -142,7 +142,8 @@ const APPS = [
       'Прямоугольники и эллипсы можно получать параметрическими фигурами AE',
       'Группы — прекомпами или null-слоями. Кнопки Precomp, Un-Precomp и удаление null-слоёв групп',
       'Референсный кадр из Figma поверх, чтобы сверить результат',
-      'Обновляется сама',
+      'Кнопка Log: журнал ошибок копируется одним нажатием',
+      'Обновляется сама, без переустановки и перезапуска After Effects',
     ],
     needs: [
       'Windows 10 или 11 (macOS — установка через Node.js)',
@@ -158,7 +159,8 @@ const APPS = [
       'Rectangles and ellipses can come in as AE parametric shapes',
       'Groups as precomps or null layers. Precomp, Un-Precomp and delete-group-nulls buttons',
       'Figma reference frame on top to compare the result',
-      'Updates itself',
+      'Log button: the error log is copied in one click',
+      'Updates itself, no reinstall and no After Effects restart',
     ],
     needsEn: [
       'Windows 10 or 11 (macOS: install with Node.js)',
