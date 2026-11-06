@@ -82,6 +82,12 @@ await no('фото слишком большое', updateDoc(doc(alice, 'chats',
 await ok('создатель добавляет', updateDoc(doc(alice, 'chats', 'g1'), { members: ['alice', 'bob', 'adm', 'eve'] }));
 await ok('участник выходит', updateDoc(doc(bob, 'chats', 'g1'), { members: ['alice', 'adm', 'eve'] }));
 await no('вышедший не читает', getDoc(doc(bob, 'chats', 'g1')));
+await no('участник не удаляет группу', deleteDoc(doc(eve, 'chats', 'g1')));
+{ let msgs; await env.withSecurityRulesDisabled(async c => { msgs = await getDocs(collection(c.firestore(), 'chats', 'g1', 'msgs')); });
+  await no('участник не удаляет сообщения', deleteDoc(doc(eve, 'chats', 'g1', 'msgs', msgs.docs[0].id)));
+  await ok('создатель удаляет сообщения', deleteDoc(doc(alice, 'chats', 'g1', 'msgs', msgs.docs[0].id))); }
+await ok('создатель удаляет группу', deleteDoc(doc(alice, 'chats', 'g1')));
+await no('личный чат не удалить', deleteDoc(doc(alice, 'chats', 'alice_bob')));
 
 // Комментарий к программе
 const ac = (db, uid, likedBy, extra = {}) => setDoc(doc(collection(db, 'comments')), { appId: 'a', uid, name: 'n', photo: '', text: 'x', createdAt: serverTimestamp(), likedBy, ...extra });

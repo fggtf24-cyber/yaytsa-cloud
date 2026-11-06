@@ -1021,3 +1021,7 @@ body, .content { transition: background-color .12s ease; }
 .r-ask { overflow: visible; }
 .r-ask .field input { padding: 10px 14px; border-radius: 10px; font-weight: 400; }
 .r-ask .r-crop-bar .btn { cursor: pointer; }
+
+/* В окне вопроса подсказки раздвигают окно, а не закрывают кнопки */
+.r-ask .suggest { position: static; width: 100%; margin-top: 2px; border-radius: 12px; box-shadow: none; }
+.r-menu-list .r-menu-danger { color: var(--err); }

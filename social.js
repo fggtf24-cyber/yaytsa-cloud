@@ -1213,6 +1213,7 @@ export function setupSocial(ctx) {
             <label>${T('Изменить фото')}<input id="group-photo" class="sr" type="file" accept="image/*"></label>
             <button type="button" data-s-group-add>${T('Добавить людей')}</button>` : ''}
           <button type="button" data-s-group-leave>${T('Выйти из группы')}</button>
+          ${g.owner === me() ? `<button type="button" class="r-menu-danger" data-s-group-delete>${T('Удалить группу')}</button>` : ''}
         </div>
       </details>
     </header>
@@ -1270,6 +1271,22 @@ export function setupSocial(ctx) {
       await F().updateDoc(ref('chats', roomId), { photo });
       ctx.render();
     } catch (e) { fail(e); }
+  }
+
+  async function deleteGroup() {
+    if (!await askDialog(T, { title: T('Удалить группу?'), text: T('Переписка удалится у всех участников. Это нельзя отменить.'), ok: 'Удалить', danger: true })) return;
+    const id = roomId;
+    try {
+      stopMsgs?.();
+      stopMsgs = null;
+      const msgs = await F().getDocs(col('chats', id, 'msgs'));
+      await Promise.all(msgs.docs.map(d => F().deleteDoc(d.ref)));
+      await F().deleteDoc(ref('chats', id));
+      location.hash = 'chat';
+    } catch (e) {
+      fail(e);
+      ctx.render();
+    }
   }
 
   async function leaveGroup() {
@@ -1692,6 +1709,7 @@ export function setupSocial(ctx) {
     else if (d.sticker) sendSticker(t);
     else if (d.sGroupAdd !== undefined) addToGroup();
     else if (d.sGroupName !== undefined) renameGroup();
+    else if (d.sGroupDelete !== undefined) deleteGroup();
     else if (d.sGroupLeave !== undefined) leaveGroup();
     else if (d.emoji) insertEmoji(t);
     else if (d.attachClear !== undefined) clearAttach(t.closest('form'));

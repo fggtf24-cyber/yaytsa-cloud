@@ -461,9 +461,13 @@ service cloud.firestore {
         || (resource.data.get('group', false) == true
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])
           && request.resource.data.members == resource.data.members.removeAll([request.auth.uid])));
+      // Группу удаляет только её создатель: сначала сообщения, потом сам чат.
+      allow delete: if signedIn() && resource.data.get('group', false) == true && resource.data.owner == request.auth.uid;
       match /msgs/{mid} {
         allow read: if signedIn()
           && request.auth.uid in get(/databases/$(database)/documents/chats/$(id)).data.members;
+        allow delete: if signedIn()
+          && get(/databases/$(database)/documents/chats/$(id)).data.get('owner', '') == request.auth.uid;
         allow create: if signedIn()
           && request.resource.data.keys().hasOnly(['from', 'text', 'sticker', 'createdAt'])
           && request.resource.data.from == request.auth.uid
