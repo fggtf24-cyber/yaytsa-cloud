@@ -1,5 +1,5 @@
 import { EN, TERMS } from './i18n.js?v=17';
-import { setupSocial, cropImage, fileToImage } from './social.js?v=2';
+import { setupSocial, cropImage } from './social.js?v=2';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -1824,8 +1824,10 @@ view.addEventListener('change', e => {
     return;
   }
   if (e.target.id === 'selfie-file' && file) {
-    fileToImage(file, { max: 720, limit: 280000 })
+    e.target.value = '';
+    cropImage(file, T, { ratio: 3 / 4, out: 600, limit: 280000 })
       .then(url => {
+        if (!url) return;
         view.querySelector('[name=selfie]').value = url;
         view.querySelector('#selfie-preview').src = url;
         say('');

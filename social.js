@@ -1567,7 +1567,7 @@ export async function fileToImage(file, { max = 1280, limit = 400000 } = {}) {
 /* ---------- Кадрирование ---------- */
 
 // Окно с рамкой: фото двигают мышью или пальцем, масштаб — ползунком, колесом или клавишами.
-// ratio 1 — круг для аватарки, больше 1 — вытянутая шапка. Возвращает JPEG строкой или null, если нажали «Отмена».
+// ratio 1 — круг для аватарки, больше 1 — вытянутая шапка, меньше 1 — портрет для селфи. Возвращает JPEG строкой или null, если нажали «Отмена».
 export async function cropImage(file, T, { ratio = 1, out = 256, limit = 95000 } = {}) {
   const bitmap = await createImageBitmap(file);
   const { width: w, height: h } = bitmap;
@@ -1575,7 +1575,7 @@ export async function cropImage(file, T, { ratio = 1, out = 256, limit = 95000 }
   const SH = Math.round(SW / ratio);
   return new Promise(resolve => {
     const dlg = document.createElement('dialog');
-    dlg.className = `r-crop${ratio === 1 ? '' : ' wide'}`;
+    dlg.className = `r-crop${ratio > 1 ? ' wide' : ratio < 1 ? ' tall' : ''}`;
     dlg.innerHTML = `
       <form method="dialog" class="r-crop-box">
         <h2>${T('Кадрирование фото')}</h2>
@@ -1596,6 +1596,7 @@ export async function cropImage(file, T, { ratio = 1, out = 256, limit = 95000 }
     document.body.append(dlg);
     const canvas = dlg.querySelector('canvas');
     const stage = dlg.querySelector('.r-crop-stage');
+    stage.style.aspectRatio = ratio;
     const range = dlg.querySelector('input[type=range]');
     const g = canvas.getContext('2d');
     const base = Math.max(SW / w, SH / h);
