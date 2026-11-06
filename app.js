@@ -732,6 +732,13 @@ async function saveItem(form) {
       ? data[key].split('\n').map(l => l.trim()).filter(Boolean)
       : data[key].trim();
   }
+  // Для записей из кода (APPS/PROJECTS) в Firestore пишем только то, что отличается от кода.
+  // Иначе первое же сохранение замораживает все поля, и следующие правки в коде (новая ссылка, размер) не видны на сайте.
+  const base = id === 'new' ? null : (kind === 'apps' ? APPS : PROJECTS).find(x => x.id === id);
+  const norm = v => (v == null || v === '' || (Array.isArray(v) && !v.length)) ? '' : v;
+  if (base) for (const key of Object.keys(data)) {
+    if (JSON.stringify(norm(data[key])) === JSON.stringify(norm(base[key]))) data[key] = fs.deleteField();
+  }
   const col = fs.collection(db, kind);
   const ref = id === 'new' ? fs.doc(col) : fs.doc(col, id);
   await fs.setDoc(ref, data, { merge: true });
