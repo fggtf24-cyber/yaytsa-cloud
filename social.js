@@ -1179,7 +1179,7 @@ export function setupSocial(ctx) {
   /* ---------- Чаты ---------- */
 
   const chatId = (a, b) => [a, b].sort().join('_');
-  const groupAva = (g, size) => `<span class="r-ava" style="--s:${size}px;--c:${color(g.id)}" aria-hidden="true">${esc((g.name[0] || '?').toUpperCase())}</span>`;
+  const groupAva = (g, size) => `<span class="r-ava" style="--s:${size}px;--c:${color(g.id)}" aria-hidden="true">${DATA_IMAGE.test(g.photo || '') ? `<img src="${g.photo}" alt="">` : esc((g.name[0] || '?').toUpperCase())}</span>`;
 
   const chatForm = () => (pub ? `
     <form class="r-chat-form" data-s-form="chat">
@@ -1205,8 +1205,16 @@ export function setupSocial(ctx) {
       <a class="r-iconbtn r-room-back" href="#chat" aria-label="${T('Все чаты')}">${ICON.back}</a>
       ${groupAva(g, 36)}
       <span class="r-group-who"><b>${esc(g.name)}</b><small>${g.members.map(userLabel).join(', ')}</small></span>
-      ${g.owner === me() ? `<button type="button" class="r-pill ghost" data-s-group-add>${ICON.plus}<span>${T('Добавить')}</span></button>` : ''}
-      <button type="button" class="r-pill ghost" data-s-group-leave>${T('Выйти')}</button>
+      <details class="r-menu">
+        <summary class="r-iconbtn" aria-label="${T('Ещё')}">${ICON.dots}</summary>
+        <div class="r-menu-list">
+          ${g.owner === me() ? `
+            <button type="button" data-s-group-name>${T('Изменить название')}</button>
+            <label>${T('Изменить фото')}<input id="group-photo" class="sr" type="file" accept="image/*"></label>
+            <button type="button" data-s-group-add>${T('Добавить людей')}</button>` : ''}
+          <button type="button" data-s-group-leave>${T('Выйти из группы')}</button>
+        </div>
+      </details>
     </header>
     <div class="r-msgs" id="chat-msgs" aria-live="polite"></div>
     ${chatForm()}`;
@@ -1241,6 +1249,27 @@ export function setupSocial(ctx) {
       if (e.code === 'username/unknown') ctx.toast(T('Такого @имени нет. Проверьте участников.'));
       else fail(e);
     }
+  }
+
+  async function renameGroup() {
+    const name = prompt(T('Новое название группы:'), roomGroup.name)?.trim().slice(0, 60);
+    if (!name || name === roomGroup.name) return;
+    try {
+      await F().updateDoc(ref('chats', roomId), { name });
+      ctx.render();
+    } catch (e) { fail(e); }
+  }
+
+  async function setGroupPhoto(input) {
+    const file = input.files[0];
+    input.value = '';
+    if (!file) return;
+    try {
+      const photo = await cropImage(file, T);
+      if (!photo) return;
+      await F().updateDoc(ref('chats', roomId), { photo });
+      ctx.render();
+    } catch (e) { fail(e); }
   }
 
   async function leaveGroup() {
@@ -1660,6 +1689,7 @@ export function setupSocial(ctx) {
     else if (d.sDelCard) deleteProfileComment(d.sDelCard);
     else if (d.sticker) sendSticker(t);
     else if (d.sGroupAdd !== undefined) addToGroup();
+    else if (d.sGroupName !== undefined) renameGroup();
     else if (d.sGroupLeave !== undefined) leaveGroup();
     else if (d.emoji) insertEmoji(t);
     else if (d.attachClear !== undefined) clearAttach(t.closest('form'));
@@ -1688,6 +1718,7 @@ export function setupSocial(ctx) {
   view.addEventListener('change', e => {
     if (e.target.matches('[data-s-sort]')) { commentSort = e.target.value; drawPost(true); }
     if (e.target.matches('[data-attach]')) attach(e.target);
+    if (e.target.id === 'group-photo') setGroupPhoto(e.target);
   });
 
   view.addEventListener('input', e => {

@@ -962,3 +962,21 @@ body, .content { transition: background-color .12s ease; }
 .r-msg.mine .r-msg-text .r-link { color: #fff; text-decoration: underline; }
 .r-chat-search { width: auto; margin: 0 16px 10px; padding: 8px 14px; }
 .r-chat-search svg { stroke: var(--sub); }
+
+.r-menu-list label { display: block; padding: 10px 16px; font-weight: 600; cursor: pointer; }
+.r-menu-list label:hover { background: var(--pill); }
+.r-menu-list label:focus-within { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Плотный чат: сообщения в одной колонке по центру, свои и чужие рядом */
+.r-msgs { padding: 10px max(16px, calc((100% - 600px) / 2)); }
+.r-msg { max-width: 85%; margin: 0; padding: 1px 0; gap: 8px; }
+.r-msg:not(.grouped) { margin-top: 8px; }
+.r-msg-main { gap: 1px; }
+.r-msg-text { padding: 5px 11px; line-height: 1.35; }
+.r-msg-gap { width: 28px; }
+.r-msg .r-ava { --s: 28px !important; }
+.r-msg .r-meta { font-size: 12px; }
+.r-msg .c-sticker { width: 104px; height: 104px; }
+.r-room .r-chat-form { width: calc(100% - 32px); max-width: 600px; margin-left: auto; margin-right: auto; }
+.r-day { margin: 8px 0 4px; }
+.r-chat-item { padding: 7px 10px; gap: 10px; }

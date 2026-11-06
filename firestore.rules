@@ -451,12 +451,13 @@ service cloud.firestore {
           && (!('lastAt' in request.resource.data.diff(resource.data).affectedKeys())
             || request.resource.data.lastAt == request.time)
           && request.resource.data.seen is map)
-        // Создатель группы меняет участников и название, любой участник может выйти.
+        // Создатель группы меняет участников, название и фото, любой участник может выйти.
         || (resource.data.get('group', false) == true && resource.data.owner == request.auth.uid
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'name'])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'name', 'photo'])
           && request.resource.data.members is list
           && request.resource.data.members.size() <= 50
-          && str(request.resource.data.name, 1, 60))
+          && str(request.resource.data.name, 1, 60)
+          && str(request.resource.data.get('photo', ''), 0, 100000))
         || (resource.data.get('group', false) == true
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])
           && request.resource.data.members == resource.data.members.removeAll([request.auth.uid])));

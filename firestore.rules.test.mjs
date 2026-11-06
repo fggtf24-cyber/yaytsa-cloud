@@ -76,6 +76,9 @@ await no('чужой не читает группу', getDoc(doc(eve, 'chats', '
 await no('чужой не читает сообщения', getDocs(collection(eve, 'chats', 'g1', 'msgs')));
 await no('чужой не пишет в группу', setDoc(doc(collection(eve, 'chats', 'g1', 'msgs')), { from: 'eve', text: 'x', createdAt: serverTimestamp() }));
 await no('участник не меняет состав', updateDoc(doc(bob, 'chats', 'g1'), { members: ['bob', 'adm', 'eve', 'alice'] }));
+await ok('создатель меняет название и фото', updateDoc(doc(alice, 'chats', 'g1'), { name: 'Новые яйца', photo: 'data:image/jpeg;base64,AA' }));
+await no('участник не меняет название', updateDoc(doc(bob, 'chats', 'g1'), { name: 'Моё' }));
+await no('фото слишком большое', updateDoc(doc(alice, 'chats', 'g1'), { photo: 'x'.repeat(100001) }));
 await ok('создатель добавляет', updateDoc(doc(alice, 'chats', 'g1'), { members: ['alice', 'bob', 'adm', 'eve'] }));
 await ok('участник выходит', updateDoc(doc(bob, 'chats', 'g1'), { members: ['alice', 'adm', 'eve'] }));
 await no('вышедший не читает', getDoc(doc(bob, 'chats', 'g1')));

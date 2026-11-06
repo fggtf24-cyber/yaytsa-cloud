@@ -1,5 +1,5 @@
-import { EN, TERMS } from './i18n.js?v=32';
-import { setupSocial, cropImage } from './social.js?v=16';
+import { EN, TERMS } from './i18n.js?v=34';
+import { setupSocial, cropImage } from './social.js?v=17';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -534,6 +534,45 @@ async function loadAuthorSelfie(id) {
 
 const when = ts => ts?.toDate?.().toLocaleString(lang === 'en' ? 'en-GB' : 'ru-RU', { dateStyle: 'medium', timeStyle: 'short' }) || '';
 
+/* ---------- Звук ---------- */
+
+// Браузер разрешает звук только после первого нажатия на странице, поэтому заводим его на этот момент.
+let audio = null;
+addEventListener('pointerdown', () => {
+  audio ||= new AudioContext();
+  audio.resume();
+});
+
+function soundOn() {
+  try { return !localStorage.getItem('muted'); } catch { return true; }
+}
+
+// Две мягкие ноты вверх. Файл не нужен: звук собирается здесь же.
+function ping() {
+  if (!audio || !soundOn()) return;
+  [[880, 0], [1175, 0.11]].forEach(([freq, delay]) => {
+    const start = audio.currentTime + delay;
+    const tone = audio.createOscillator();
+    const volume = audio.createGain();
+    tone.frequency.value = freq;
+    volume.gain.setValueAtTime(0, start);
+    volume.gain.linearRampToValueAtTime(0.08, start + 0.015);
+    volume.gain.exponentialRampToValueAtTime(0.0001, start + 0.22);
+    tone.connect(volume).connect(audio.destination);
+    tone.start(start);
+    tone.stop(start + 0.24);
+  });
+}
+
+// Звучим, только когда непрочитанных стало больше. Первые секунды после входа молчим:
+// в это время подгружаются старые уведомления, и они не новые.
+const heard = { bell: 0, inbox: 0 };
+let quietUntil = 0;
+function soundOnGrowth(kind, count) {
+  if (count > heard[kind] && Date.now() > quietUntil) ping();
+  heard[kind] = count;
+}
+
 /* ---------- Уведомления ---------- */
 
 // Сервера нет: уведомление пишет браузер того, кто ответил или лайкнул. Правила проверяют, что оно настоящее.
@@ -668,6 +707,7 @@ function drawBell() {
   bellWrap.hidden = !user;
   bellCount.hidden = !unread;
   bellCount.textContent = unread > 9 ? '9+' : unread;
+  soundOnGrowth('bell', unread);
   bell.setAttribute('aria-label', unread ? T('Уведомления, новых: {n}', { n: unread }) : T('Уведомления'));
   if (!bellPanel.hidden) {
     bellPanel.innerHTML = groups.map(noteItem).join('') || `<p class="empty">${T('Пока нет уведомлений.')}</p>`;
@@ -1328,6 +1368,7 @@ function toggleMeMenu(open) {
     <a role="menuitem" href="${esc(social.myHref())}">${T('Перейти на страницу')}</a>
     <a role="menuitem" href="#account">${T('Редактировать профиль')}</a>
     ${realAdmin ? `<button type="button" role="menuitem" id="view-mode">${T(isAdmin ? 'Вид пользователя' : 'Вид админа')}</button>` : ''}
+    <button type="button" role="menuitem" id="sound-mode">${T(soundOn() ? 'Выключить звук' : 'Включить звук')}</button>
     <button type="button" role="menuitem" id="me-logout">${T('Выйти')}</button>`;
 }
 
@@ -1351,6 +1392,7 @@ function drawInboxCount() {
   const count = document.getElementById('inbox-count');
   count.hidden = !unread;
   count.textContent = unread > 9 ? '9+' : unread;
+  soundOnGrowth('inbox', unread);
 }
 
 // Имена, почту и текст пишут посетители: только через esc.
@@ -1529,6 +1571,7 @@ async function initFirebase() {
       [realAdmin, profile] = await Promise.all([checkAdmin(u), loadProfile(u)]);
       isAdmin = realAdmin && savedAdminView();
       user = u;
+      quietUntil = Date.now() + 4000;
       authState = 'ready';
       await social.onUser(u);
       watchNotifications(u);
@@ -1673,6 +1716,9 @@ avatar.addEventListener('click', e => {
 meMenu.addEventListener('click', e => {
   if (e.target.id === 'view-mode') setAdminView(!isAdmin);
   if (e.target.id === 'me-logout') fb.signOut(auth).catch(console.error);
+  if (e.target.id === 'sound-mode') {
+    try { localStorage.setItem('muted', soundOn() ? '1' : ''); } catch { /* приватный режим */ }
+  }
   if (e.target.closest('a, button')) toggleMeMenu(false);
 });
 document.addEventListener('click', e => { if (!meMenu.hidden && !e.target.closest('#me-wrap')) toggleMeMenu(false); });
