@@ -344,6 +344,33 @@ export function setupSocial(ctx) {
 
   const shareBtn = href => `<button type="button" class="r-pill" data-s-share="${esc(href)}">${ICON.share}<span>${T('Поделиться')}</span></button>`;
 
+  // Картинка поста. Место под неё занято сразу, поэтому лента не прыгает, когда файл догрузится.
+  const postMedia = p => (p.imageRatio ? `<div class="r-media" data-media="${esc(p.id)}" style="aspect-ratio:${Math.min(3, Math.max(0.4, +p.imageRatio || 1))}"></div>` : '');
+
+  const postImages = new Map();
+  async function fillMedia(box) {
+    const { media: id } = box.dataset;
+    if (!postImages.has(id)) {
+      const image = (await F().getDoc(ref('postimages', id)).catch(() => null))?.data()?.image;
+      postImages.set(id, DATA_IMAGE.test(image || '') ? image : '');
+    }
+    const url = postImages.get(id);
+    if (url) box.innerHTML = `<img class="r-media-bg" src="${url}" alt=""><img class="r-media-img" src="${url}" alt="${T('Картинка в посте')}">`;
+  }
+
+  // Качаем картинку, только когда карточка подъезжает к экрану.
+  const mediaSeen = new IntersectionObserver(entries => entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    mediaSeen.unobserve(e.target);
+    fillMedia(e.target);
+  }), { rootMargin: '600px' });
+  new MutationObserver(() => {
+    view.querySelectorAll('.r-media:not([data-watched])').forEach(box => {
+      box.dataset.watched = '';
+      mediaSeen.observe(box);
+    });
+  }).observe(view, { childList: true, subtree: true });
+
   const postCard = (p, { author = true } = {}) => `
     <article class="r-post" data-href="#post/${esc(p.id)}">
       <div class="r-meta">
@@ -352,6 +379,7 @@ export function setupSocial(ctx) {
       </div>
       <h2 class="r-title"><a href="#post/${esc(p.id)}">${esc(p.title)}</a></h2>
       ${p.body ? `<div class="r-preview">${esc(p.body)}</div>` : ''}
+      ${postMedia(p)}
       ${tagChip(p.appId)}
       <div class="r-actions">
         ${voteBox('p', p.id, p.score)}
@@ -482,6 +510,7 @@ export function setupSocial(ctx) {
         </div>
         <h1 class="r-h1">${esc(post.title)}</h1>
         <div class="r-body" id="r-post-body">${post.body ? rich(post.body) : ''}</div>
+        ${postMedia(post)}
         ${tagChip(post.appId)}
         <div class="r-actions">
           ${voteBox('p', post.id, post.score)}
@@ -692,6 +721,7 @@ export function setupSocial(ctx) {
       await Promise.allSettled([
         ...comments.map(c => F().deleteDoc(ref('tcomments', c.id))),
         ...(ctx.isAdmin ? [F().deleteDoc(ref('broadcasts', post.id))] : []),
+        ...(post.imageRatio ? [F().deleteDoc(ref('postimages', post.id))] : []),
       ]);
       thread = null;
       location.hash = pub ? `u/${pub.username}` : 'feed';
@@ -890,7 +920,7 @@ export function setupSocial(ctx) {
         </div>
         <div class="r-field r-field-body">
           <textarea name="body" rows="9" maxlength="10000" data-suggest="@" placeholder="${T('Текст (необязательно)')}" aria-label="${T('Текст')}"></textarea>
-          <div class="attach">${emojiBtn()}</div>
+          ${attachBar()}
         </div>
         <label class="field r-tagfield"><span class="sr">${T('Программа')}</span>
           <span class="r-at"><span aria-hidden="true">#</span><input name="tag" maxlength="60" autocomplete="off" data-suggest="app" placeholder="${T('Программа, необязательно')}" value="${app ? esc(appTag(ctx.nm(app))) : ''}"></span>
@@ -916,7 +946,7 @@ export function setupSocial(ctx) {
 
   async function addPost(form) {
     if (needAccount()) return;
-    const { title, body, tag } = Object.fromEntries(new FormData(form));
+    const { title, body, tag, image } = Object.fromEntries(new FormData(form));
     if (!title.trim()) return;
     const text = `${title}\n${body}`;
     const tagName = tag.trim().replace(/^#/, '');
@@ -927,9 +957,12 @@ export function setupSocial(ctx) {
     try {
       const pRef = F().doc(col('posts'));
       const batch = F().writeBatch(ctx.db);
+      const size = image && await imageSize(image);
       batch.set(pRef, {
         uid: me(), title: title.trim(), body: body.trim(), appId: tagged?.id || '', score: 1, commentCount: 0, createdAt: F().serverTimestamp(),
+        ...(image ? { imageRatio: +(size.width / size.height).toFixed(3) } : {}),
       });
+      if (image) batch.set(ref('postimages', pRef.id), { uid: me(), image });
       batch.set(ref('votes', `p_${pRef.id}_${me()}`), { uid: me(), kind: 'p', target: pRef.id, v: 1 });
       if (ctx.isAdmin && /(^|[\s(])@everyone\b/.test(text)) {
         batch.set(ref('broadcasts', pRef.id), {
@@ -1582,6 +1615,12 @@ export function setupSocial(ctx) {
 // Storage на бесплатном тарифе нет, поэтому картинка лежит строкой в документе. Лимит документа в базе 1 МиБ.
 // ponytail: гифку нельзя ужать в браузере, не убив анимацию, поэтому она ограничена размером. Большие гифки — только через Storage.
 const GIF_LIMIT = 590000;
+
+function imageSize(url) {
+  const img = new Image();
+  img.src = url;
+  return img.decode().then(() => img);
+}
 
 export async function fileToImage(file, { max = 1280, limit = 400000 } = {}) {
   if (file.type === 'image/gif') {

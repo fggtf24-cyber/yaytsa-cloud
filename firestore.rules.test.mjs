@@ -65,6 +65,19 @@ await no('everyone занято', name(bob, 'bob', 'everyone'));
 await ok('шапка и соцсети', updateDoc(doc(alice, 'profiles', 'alice'), { banner: 'data:image/jpeg;base64,AA', links: { youtube: 'https://youtube.com/@a' } }));
 await no('чужой профиль', updateDoc(doc(bob, 'profiles', 'alice'), { banner: '' }));
 
+// Картинка поста
+const imgPost = (db, id, uid, withImage = true) => { const b = writeBatch(db);
+  b.set(doc(db, 'posts', id), { uid, title: 'x', body: '', appId: '', score: 1, commentCount: 0, imageRatio: 1.5, createdAt: serverTimestamp() });
+  b.set(doc(db, 'votes', `p_${id}_${uid}`), { uid, kind: 'p', target: id, v: 1 });
+  if (withImage) b.set(doc(db, 'postimages', id), { uid, image: 'data:image/jpeg;base64,AA' }); return b.commit(); };
+await ok('пост с картинкой', imgPost(alice, 'pi1', 'alice'));
+await no('отметка картинки без картинки', imgPost(alice, 'pi2', 'alice', false));
+await ok('картинку видят все', getDoc(doc(anon, 'postimages', 'pi1')));
+await no('картинка к чужому посту', setDoc(doc(bob, 'postimages', 'p1'), { uid: 'bob', image: 'x' }));
+await no('чужую картинку не удалить', deleteDoc(doc(bob, 'postimages', 'pi1')));
+await ok('автор удаляет пост', deleteDoc(doc(alice, 'posts', 'pi1')));
+await ok('автор удаляет картинку', deleteDoc(doc(alice, 'postimages', 'pi1')));
+
 // Заявка и селфи
 const sub = (db, id, uid, selfie = true, consent = true) => { const b = writeBatch(db);
   b.set(doc(db, 'submissions', id), { uid, status: 'pending', createdAt: serverTimestamp(), icon: '', name: 'App', desc: 'd', file: 'https://x.dev/a.exe', size: '', features: [], needs: [], site: '', repo: '', demo: '', coauthors: ['bob'], selfiePublic: consent });

@@ -269,12 +269,15 @@ service cloud.firestore {
     match /posts/{id} {
       allow read: if true;
       allow create: if signedIn() && hasProfile()
-        && request.resource.data.keys().hasOnly(['uid', 'title', 'body', 'appId', 'score', 'commentCount', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['uid', 'title', 'body', 'appId', 'score', 'commentCount', 'createdAt', 'imageRatio'])
         && request.resource.data.uid == request.auth.uid
         && str(request.resource.data.title, 1, 300)
         && str(request.resource.data.body, 0, 10000)
         && str(request.resource.data.appId, 0, 100)
         && (request.resource.data.score == 0 || (request.resource.data.score == 1 && hasOwnVote('p', id)))
+        && request.resource.data.get('imageRatio', 1) is number
+        && (!('imageRatio' in request.resource.data)
+          || getAfter(/databases/$(database)/documents/postimages/$(id)).data.uid == request.auth.uid)
         && request.resource.data.commentCount == 0
         && request.resource.data.createdAt == request.time;
       allow update: if signedIn() && (
@@ -288,6 +291,17 @@ service cloud.firestore {
         || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentCount'])
           && request.resource.data.commentCount == resource.data.commentCount + 1));
       allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+    }
+    // Картинка поста лежит отдельно, чтобы лента не качала все картинки разом. id такой же, как у поста.
+    match /postimages/{id} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid', 'image'])
+        && request.resource.data.uid == request.auth.uid
+        && str(request.resource.data.image, 1, 800000)
+        && getAfter(/databases/$(database)/documents/posts/$(id)).data.uid == request.auth.uid;
+      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin()
+        || !existsAfter(/databases/$(database)/documents/posts/$(id)));
     }
     // Комментарии в ветке поста. parentId = '' — ответ на сам пост. Удаление стирает текст, ветка остаётся.
     match /tcomments/{id} {

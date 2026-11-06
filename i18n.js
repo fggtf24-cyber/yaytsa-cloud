@@ -180,6 +180,7 @@ export const EN = {
   'Укажите программу в поле под текстом — пост будет виден и на её странице.': 'Set the program in the field below the text and the post will also appear on its page.',
   '{name} отметил(а) всех в посте': '{name} mentioned everyone in a post',
   'Картинка в комментарии': 'Image in a comment',
+  'Картинка в посте': 'Image in a post',
   'Добавить картинку или гифку': 'Add an image or GIF',
   'Убрать картинку': 'Remove image',
   'Эмодзи': 'Emoji',
