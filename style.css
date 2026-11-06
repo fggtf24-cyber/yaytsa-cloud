@@ -51,7 +51,7 @@ h1, h2, p, ul { margin: 0; }
 .top-right { display: flex; align-items: center; gap: 16px; max-width: 100%; }
 .search-wrap { position: relative; min-width: 0; }
 .search {
-  display: flex; align-items: center; gap: 10px; width: 260px; max-width: 100%; min-width: 0;
+  display: flex; align-items: center; gap: 10px; width: 360px; max-width: 100%; min-width: 0;
   padding: 10px 16px; border: 1.5px solid var(--edge); border-radius: 999px;
 }
 .search:focus-within { border-color: var(--text); }
@@ -727,8 +727,12 @@ a.r-stat:hover b { text-decoration: underline; }
 .cookie p { flex: 1; }
 .cookie .btn { flex: none; cursor: pointer; }
 @media (max-width: 640px) {
-  .brand { flex: 1 1 100%; }
-  .search-wrap { flex: 1; }
+  /* Значки в строке с логотипом, поиск отдельной строкой: подпись влезает целиком */
+  .top { gap: 8px 4px; }
+  .top-right { display: contents; }
+  .brand { flex: 1 0 auto; font-size: 17px; white-space: nowrap; }
+  .bell, .theme, .lang { width: 40px; min-width: 40px; height: 40px; }
+  .search-wrap { order: 10; flex: 1 1 100%; }
   .search-wrap .search { width: 100%; }
   .search-panel { position: fixed; left: 16px; right: 16px; top: 116px; width: auto; }
   .sub { flex-direction: column; }
@@ -761,6 +765,9 @@ a, button, summary, input, textarea, select, .card, .comment, .rail-ico, .r-post
 .emoji-panel button { aspect-ratio: 1; padding: 0; border: 0; border-radius: 8px; background: none; font-size: 19px; line-height: 1; }
 .emoji-panel button:hover { background: var(--pill); }
 .r-chat-form .emoji-panel { top: auto; bottom: calc(100% + 6px); }
+/* В посте смайлик живёт внутри поля текста, в левом нижнем углу */
+.r-field-body textarea { padding-bottom: 52px; }
+.r-field-body .attach { position: absolute; left: 10px; bottom: 10px; margin: 0; }
 
 /* ---------- Редактирование профиля ---------- */
 .panel.edit { max-width: 920px; margin: 0 auto; padding-top: 32px; padding-bottom: 48px; gap: 24px; }
@@ -795,17 +802,21 @@ a, button, summary, input, textarea, select, .card, .comment, .rail-ico, .r-post
 .edit-fields .field > input, .edit-fields .field > textarea { padding: 12px 14px; }
 .edit-fields .field .r-at input { padding: 12px 14px 12px 4px; }
 .edit-fields .field > input:focus, .edit-fields .field > textarea:focus, .edit-fields .r-at:focus-within, .net-row:focus-within { border-color: var(--accent); }
-.net-row { display: flex; align-items: center; gap: 12px; padding: 0 14px; }
+.net-list { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.net-rows { align-self: stretch; display: flex; flex-direction: column; gap: 10px; }
+.net-row { display: flex; align-items: center; gap: 12px; padding: 0 6px 0 14px; }
+.net-del { flex: none; width: 30px; height: 30px; border: 0; border-radius: 50%; background: none; color: var(--faint); font-size: 18px; line-height: 1; }
+.net-del:hover { background: var(--pill); color: var(--text); }
+.net-add { height: 36px; }
+.net-list .r-hint { color: var(--faint); }
 .net-row img { flex: none; opacity: .85; }
 .net-row input { flex: 1; min-width: 0; padding: 12px 0; border: 0; outline: 0; background: none; font-size: 14px; }
 .net-row input::placeholder { color: var(--faint); }
-.edit-bar {
-  position: sticky; bottom: 16px; z-index: 5; display: flex; align-items: center; justify-content: flex-end; gap: 16px;
-  padding: 12px 12px 12px 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--glass);
-  backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6);
-}
-.edit-bar .msg { flex: 1; }
-.edit-bar .btn { padding: 10px 28px; cursor: pointer; }
+/* Только кнопка, без панели: она плавает справа и всегда под рукой */
+.edit-bar { position: sticky; bottom: 16px; z-index: 5; align-self: flex-end; max-width: 100%; display: flex; align-items: center; gap: 10px; }
+.edit-bar .msg { padding: 8px 14px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); box-shadow: 0 6px 20px var(--shadow); font-size: 13px; }
+.edit-bar .msg:empty { display: none; }
+.edit-bar .btn { flex: none; padding: 11px 30px; cursor: pointer; box-shadow: 0 6px 20px var(--shadow); }
 .edit-account { gap: 16px; }
 .edit-account-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .edit-account-actions .btn { padding: 8px 22px; cursor: pointer; }
@@ -839,7 +850,7 @@ html { scrollbar-gutter: stable; scroll-padding-top: calc(var(--top-h) + 12px); 
     flex-direction: row; flex-wrap: nowrap; justify-content: space-around; gap: 0; overflow-x: auto;
     padding: 4px 0 max(4px, env(safe-area-inset-bottom)); background: var(--bg); border-top: 1px solid var(--line);
   }
-  .rail a { flex: 1 1 56px; min-width: 0; width: auto; padding: 4px 0; font-size: 10px; }
+  .rail a { flex: 1 0 56px; width: auto; padding: 4px 0; font-size: 10px; }
   .shell { padding-bottom: 72px; }
   html { scroll-padding-bottom: 84px; }
   .toast, .cookie { bottom: 84px; }
@@ -849,11 +860,13 @@ html { scrollbar-gutter: stable; scroll-padding-top: calc(var(--top-h) + 12px); 
 }
 
 /* Админские разделы: внизу меню, за линией и серым цветом */
-.rail-admin { margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.rail-bottom { margin-top: auto; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.rail-admin { width: 100%; padding: 10px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .rail-admin a:not([aria-current]) { color: var(--faint); }
 .rail-admin a:not([aria-current]) .rail-ico { opacity: .7; }
 @media (max-width: 640px) {
-  .rail-admin { flex: 2 1 112px; min-width: 0; flex-direction: row; gap: 0; margin: 0; padding: 0; border-top: 0; border-left: 1px solid var(--line); }
+  .rail-bottom { display: contents; }
+  .rail-admin { flex: 2 0 112px; width: auto; flex-direction: row; gap: 0; padding: 0; border: 0; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
 }
 
 /* ---------- Светлая тема в духе Creative Cloud ---------- */
@@ -898,3 +911,10 @@ body, .content { transition: background-color .12s ease; }
 @media (max-width: 640px) {
   .top-right { gap: 4px; }
 }
+
+/* Хэштег программы: отдельное поле в посте и метка под текстом */
+.r-tagfield { max-width: 320px; }
+.r-tagfield .r-at { position: relative; border-radius: 999px; }
+.r-tagfield input { padding: 8px 14px 8px 4px; font-size: 14px; }
+.r-tagchip { align-self: flex-start; width: max-content; max-width: 100%; padding: 3px 10px; border-radius: 999px; background: var(--pill); color: var(--link); font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.r-tagchip:hover { background: var(--pill-hover); }

@@ -32,6 +32,10 @@ function cleanLink(hosts, raw) {
 
 const EMOJI = '😀 😂 🤣 😅 😊 😍 🥰 😘 😎 🤩 🤔 😏 🙄 😭 🥲 😡 🤯 😱 🤡 💀 👀 👍 👎 👏 🙏 🤝 💪 🫡 ❤️ 🔥 ✨ 🎉 💯 🚀 🥚 🐣 🍳 🐔 🍆 💩'.split(' ');
 
+// Соцсеть узнаём по самой ссылке.
+const netOf = raw => NETS.find(([, , hosts]) => cleanLink(hosts, raw));
+const netIcon = raw => `assets/net/${netOf(raw)?.[0] || 'link'}.svg`;
+
 // Название программы в хэштеге: без пробелов, чтобы тег был одним словом.
 const appTag = name => name.replace(/\s+/g, '');
 const TAG_RE = /(^|[\s(])#([\p{L}\p{N}_-]{1,60})/gu;
@@ -332,12 +336,11 @@ export function setupSocial(ctx) {
     return '';
   }
 
-  const DOT = '<span class="r-dot">•</span>';
-  function appLink(appId) {
+  // Хэштег программы стоит под текстом поста отдельной меткой.
+  function tagChip(appId) {
     const app = appId && ctx.apps.find(a => a.id === appId);
-    return app ? `<a class="r-app" href="#app/${esc(app.id)}">${esc(ctx.nm(app))}</a>` : '';
+    return app ? `<a class="r-tagchip" href="#app/${esc(app.id)}">#${esc(appTag(ctx.nm(app)))}</a>` : '';
   }
-  const appChip = appId => (appLink(appId) ? DOT + appLink(appId) : '');
 
   const shareBtn = href => `<button type="button" class="r-pill" data-s-share="${esc(href)}">${ICON.share}<span>${T('Поделиться')}</span></button>`;
 
@@ -346,10 +349,10 @@ export function setupSocial(ctx) {
       <div class="r-meta">
         ${author ? `<a class="r-who" href="${profileHref(p.uid)}">${ava(p.uid, 24)}<span class="r-user">${userLabel(p.uid)}</span></a>${relation(p.uid)}<span class="r-dot">•</span>` : ''}
         ${time(p.createdAt)}
-        ${appChip(p.appId)}
       </div>
       <h2 class="r-title"><a href="#post/${esc(p.id)}">${esc(p.title)}</a></h2>
       ${p.body ? `<div class="r-preview">${esc(p.body)}</div>` : ''}
+      ${tagChip(p.appId)}
       <div class="r-actions">
         ${voteBox('p', p.id, p.score)}
         <a class="r-pill" href="#post/${esc(p.id)}" aria-label="${T('Комментарии: {n}', { n: p.commentCount || 0 })}">${ICON.comment}<span>${fmt(p.commentCount || 0)}</span></a>
@@ -465,7 +468,7 @@ export function setupSocial(ctx) {
         </div>
       </details>` : '';
     const live = comments.filter(c => !c.deleted).length;
-    const sub = [people.get(post.uid)?.name ? esc(people.get(post.uid).name) : '', appLink(post.appId)].filter(Boolean).join(DOT);
+    const sub = people.get(post.uid)?.name ? esc(people.get(post.uid).name) : '';
     const main = `
       <article class="r-full">
         <div class="r-full-head">
@@ -479,6 +482,7 @@ export function setupSocial(ctx) {
         </div>
         <h1 class="r-h1">${esc(post.title)}</h1>
         <div class="r-body" id="r-post-body">${post.body ? rich(post.body) : ''}</div>
+        ${tagChip(post.appId)}
         <div class="r-actions">
           ${voteBox('p', post.id, post.score)}
           <a class="r-pill" href="#r-comments" data-s-jump aria-label="${T('Комментарии: {n}', { n: post.commentCount || 0 })}">${ICON.comment}<span>${fmt(post.commentCount || 0)}</span></a>
@@ -881,15 +885,18 @@ export function setupSocial(ctx) {
       <h1 class="r-h1">${T('Создать пост')}</h1>
       <form class="r-submit" data-s-form="post">
         <div class="r-field">
-          <input name="title" maxlength="300" required autocomplete="off" data-suggest="#@" placeholder="${T('Заголовок')}*" aria-label="${T('Заголовок')}">
+          <input name="title" maxlength="300" required autocomplete="off" data-suggest="@" placeholder="${T('Заголовок')}*" aria-label="${T('Заголовок')}">
           <span class="r-counter" data-for="title">0/300</span>
         </div>
-        <div class="r-field">
-          <textarea name="body" rows="9" maxlength="10000" data-suggest="#@" placeholder="${T('Текст (необязательно)')}" aria-label="${T('Текст')}">${app ? `#${esc(appTag(ctx.nm(app)))} ` : ''}</textarea>
-        </div>
-        <p class="r-hint">${T('Чтобы привязать программу, напишите # и начните вводить её название.')}${ctx.isAdmin ? ` ${T('@everyone отметит всех: пост придёт в уведомления.')}` : ''}</p>
-        <div class="r-submit-bar">
+        <div class="r-field r-field-body">
+          <textarea name="body" rows="9" maxlength="10000" data-suggest="@" placeholder="${T('Текст (необязательно)')}" aria-label="${T('Текст')}"></textarea>
           <div class="attach">${emojiBtn()}</div>
+        </div>
+        <label class="field r-tagfield"><span class="sr">${T('Программа')}</span>
+          <span class="r-at"><span aria-hidden="true">#</span><input name="tag" maxlength="60" autocomplete="off" data-suggest="app" placeholder="${T('Программа, необязательно')}" value="${app ? esc(appTag(ctx.nm(app))) : ''}"></span>
+        </label>
+        ${ctx.isAdmin ? `<p class="r-hint">${T('@everyone отметит всех: пост придёт в уведомления.')}</p>` : ''}
+        <div class="r-submit-bar">
           <button type="button" class="r-pill ghost" data-s-back>${T('Отмена')}</button>
           <button class="r-pill primary">${T('Опубликовать')}</button>
         </div>
@@ -899,7 +906,7 @@ export function setupSocial(ctx) {
         <h3 class="r-card-title small">${T('Как писать')}</h3>
         <ol class="r-rules">
           <li>${T('Пост появится на вашей странице и в общей ленте.')}</li>
-          <li>${T('Напишите #название программы — пост будет виден и на её странице.')}</li>
+          <li>${T('Укажите программу в поле под текстом — пост будет виден и на её странице.')}</li>
           <li>${T('Упомяните человека через @имя, ссылки станут кликабельными.')}</li>
           <li>${T('Будьте вежливы. Админы могут удалить грубость.')}</li>
         </ol>
@@ -909,10 +916,12 @@ export function setupSocial(ctx) {
 
   async function addPost(form) {
     if (needAccount()) return;
-    const { title, body } = Object.fromEntries(new FormData(form));
+    const { title, body, tag } = Object.fromEntries(new FormData(form));
     if (!title.trim()) return;
     const text = `${title}\n${body}`;
-    const tagged = [...text.matchAll(TAG_RE)].map(m => appByTag(m[2])).find(Boolean);
+    const tagName = tag.trim().replace(/^#/, '');
+    const tagged = tagName ? appByTag(appTag(tagName)) : null;
+    if (tagName && !tagged) return ctx.toast(T('Такой программы нет. Выберите её из списка.'));
     const button = form.querySelector('button:not([type])');
     button.disabled = true;
     try {
@@ -967,9 +976,10 @@ export function setupSocial(ctx) {
 
   // Ищем слово с # или @ прямо перед курсором.
   async function updateSuggest(input) {
+    const whole = input.dataset.suggest === 'app';
     const before = input.value.slice(0, input.selectionStart);
-    const m = before.match(/(?:^|[\s(])([#@])([^\s#@]*)$/);
-    if (!m || !input.dataset.suggest.includes(m[1])) return closeSuggest();
+    const m = whole ? [null, '#', input.value.trim().replace(/^#/, '')] : before.match(/(?:^|[\s(])([#@])([^\s#@]*)$/);
+    if (!m || (!whole && !input.dataset.suggest.includes(m[1]))) return closeSuggest();
     const [, sign, q] = m;
     const low = q.toLowerCase();
     const my = ++suggestSeq;
@@ -990,19 +1000,19 @@ export function setupSocial(ctx) {
     const box = suggest?.box || Object.assign(document.createElement('div'), { className: 'pop suggest' });
     box.setAttribute('role', 'listbox');
     input.parentElement.append(box);
-    suggest = { box, input, start: before.length - q.length, items, active: 0 };
+    suggest = { box, input, whole, start: before.length - q.length, items, active: 0 };
     drawSuggest();
   }
 
   function pickSuggest(i) {
-    const { input, start, items } = suggest;
-    const head = `${input.value.slice(0, start)}${items[i].insert} `;
-    const tail = input.value.slice(input.selectionStart);
+    const { input, whole, start, items } = suggest;
+    const head = whole ? items[i].insert : `${input.value.slice(0, start)}${items[i].insert} `;
+    const tail = whole ? '' : input.value.slice(input.selectionStart);
     closeSuggest();
     input.value = head + tail;
     input.setSelectionRange(head.length, head.length);
     input.focus();
-    input.dispatchEvent(new Event('input', { bubbles: true })); // обновит счётчик символов
+    if (!whole) input.dispatchEvent(new Event('input', { bubbles: true })); // обновит счётчик символов
   }
 
   /* ---------- Поиск в шапке ---------- */
@@ -1278,15 +1288,29 @@ export function setupSocial(ctx) {
     </label>
     <label class="field wide">${T('О себе')}<textarea name="bio" rows="4" maxlength="300">${esc(pub?.bio || '')}</textarea></label>`;
 
-  const netFields = () => `
-    <section class="edit-card">
-      <div class="edit-title"><h2>${T('Соцсети')}</h2><p>${T('Значки появятся в вашем профиле. Вставьте ссылку на свою страницу.')}</p></div>
-      <div class="edit-fields">
-        ${NETS.map(([id, label, hosts]) => `
-          <label class="net-row"><img src="assets/net/${id}.svg" alt="" width="20" height="20"><span class="sr">${label}</span>
-            <input name="net_${id}" inputmode="url" autocomplete="off" placeholder="${hosts[0]}/…" value="${esc(pub?.links?.[id] || '')}"></label>`).join('')}
-      </div>
-    </section>`;
+  const netRow = (url = '') => `
+    <div class="net-row">
+      <img src="${netIcon(url)}" alt="" width="20" height="20">
+      <input name="net" inputmode="url" autocomplete="off" aria-label="${T('Ссылка на соцсеть')}" placeholder="${T('Вставьте ссылку на свою страницу')}" value="${esc(url)}">
+      <button type="button" class="net-del" data-net-del aria-label="${T('Убрать ссылку')}">×</button>
+    </div>`;
+
+  function netFields() {
+    const saved = NETS.map(([id]) => pub?.links?.[id]).filter(Boolean);
+    return `
+      <section class="edit-card">
+        <div class="edit-title"><h2>${T('Соцсети')}</h2><p>${T('Значки появятся в вашем профиле.')}</p></div>
+        <div class="net-list">
+          <div class="net-rows">${(saved.length ? saved : ['']).map(netRow).join('')}</div>
+          <button type="button" class="r-pill ghost net-add" data-net-add ${saved.length >= NETS.length ? 'hidden' : ''}>${ICON.plus}<span>${T('Добавить соцсеть')}</span></button>
+          <small class="r-hint">${T('Поддерживаются: {list}', { list: NETS.map(n => n[1]).join(', ') })}</small>
+        </div>
+      </section>`;
+  }
+
+  function drawNetAdd() {
+    view.querySelector('[data-net-add]').hidden = view.querySelectorAll('.net-row').length >= NETS.length;
+  }
 
   // Шапка без @имени тоже видна, но загрузить свою можно только в готовый публичный профиль.
   const bannerField = () => `
@@ -1300,11 +1324,13 @@ export function setupSocial(ctx) {
 
   function readLinks(form) {
     const links = {};
-    for (const [id, , hosts] of NETS) {
-      const raw = form.elements[`net_${id}`].value.trim();
+    for (const input of form.querySelectorAll('[name=net]')) {
+      const raw = input.value.trim();
       if (!raw) continue;
-      links[id] = cleanLink(hosts, raw);
-      if (!links[id]) throw Object.assign(new Error('bad link'), { code: 'link/invalid' });
+      const net = netOf(raw);
+      if (!net) throw Object.assign(new Error('bad link'), { code: 'link/invalid' });
+      if (links[net[0]]) throw Object.assign(new Error('same network'), { code: 'link/duplicate' });
+      links[net[0]] = cleanLink(net[2], raw);
     }
     return links;
   }
@@ -1439,6 +1465,20 @@ export function setupSocial(ctx) {
     else if (d.sDelCard) deleteProfileComment(d.sDelCard);
     else if (d.emoji) insertEmoji(t);
     else if (d.attachClear !== undefined) clearAttach(t.closest('form'));
+    else if (d.netAdd !== undefined) {
+      view.querySelector('.net-rows').insertAdjacentHTML('beforeend', netRow());
+      view.querySelector('.net-row:last-child input').focus();
+      drawNetAdd();
+    }
+    else if (d.netDel !== undefined) {
+      // Последнее поле не убираем, а очищаем: иначе негде будет добавить ссылку.
+      if (view.querySelectorAll('.net-row').length > 1) t.closest('.net-row').remove();
+      else {
+        t.closest('.net-row').querySelector('input').value = '';
+        t.closest('.net-row').querySelector('img').src = netIcon('');
+      }
+      drawNetAdd();
+    }
     else if (d.sDelPost !== undefined) deletePost();
     else if (d.sBack !== undefined) { if (history.length > 1) history.back(); else location.hash = 'feed'; }
     else if (d.sJump !== undefined) {
@@ -1455,6 +1495,7 @@ export function setupSocial(ctx) {
   view.addEventListener('input', e => {
     if (e.target.matches('.r-submit [name=title]')) view.querySelector('.r-counter').textContent = `${e.target.value.length}/300`;
     if (e.target.matches('[data-suggest]')) updateSuggest(e.target);
+    if (e.target.matches('[name=net]')) e.target.closest('.net-row').querySelector('img').src = netIcon(e.target.value.trim());
     if (e.target.matches('.r-chat-form textarea, .r-composer textarea')) {
       e.target.style.height = 'auto';
       e.target.style.height = `${Math.min(e.target.scrollHeight, 240)}px`;
@@ -1468,6 +1509,7 @@ export function setupSocial(ctx) {
     pickSuggest(+item.dataset.i);
   });
   view.addEventListener('focusout', e => { if (e.target === suggest?.input) closeSuggest(); });
+  view.addEventListener('focusin', e => { if (e.target.matches('[data-suggest=app]')) updateSuggest(e.target); });
 
   view.addEventListener('keydown', e => {
     if (suggest && e.target === suggest.input) {
@@ -1524,9 +1566,6 @@ export function setupSocial(ctx) {
     saveIdentity,
     mirror,
     updatePublic,
-    attachBar,
-    clearAttach,
-    imageTag,
     isImage: url => DATA_IMAGE.test(url || ''),
     loadPeople,
     uidsByNames,

@@ -1,5 +1,5 @@
-import { EN, TERMS } from './i18n.js?v=20';
-import { setupSocial, cropImage } from './social.js?v=4';
+import { EN, TERMS } from './i18n.js?v=24';
+import { setupSocial, cropImage } from './social.js?v=7';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -250,7 +250,8 @@ const AUTH_ERRORS = {
   'permission-denied': 'Нет прав на это действие. Для правок войдите через Google с почтой админа.',
   'username/invalid': 'Имя пользователя: 1–20 символов, латиница, цифры и _.',
   'username/unknown': 'Такого @имени нет. Проверьте соавторов.',
-  'link/invalid': 'Проверьте ссылки на соцсети: каждая должна вести на сайт этой соцсети.',
+  'link/invalid': 'Такую ссылку сайт не знает. Проверьте её или посмотрите список соцсетей.',
+  'link/duplicate': 'Две ссылки на одну соцсеть. Оставьте одну.',
   'username/taken': 'Это имя уже занято. Попробуйте другое.',
 };
 
@@ -514,13 +515,9 @@ function renderApp(a) {
         ${needs.length ? `<h2>${T('Системные требования')}</h2><div class="use"><div class="use-text">${list(needs)}</div></div>` : ''}
         <h2>${T('Обсуждения')}</h2>
         <div id="app-threads" class="app-threads" data-app="${esc(a.id)}"><p class="empty">${T('Загрузка…')}</p></div>
-        <h2>${T('Комментарии')} <span id="comment-count"></span></h2>
-        ${commentForm()}
         <p id="msg" class="msg" role="alert"></p>
-        <div id="comment-list" data-app="${esc(a.id)}"><p class="empty">${T('Загрузка…')}</p></div>
       </div>
     </div>`;
-  loadComments(a.id);
   social.fillAppThreads(a.id);
   if (a.community) loadAuthorSelfie(a.id);
 }
@@ -535,135 +532,7 @@ async function loadAuthorSelfie(id) {
   box.hidden = false;
 }
 
-/* ---------- Комментарии ---------- */
-
-const commentForm = () => (user ? `
-  <form class="comment-form">
-    <label class="sr" for="comment-text">${T('Комментарий')}</label>
-    <textarea id="comment-text" name="text" rows="3" maxlength="1000" placeholder="${T('Напишите комментарий')}"></textarea>
-    <div class="comment-form-bar">${social.attachBar()}<button class="btn primary">${T('Отправить')}</button></div>
-  </form>` : `<p class="empty"><a class="link" href="#account">${T('Войдите')}</a>${T(', чтобы оставить комментарий или лайк.')}</p>`);
-
 const when = ts => ts?.toDate?.().toLocaleString(lang === 'en' ? 'en-GB' : 'ru-RU', { dateStyle: 'medium', timeStyle: 'short' }) || '';
-
-// Имя, фото и текст пишут посетители: в разметку только через esc, картинка только https или data:image.
-// rootId: ответы живут одной веткой под верхним комментарием, ответ на ответ идёт туда же.
-const commentItem = (c, rootId = c.id) => {
-  const likes = c.likedBy || [];
-  const liked = !!user && likes.includes(user.uid);
-  const photo = /^(https:\/\/|data:image\/)/.test(c.photo || '') ? esc(c.photo) : '';
-  return `
-    <article class="comment" id="c-${esc(c.id)}">
-      <a class="avatar" href="#uid/${esc(c.uid)}" tabindex="-1" aria-hidden="true">${photo ? `<img src="${photo}" alt="" referrerpolicy="no-referrer">` : esc(String(c.name || 'П')[0])}</a>
-      <div class="comment-body">
-        <div class="comment-head"><a class="comment-author" href="#uid/${esc(c.uid)}">${esc(c.name)}</a>${authors[c.uid] ? `<span class="tag admin">${T('Админ')}</span>` : ''}<span>${when(c.createdAt)}</span></div>
-        <p>${esc(c.text)}</p>
-        ${social.imageTag(c.image)}
-        <div class="comment-actions">
-          <button type="button" class="like" data-like="${esc(c.id)}" data-uid="${esc(c.uid)}" aria-pressed="${liked}" aria-label="${T('Нравится, сейчас {n}', { n: likes.length })}">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="${liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.2-9.1C1.7 7.8 3.8 5 6.8 5c2 0 3.6 1.1 5.2 3 1.6-1.9 3.2-3 5.2-3 3 0 5.1 2.8 4 5.9C19.5 15.4 12 20 12 20z"/></svg>
-            ${likes.length}
-          </button>
-          <button type="button" class="link linkbtn" data-reply="${esc(rootId)}" data-target="${esc(c.id)}" data-uid="${esc(c.uid)}" data-name="${esc(c.name)}" data-nested="${rootId !== c.id}">${T('Ответить')}</button>
-          ${user && (c.uid === user.uid || isAdmin) ? `<button type="button" class="link linkbtn" data-del-comment="${esc(c.id)}">${T('Удалить')}</button>` : ''}
-        </div>
-      </div>
-    </article>`;
-};
-
-// ponytail: грузим все комментарии программы и сортируем в браузере, индекс не нужен.
-// Когда их станут тысячи, понадобится составной индекс и подгрузка порциями.
-async function loadComments(appId) {
-  const box = () => {
-    const el = document.getElementById('comment-list');
-    return el?.dataset.app === appId ? el : null;
-  };
-  if (!fs) {
-    if (authState === 'failed') box().innerHTML = `<p class="empty">${T('Комментарии сейчас недоступны.')}</p>`;
-    return;
-  }
-  try {
-    const snap = await fs.getDocs(fs.query(fs.collection(db, 'comments'), fs.where('appId', '==', appId)));
-    const list = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-      .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-    if (!box()) return;
-    // ponytail: у удалённого комментария ответы остаются в базе, но не показываются.
-    const roots = list.filter(c => !c.parentId);
-    const replies = id => list.filter(c => c.parentId === id).reverse();
-    const shown = roots.reduce((n, c) => n + 1 + replies(c.id).length, 0);
-    box().innerHTML = shown ? roots.map(c => {
-      const thread = replies(c.id).map(r => commentItem(r, c.id)).join('');
-      return commentItem(c) + (thread ? `<div class="replies">${thread}</div>` : '');
-    }).join('') : `<p class="empty">${T('Пока никто не написал.')}</p>`;
-    document.getElementById('comment-count').textContent = shown ? `(${shown})` : '';
-    const target = document.getElementById(`c-${route().commentId}`);
-    if (target) {
-      target.scrollIntoView({ block: 'center' });
-      target.classList.add('flash');
-      history.replaceState(null, '', `#app/${appId}`); // иначе каждый лайк снова прокручивал бы сюда
-    }
-  } catch (e) {
-    console.error(e);
-    if (box()) box().innerHTML = `<p class="empty">${T('Комментарии сейчас недоступны.')}</p>`;
-  }
-}
-
-function toggleReplyForm(button) {
-  if (!user) { location.hash = 'account'; return; }
-  const body = button.closest('.comment-body');
-  const open = body.querySelector('.comment-form');
-  if (open) { open.remove(); return; }
-  const form = document.createElement('form');
-  form.className = 'comment-form';
-  form.dataset.parent = button.dataset.reply;
-  form.dataset.target = button.dataset.target;
-  form.dataset.uid = button.dataset.uid;
-  form.innerHTML = `
-    <textarea name="text" rows="2" maxlength="1000" aria-label="${T('Ответ')}" placeholder="${T('Напишите ответ')}"></textarea>
-    <div class="comment-form-bar">${social.attachBar()}<button class="btn primary">${T('Ответить')}</button></div>`;
-  body.append(form);
-  const input = form.elements.text;
-  if (button.dataset.nested === 'true') input.value = `${button.dataset.name}, `;
-  input.focus();
-}
-
-async function addComment(form) {
-  const text = form.elements.text.value.trim();
-  const image = form.elements.image.value;
-  if (!text && !image) return;
-  const appId = route().app.id;
-  await fs.addDoc(fs.collection(db, 'comments'), {
-    appId,
-    uid: user.uid,
-    name: myName(),
-    photo: myPhoto(),
-    text,
-    createdAt: fs.serverTimestamp(),
-    likedBy: [user.uid], // свой лайк сразу, как апвоут на Reddit
-    ...(image ? { image } : {}),
-    ...(form.dataset.parent ? { parentId: form.dataset.parent } : {}),
-  });
-  if (form.dataset.parent) notify('reply', form.dataset.target, form.dataset.uid, appId, text);
-  form.reset();
-  social.clearAttach(form);
-  await loadComments(appId);
-}
-
-// Имя и фото лежат в самом комментарии, чтобы читать его без лишних запросов.
-// При входе и смене профиля обновляем их во всех своих комментариях.
-async function syncMyComments() {
-  const name = myName();
-  const photo = myPhoto();
-  const snap = await fs.getDocs(fs.query(fs.collection(db, 'comments'), fs.where('uid', '==', user.uid)));
-  // ponytail: в одной пачке Firestore до 500 записей, остальные обновятся при следующем входе.
-  const stale = snap.docs.filter(d => d.data().name !== name || d.data().photo !== photo).slice(0, 500);
-  if (!stale.length) return;
-  const batch = fs.writeBatch(db);
-  stale.forEach(d => batch.update(d.ref, { name, photo }));
-  await batch.commit();
-  const { app } = route();
-  if (app) await loadComments(app.id);
-}
 
 /* ---------- Уведомления ---------- */
 
@@ -1348,7 +1217,6 @@ async function saveProfile(data) {
   profile = { ...profile, ...data };
   await social.mirror({ name: myName(), photo: myPhoto().length <= 100000 ? myPhoto() : '' });
   if (realAdmin) await syncAuthor();
-  await syncMyComments();
   drawAvatar(avatar);
   renderAccount();
   say(T('Сохранено.'), true);
@@ -1459,7 +1327,6 @@ function toggleMeMenu(open) {
   meMenu.innerHTML = `
     <a role="menuitem" href="${esc(social.myHref())}">${T('Перейти на страницу')}</a>
     <a role="menuitem" href="#account">${T('Редактировать профиль')}</a>
-    <a role="menuitem" href="#report">${T('Сообщить о баге или идее')}</a>
     ${realAdmin ? `<button type="button" role="menuitem" id="view-mode">${T(isAdmin ? 'Вид пользователя' : 'Вид админа')}</button>` : ''}
     <button type="button" role="menuitem" id="me-logout">${T('Выйти')}</button>`;
 }
@@ -1663,7 +1530,6 @@ async function initFirebase() {
       watchMessages(u);
       if (realAdmin) await syncAuthor().catch(console.error);
       if (u) {
-        syncMyComments().catch(console.error);
         syncAccount(u).catch(console.error);
       }
       drawAvatar(avatar);
@@ -1693,7 +1559,7 @@ function route() {
   if (name === 'report') return { name, appId: a };
   if (name === 'edit' && FIELDS[a] && b) return { name, kind: a, id: b };
   const app = name === 'app' && apps.find(x => x.id === a);
-  return app ? { name: 'app', app, commentId: b } : { name: 'apps' };
+  return app ? { name: 'app', app } : { name: 'apps' };
 }
 
 const RAIL = { feed: 'feed', post: 'feed', submit: 'feed', u: 'account', uid: 'account', chat: 'inbox', inbox: 'inbox', account: 'account', stats: 'stats', report: 'report', admin: 'admin' };
@@ -1735,33 +1601,12 @@ view.addEventListener('click', e => {
     count(`dl_${t.dataset.id}`);
     toast(T('Скачивание началось. Если Windows покажет SmartScreen: «Подробнее», затем «Выполнить в любом случае».'));
   }
-  else if (t.dataset.like) {
-    if (!user) { location.hash = 'account'; return; }
-    const adding = t.getAttribute('aria-pressed') !== 'true';
-    const commentText = t.closest('.comment-body').querySelector('p').textContent;
-    const appId = route().app.id;
-    attempt(async () => {
-      await fs.updateDoc(fs.doc(db, 'comments', t.dataset.like), {
-        likedBy: (adding ? fs.arrayUnion : fs.arrayRemove)(user.uid),
-      });
-      if (adding) notify('like', t.dataset.like, t.dataset.uid, appId, commentText);
-      await loadComments(appId);
-    });
-  }
-  else if (t.dataset.reply) toggleReplyForm(t);
   else if (t.dataset.approve) attempt(() => decide(t.dataset.approve, true));
   else if (t.dataset.reject) attempt(() => decide(t.dataset.reject, false));
   else if (t.dataset.delSub) attempt(() => deleteSubmission(t.dataset.delSub));
   else if (t.dataset.delMessage) {
     if (!confirm(T('Удалить сообщение?'))) return;
     attempt(() => fs.deleteDoc(fs.doc(db, 'messages', t.dataset.delMessage)));
-  }
-  else if (t.dataset.delComment) {
-    if (!confirm(T('Удалить комментарий?'))) return;
-    attempt(async () => {
-      await fs.deleteDoc(fs.doc(db, 'comments', t.dataset.delComment));
-      await loadComments(route().app.id);
-    });
   }
   else if (t.id === 'delete') {
     if (!confirm(T('Удалить запись с сайта?'))) return;
@@ -1793,7 +1638,6 @@ view.addEventListener('submit', e => {
   if (e.target.id === 'report-form') return attempt(() => sendReport(e.target));
   if (e.target.id === 'publish-form') return attempt(() => sendSubmission(e.target));
   if (e.target.classList.contains('message-reply')) return attempt(() => sendReply(e.target));
-  if (e.target.classList.contains('comment-form')) return attempt(() => addComment(e.target));
   if (e.target.dataset.sForm) return social.onSubmit(e.target);
   if (e.target.id === 'profile-form') {
     const f = e.target.elements;

@@ -57,18 +57,13 @@ export const EN = {
 
   // Комментарии
   'Комментарий': 'Comment',
-  'Напишите комментарий': 'Write a comment',
   'Отправить': 'Send',
   'Войдите': 'Sign in',
-  ', чтобы оставить комментарий или лайк.': ' to comment or like.',
   'Админ': 'Admin',
-  'Нравится, сейчас {n}': 'Like, currently {n}',
   'Ответить': 'Reply',
   'Удалить': 'Delete',
   'Ответ': 'Reply',
   'Напишите ответ': 'Write a reply',
-  'Комментарии сейчас недоступны.': 'Comments are unavailable right now.',
-  'Пока никто не написал.': 'No comments yet.',
   'Пользователь': 'User',
 
   // Уведомления
@@ -179,9 +174,10 @@ export const EN = {
   'Пост': 'Post',
   'Люди': 'People',
   'Отметить всех': 'Mention everyone',
-  'Чтобы привязать программу, напишите # и начните вводить её название.': 'To link a program, type # and start typing its name.',
+  'Программа, необязательно': 'Program, optional',
+  'Такой программы нет. Выберите её из списка.': 'There is no such program. Pick one from the list.',
   '@everyone отметит всех: пост придёт в уведомления.': '@everyone mentions everybody: the post goes to their notifications.',
-  'Напишите #название программы — пост будет виден и на её странице.': 'Write #program name and the post will also appear on its page.',
+  'Укажите программу в поле под текстом — пост будет виден и на её странице.': 'Set the program in the field below the text and the post will also appear on its page.',
   '{name} отметил(а) всех в посте': '{name} mentioned everyone in a post',
   'Картинка в комментарии': 'Image in a comment',
   'Добавить картинку или гифку': 'Add an image or GIF',
@@ -200,9 +196,15 @@ export const EN = {
   'Загрузить шапку': 'Upload banner',
   'Убрать шапку': 'Remove banner',
   'Соцсети': 'Social links',
-  'Значки появятся в вашем профиле. Вставьте ссылку на свою страницу.': 'The icons will appear on your profile. Paste a link to your page.',
+  'Значки появятся в вашем профиле.': 'The icons will appear on your profile.',
   'Такого @имени нет. Проверьте соавторов.': 'This @username does not exist. Check the co-authors.',
-  'Проверьте ссылки на соцсети: каждая должна вести на сайт этой соцсети.': 'Check your social links: each one must lead to that network\'s site.',
+  'Такую ссылку сайт не знает. Проверьте её или посмотрите список соцсетей.': 'The site does not recognize this link. Check it or see the list of networks.',
+  'Две ссылки на одну соцсеть. Оставьте одну.': 'Two links to the same network. Keep one.',
+  'Ссылка на соцсеть': 'Social link',
+  'Вставьте ссылку на свою страницу': 'Paste a link to your page',
+  'Убрать ссылку': 'Remove link',
+  'Добавить соцсеть': 'Add a network',
+  'Поддерживаются: {list}': 'Supported: {list}',
 
   // Сообщество и заявки
   'Сообщество': 'Community',
@@ -408,7 +410,7 @@ export const TERMS = {
     ['Программы сообщества', 'Предлагая программу, вы подтверждаете, что имеете право её распространять и что в ней нет вредоносного кода. К заявке нужно приложить своё селфи и согласиться на его показ: до одобрения его видят только админы, после одобрения все посетители на странице программы. Селфи хранится, пока заявка не удалена. Удалить заявку можете вы сами или админ. Программы сообщества проверяет админ, но скачиваете их вы на свой риск.'],
     ['Правила поведения', 'Нельзя публиковать спам, оскорбления, чужие личные данные, вредоносные файлы и всё, что нарушает закон. Админы могут удалить такие материалы и отказать в заявке.'],
     ['Ответственность', 'Сайт и программы предоставляются как есть. Мы стараемся, чтобы всё работало, но не обещаем, что сайт всегда будет доступен, а программы подойдут именно вам.'],
-    ['Как удалить данные', 'Свои посты, комментарии и заявки вы удаляете сами. Чтобы удалить аккаунт и остальные данные, напишите админам через пункт «Сообщить о баге или идее» в меню аватарки.'],
+    ['Как удалить данные', 'Свои посты, комментарии и заявки вы удаляете сами. Чтобы удалить аккаунт и остальные данные, напишите админам через раздел «Сообщить» внизу меню.'],
     ['Изменения', 'Мы можем обновлять это соглашение. Новая версия начинает действовать, как только появляется на этой странице.'],
   ],
   en: [
@@ -419,7 +421,7 @@ export const TERMS = {
     ['Community programs', 'By suggesting a program, you confirm that you have the right to distribute it and that it contains no malicious code. Your request must include your selfie and your consent to show it: before approval only admins can see it, after approval all visitors can see it on the program page. The selfie is kept until the request is deleted. You or an admin can delete the request. An admin reviews community programs, but you download them at your own risk.'],
     ['Rules of conduct', 'Do not post spam, insults, other people\'s personal data, malicious files or anything illegal. Admins can remove such content and reject requests.'],
     ['Liability', 'The site and programs are provided as is. We try to keep everything working, but we do not promise that the site will always be available or that a program will suit you.'],
-    ['How to delete your data', 'You can delete your own posts, comments and requests. To delete your account and other data, write to the admins through “Report a bug or idea” in the avatar menu.'],
+    ['How to delete your data', 'You can delete your own posts, comments and requests. To delete your account and other data, write to the admins through Report at the bottom of the menu.'],
     ['Changes', 'We may update this agreement. A new version takes effect as soon as it appears on this page.'],
   ],
 };
