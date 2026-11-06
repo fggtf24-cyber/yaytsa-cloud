@@ -116,7 +116,7 @@ export function setupSocial(ctx) {
   const shownName = uid => people.get(uid)?.name || (handle(uid) ? handle(uid) : T('Пользователь'));
   const profileHref = uid => (handle(uid) ? `#u/${esc(handle(uid))}` : `#uid/${esc(uid)}`);
   const userLabel = uid => esc(handle(uid) ? `@${handle(uid)}` : shownName(uid));
-  const isFriend = uid => following.has(uid) && followers.has(uid);
+  const isMutual = uid => following.has(uid) && followers.has(uid);
   const color = uid => EGG_COLORS[[...String(uid)].reduce((n, c) => n + c.charCodeAt(0), 0) % EGG_COLORS.length];
 
   function photoOf(uid) {
@@ -305,8 +305,8 @@ export function setupSocial(ctx) {
     if (uid === me()) return '';
     const mine = following.has(uid);
     const theirs = followers.has(uid);
-    const label = mine && theirs ? 'Взаимная подписка' : mine ? 'Вы подписаны' : theirs ? 'Подписаться в ответ' : 'Подписаться';
-    return `<button type="button" class="r-pill ${mine ? 'ghost' : 'primary'} ${extra}" data-s-follow="${esc(uid)}" aria-pressed="${mine}">${mine && theirs ? '✓ ' : ''}${T(label)}</button>`;
+    const label = mine && theirs ? 'Подписан(а) на вас' : mine ? 'Вы подписаны' : theirs ? 'Подписаться в ответ' : 'Подписаться';
+    return `<button type="button" class="r-pill ${mine ? 'ghost' : 'primary'} ${extra}" data-s-follow="${esc(uid)}" aria-pressed="${mine}">${T(label)}</button>`;
   }
 
   async function toggleFollow(uid) {
@@ -330,7 +330,7 @@ export function setupSocial(ctx) {
 
   function relation(uid) {
     if (!ctx.user || uid === me()) return '';
-    if (isFriend(uid)) return `<span class="r-tag friend">${T('взаимно')}</span>`;
+    if (isMutual(uid)) return `<span class="r-tag mutual">${T('подписан(а) на вас')}</span>`;
     if (following.has(uid)) return `<span class="r-tag">${T('подписка')}</span>`;
     return '';
   }
@@ -395,7 +395,7 @@ export function setupSocial(ctx) {
   function hot(p) {
     const s = p.score || 0;
     const t = (ms(p.createdAt) || Date.now()) / 1000;
-    const boost = isFriend(p.uid) ? 1.5 : following.has(p.uid) ? 1 : 0;
+    const boost = isMutual(p.uid) ? 1.5 : following.has(p.uid) ? 1 : 0;
     return Math.sign(s) * Math.log10(Math.max(Math.abs(s), 1)) + Math.log10(1 + (p.commentCount || 0)) * 0.5 + t / 45000 + boost;
   }
 
@@ -848,7 +848,7 @@ export function setupSocial(ctx) {
           </div>
           <div class="r-phead-text">
             <h1>${esc(p.name || p.username)}</h1>
-            <p class="r-sub">@${esc(p.username)}${!isMe && followers.has(uid) ? ` <span class="r-tag">${T(isFriend(uid) ? 'взаимно' : 'подписан(а) на вас')}</span>` : ''}</p>
+            <p class="r-sub">@${esc(p.username)}${!isMe && followers.has(uid) && !isMutual(uid) ? ` <span class="r-tag">${T('подписан(а) на вас')}</span>` : ''}</p>
             ${netLinks(uid)}
           </div>
         </header>

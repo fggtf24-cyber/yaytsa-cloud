@@ -384,7 +384,7 @@ a.r-user:hover, .r-who:hover .r-user, .r-app:hover, .r-ptitle:hover { text-decor
 .r-dot { color: var(--faint); }
 .r-app { font-weight: 600; color: var(--text); }
 .r-tag { padding: 1px 7px; border-radius: 999px; background: var(--pill); color: var(--muted); font-size: 11px; font-weight: 700; }
-.r-tag.friend { background: rgba(107, 227, 180, .16); color: #6BE3B4; }
+.r-tag.mutual { background: rgba(107, 227, 180, .16); color: #6BE3B4; }
 .r-tag.op { background: rgba(20, 115, 230, .22); color: var(--link); }
 .r-sub { font-size: 12px; color: var(--sub); }
 .r-full-who .r-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
@@ -898,7 +898,7 @@ html[data-theme=light] {
   --icon-filter: none;
 }
 html[data-theme=light] .r-all { color: #A86A00; }
-html[data-theme=light] .r-tag.friend { color: #107C41; }
+html[data-theme=light] .r-tag.mutual { color: #107C41; }
 html[data-theme=light] .eggs i { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .08); }
 .search svg, .card-head > svg { stroke: var(--sub); }
 .theme { flex: none; width: 44px; height: 44px; border: 0; border-radius: 50%; background: none; color: var(--soft); display: flex; align-items: center; justify-content: center; }
