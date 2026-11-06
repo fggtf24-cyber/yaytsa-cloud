@@ -991,3 +991,17 @@ body, .content { transition: background-color .12s ease; }
   .r-profile .r-phead-text { min-width: 0; flex-basis: calc(100% - 110px); padding-bottom: 2px; }
   .r-nets { flex-basis: 100%; max-width: none; justify-content: flex-start; padding-bottom: 0; }
 }
+
+/* Переписка: отдельное окно посреди экрана */
+.r-chat {
+  flex: none; width: calc(100% - 48px); max-width: 1060px; height: calc(100vh - var(--top-h) - 48px); margin: 24px auto;
+  background: var(--card2); border: 1px solid var(--line); border-radius: 20px; overflow: hidden;
+  box-shadow: 0 12px 40px var(--shadow);
+}
+.r-chat-list { background: var(--panel); }
+@media (max-width: 760px) {
+  .r-chat { width: 100%; height: calc(100vh - 150px); margin: 0; border: 0; border-radius: 0; box-shadow: none; }
+}
+@media (max-width: 640px) {
+  .r-chat { height: calc(100vh - var(--top-h) - 72px); }
+}

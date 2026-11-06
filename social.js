@@ -1296,7 +1296,8 @@ export function setupSocial(ctx) {
         if (ctx.route().name === 'chat') {
           drawChatList();
           drawMsgs(); // собеседник мог прочитать: обновятся галочки
-          if (roomId && !stopMsgs && chats.some(c => c.id === roomId)) openRoomStream();
+          // Пока чат не дошёл до базы, читать его сообщения нельзя: подписка сразу оборвалась бы.
+          if (roomId && !stopMsgs && !snap.metadata.hasPendingWrites && chats.some(c => c.id === roomId)) openRoomStream();
           markSeen();
         }
       },
@@ -1423,7 +1424,10 @@ export function setupSocial(ctx) {
         roomMsgs = rows(snap);
         drawMsgs();
       },
-      console.error,
+      e => {
+        console.error(e);
+        if (id === roomId) stopMsgs = null; // следующее обновление чата откроет подписку заново
+      },
     );
   }
 
