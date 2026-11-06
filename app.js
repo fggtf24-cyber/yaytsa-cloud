@@ -178,8 +178,8 @@ const APPS = [
     desc: 'Помодоро-таймер с учётом рабочих часов. Свои интервалы работы и перерыва, статистика по дням и напоминание поверх всех окон.',
     descEn: 'A pomodoro timer that tracks your work hours. Custom focus and break lengths, daily stats and a reminder on top of every window.',
     file: 'https://github.com/brlk33/Yaytsa-Timer/raw/main/YaytsaTimer-Setup.exe',
-    size: '290 МБ',
-    sizeEn: '290 MB',
+    size: '3 МБ',
+    sizeEn: '3 MB',
     repo: 'https://github.com/brlk33/Yaytsa-Timer',
     features: [
       'Свои интервалы: по умолчанию 25/5, работа и перерыв меняются с шагом 5 минут',
@@ -193,7 +193,8 @@ const APPS = [
     ],
     needs: [
       'Windows 10 или 11, 64-бит',
-      'Около 290 МБ на диске',
+      'Около 3 МБ на диске',
+      'Работает на встроенном в Windows движке Edge (WebView2), он есть в Windows 10 и 11',
       'Права администратора не нужны',
     ],
     featuresEn: [
@@ -208,7 +209,8 @@ const APPS = [
     ],
     needsEn: [
       'Windows 10 or 11, 64-bit',
-      'About 290 MB of disk space',
+      'About 3 MB of disk space',
+      'Runs on the Edge engine built into Windows (WebView2), included in Windows 10 and 11',
       'No administrator rights needed',
     ],
   },
