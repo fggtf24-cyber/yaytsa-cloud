@@ -1495,6 +1495,10 @@ export function setupSocial(ctx) {
   document.addEventListener('click', e => {
     document.querySelectorAll('.emoji[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; });
   });
+  // У низа экрана панель иначе открылась бы за его краем. Событие toggle не всплывает, поэтому ловим на погружении.
+  document.addEventListener('toggle', e => {
+    if (e.target.matches('.emoji[open]')) e.target.querySelector('.emoji-panel').scrollIntoView({ block: 'nearest' });
+  }, true);
 
   function onSubmit(form) {
     const kind = form.dataset.sForm;

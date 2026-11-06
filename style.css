@@ -435,7 +435,7 @@ a.r-user:hover, .r-who:hover .r-user, .r-app:hover, .r-ptitle:hover { text-decor
 .r-menu-list button:hover { background: var(--pill); }
 
 .r-composer {
-  display: flex; flex-direction: column; border: 1px solid var(--edge); border-radius: 20px; background: var(--bg); overflow: hidden;
+  display: flex; flex-direction: column; border: 1px solid var(--edge); border-radius: 20px; background: var(--bg);
 }
 .r-composer:focus-within { border-color: var(--text); }
 .r-composer textarea {
@@ -696,6 +696,7 @@ a.r-stat:hover b { text-decoration: underline; }
 .r-composer:has(.attach-preview:not([hidden])) .r-composer-bar { display: flex; }
 .r-composer-bar { align-items: center; }
 .r-composer .attach { padding-left: 2px; }
+.r-composer textarea { border-radius: 20px; }
 .r-all { color: #FFC531; }
 
 /* ---------- Заявки, админка, соглашение ---------- */
