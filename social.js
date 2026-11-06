@@ -397,10 +397,13 @@ export function setupSocial(ctx) {
     });
   }).observe(view, { childList: true, subtree: true });
 
+  // Имя сверху, @логин под ним.
+  const names = uid => `<span class="r-names"><b>${esc(shownName(uid))}</b>${handle(uid) ? `<small>@${esc(handle(uid))}</small>` : ''}</span>`;
+
   const postCard = (p, { author = true } = {}) => `
     <article class="r-post" data-href="#post/${esc(p.id)}">
       <div class="r-meta">
-        ${author ? `<a class="r-who" href="${profileHref(p.uid)}">${ava(p.uid, 24)}<span class="r-user">${userLabel(p.uid)}</span></a>${relation(p.uid)}<span class="r-dot">•</span>` : ''}
+        ${author ? `<a class="r-who" href="${profileHref(p.uid)}">${ava(p.uid, 32)}${names(p.uid)}</a>${relation(p.uid)}<span class="r-dot">•</span>` : ''}
         ${time(p.createdAt)}
       </div>
       <h2 class="r-title"><a href="#post/${esc(p.id)}">${esc(p.title)}</a></h2>
@@ -522,14 +525,14 @@ export function setupSocial(ctx) {
         </div>
       </details>` : '';
     const live = comments.filter(c => !c.deleted).length;
-    const sub = people.get(post.uid)?.name ? esc(people.get(post.uid).name) : '';
+    const sub = handle(post.uid) ? `@${esc(handle(post.uid))}` : '';
     const main = `
       <article class="r-full">
         <div class="r-full-head">
           <button type="button" class="r-iconbtn r-backbtn" data-s-back aria-label="${T('Назад')}">${ICON.back}</button>
           <a href="${profileHref(post.uid)}">${ava(post.uid, 32)}</a>
           <div class="r-full-who">
-            <div class="r-meta"><a class="r-user strong" href="${profileHref(post.uid)}">${userLabel(post.uid)}</a>${relation(post.uid)}<span class="r-dot">•</span>${time(post.createdAt)}${post.editedAt ? `<span class="r-dot">•</span><span>${T('изменено')}</span>` : ''}</div>
+            <div class="r-meta"><a class="r-user strong" href="${profileHref(post.uid)}">${esc(shownName(post.uid))}</a>${relation(post.uid)}<span class="r-dot">•</span>${time(post.createdAt)}${post.editedAt ? `<span class="r-dot">•</span><span>${T('изменено')}</span>` : ''}</div>
             ${sub ? `<div class="r-sub">${sub}</div>` : ''}
           </div>
           ${menu}

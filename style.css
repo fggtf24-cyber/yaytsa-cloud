@@ -980,3 +980,7 @@ body, .content { transition: background-color .12s ease; }
 .r-room .r-chat-form { width: calc(100% - 32px); max-width: 600px; margin-left: auto; margin-right: auto; }
 .r-day { margin: 8px 0 4px; }
 .r-chat-item { padding: 7px 10px; gap: 10px; }
+
+.r-names { min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
+.r-names b { color: var(--text); font-size: 14px; font-weight: 700; }
+.r-names small { color: var(--sub); font-size: 12px; }
