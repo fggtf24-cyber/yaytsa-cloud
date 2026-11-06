@@ -168,6 +168,48 @@ const APPS = [
       'No administrator rights needed',
     ],
   },
+  {
+    id: 'yaytsa-timer',
+    name: 'Яйца Таймер',
+    nameEn: 'Yaytsa Timer',
+    icon: 'assets/yaytsa-timer.png',
+    desc: 'Помодоро-таймер с учётом рабочих часов. Свои интервалы работы и перерыва, статистика по дням и напоминание поверх всех окон.',
+    descEn: 'A pomodoro timer that tracks your work hours. Custom focus and break lengths, daily stats and a reminder on top of every window.',
+    file: 'https://github.com/brlk33/Yaytsa-Timer/raw/main/YaytsaTimer-Setup.exe',
+    size: '290 МБ',
+    sizeEn: '290 MB',
+    repo: 'https://github.com/brlk33/Yaytsa-Timer',
+    features: [
+      'Свои интервалы: по умолчанию 25/5, работа и перерыв меняются с шагом 5 минут',
+      'Учёт часов: каждый заход записывается вместе с задачей, над которой вы работали',
+      'Статистика: сегодня, 7 и 30 дней, график по дням, цель на день, выгрузка в CSV',
+      'Напоминание справа снизу поверх любых окон и видео во весь экран. Не исчезает, пока не нажмёте',
+      'Работа в фоне: значок в трее, крестик прячет окно, таймер идёт дальше',
+      'Кнопка «Тест 5 сек», чтобы проверить звук и напоминание',
+      'Интерфейс в стиле Notion, тёмная и светлая тема, русский и английский',
+      'Обновляется сама при запуске',
+    ],
+    needs: [
+      'Windows 10 или 11, 64-бит',
+      'Около 290 МБ на диске',
+      'Права администратора не нужны',
+    ],
+    featuresEn: [
+      'Custom intervals: 25/5 by default, focus and break change in 5-minute steps',
+      'Hour tracking: every session is saved with the task you worked on',
+      'Stats: today, 7 and 30 days, daily chart, daily goal, CSV export',
+      'A bottom-right reminder on top of any window and fullscreen video. It stays until you click it',
+      'Runs in the background: tray icon, the close button hides the window and the timer keeps going',
+      'A "Test 5 sec" button to check the sound and the reminder',
+      'Notion-style interface, dark and light theme, Russian and English',
+      'Updates itself on launch',
+    ],
+    needsEn: [
+      'Windows 10 or 11, 64-bit',
+      'About 290 MB of disk space',
+      'No administrator rights needed',
+    ],
+  },
 ];
 
 // Стартовый список «Других проектов». Правки админов лежат в Firestore и накладываются поверх APPS и PROJECTS.
