@@ -32,6 +32,9 @@ function cleanLink(hosts, raw) {
 
 const EMOJI = '😀 😂 🤣 😅 😊 😍 🥰 😘 😎 🤩 🤔 😏 🙄 😭 🥲 😡 🤯 😱 🤡 💀 👀 👍 👎 👏 🙏 🤝 💪 🫡 ❤️ 🔥 ✨ 🎉 💯 🚀 🥚 🐣 🍳 🐔 🍆 💩'.split(' ');
 
+// Стикеры с яйцами: файлы лежат в assets/stickers/<id>.svg, в базе хранится только id.
+const STICKERS = ['happy', 'laugh', 'love', 'cool', 'wink', 'party', 'think', 'shock', 'cry', 'angry', 'sleepy', 'dead'];
+
 // Соцсеть узнаём по самой ссылке.
 const netOf = raw => NETS.find(([, , hosts]) => cleanLink(hosts, raw));
 const netIcon = raw => `assets/net/${netOf(raw)?.[0] || 'link'}.svg`;
@@ -54,6 +57,9 @@ const ICON = {
   chat: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" stroke-linejoin="round"/></svg>',
   image: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 16l-5-5-8 8" stroke-linejoin="round"/></svg>',
   smile: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 14c1 1.5 2.3 2.2 4 2.2s3-.7 4-2.2M9 9.5v.5M15 9.5v.5"/></svg>',
+  sticker: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h14a1 1 0 0 1 1 1v9l-6 6H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M14 20v-5a1 1 0 0 1 1-1h5"/></svg>',
+  tick: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13l5 5L19 7"/></svg>',
+  ticks: '<svg width="20" height="16" viewBox="0 0 30 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l5 5L18 7"/><path d="M14 17l1 1L25 7"/></svg>',
   edit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z" stroke-linejoin="round"/></svg>',
 };
 
@@ -187,6 +193,22 @@ export function setupSocial(ctx) {
       <div class="pop emoji-panel">${EMOJI.map(e => `<button type="button" data-emoji="${e}">${e}</button>`).join('')}</div>
     </details>`;
 
+  const stickerBtn = () => `
+    <details class="emoji">
+      <summary class="r-iconbtn" title="${T('Стикеры')}" aria-label="${T('Стикеры')}">${ICON.sticker}</summary>
+      <div class="pop emoji-panel sticker-panel">${STICKERS.map(id => `<button type="button" data-sticker="${id}" aria-label="${T('Стикер')}"><img src="assets/stickers/${id}.svg" alt="" loading="lazy"></button>`).join('')}</div>
+    </details>`;
+
+  const stickerTag = id => (STICKERS.includes(id) ? `<img class="c-sticker" src="assets/stickers/${id}.svg" alt="${T('Стикер')}">` : '');
+
+  // Стикер уходит сразу по нажатию, как в мессенджерах.
+  function sendSticker(btn) {
+    const form = btn.closest('form');
+    btn.closest('details').open = false;
+    if (form.dataset.sForm === 'chat') sendChat(form, btn.dataset.sticker);
+    else addComment(form, btn.dataset.sticker);
+  }
+
   function insertEmoji(btn) {
     const input = btn.closest('form').querySelector('textarea');
     input.setRangeText(btn.dataset.emoji, input.selectionStart, input.selectionEnd, 'end');
@@ -195,9 +217,10 @@ export function setupSocial(ctx) {
     input.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
-  const attachBar = () => `
+  const attachBar = (stickers = false) => `
     <div class="attach">
       ${emojiBtn()}
+      ${stickers ? stickerBtn() : ''}
       <label class="r-iconbtn" title="${T('Добавить картинку или гифку')}">${ICON.image}<span class="sr">${T('Добавить картинку или гифку')}</span>
         <input class="sr" type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-attach></label>
       <input type="hidden" name="image">
@@ -545,7 +568,7 @@ export function setupSocial(ctx) {
         <textarea name="text" rows="${parentId ? 3 : 1}" maxlength="5000" aria-label="${T(parentId ? 'Ответ' : 'Комментарий')}"
           placeholder="${T(parentId ? 'Напишите ответ' : 'Присоединиться к обсуждению')}" ${autofocus ? 'autofocus' : ''}></textarea>
         <div class="r-composer-bar">
-          ${attachBar()}
+          ${attachBar(true)}
           <button type="button" class="r-pill ghost" data-s-cancel>${T('Отмена')}</button>
           <button class="r-pill primary">${T(parentId ? 'Ответить' : 'Комментировать')}</button>
         </div>
@@ -599,7 +622,7 @@ export function setupSocial(ctx) {
           <button type="button" class="r-c-line" data-s-collapse aria-label="${T('Свернуть ветку')}"></button>
           <div class="r-c-content">
             <div class="r-c-body">${c.deleted ? `<p class="r-muted">${T('[комментарий удалён]')}</p>` : rich(c.body)}</div>
-            ${c.deleted ? '' : imageTag(c.image)}
+            ${c.deleted ? '' : imageTag(c.image) + stickerTag(c.sticker)}
             ${c.deleted ? '' : `
               <div class="r-c-actions">
                 ${voteBox('c', c.id, c.score)}
@@ -617,11 +640,11 @@ export function setupSocial(ctx) {
     return roots.map(c => item(c, 0)).join('');
   }
 
-  async function addComment(form) {
+  async function addComment(form, sticker = '') {
     if (needAccount()) return;
-    const text = form.elements.text.value.trim();
-    const image = form.elements.image?.value || '';
-    if ((!text && !image) || !thread) return;
+    const text = sticker ? '' : form.elements.text.value.trim();
+    const image = sticker ? '' : form.elements.image?.value || '';
+    if ((!text && !image && !sticker) || !thread) return;
     const { post } = thread;
     const parentId = form.dataset.parent || '';
     const button = form.querySelector('button:not([type])');
@@ -629,13 +652,13 @@ export function setupSocial(ctx) {
     try {
       const cRef = F().doc(col('tcomments'));
       const batch = F().writeBatch(ctx.db);
-      const data = { postId: post.id, parentId, uid: me(), body: text, score: 1, deleted: false, ...(image ? { image } : {}) };
+      const data = { postId: post.id, parentId, uid: me(), body: text, score: 1, deleted: false, ...(image ? { image } : {}), ...(sticker ? { sticker } : {}) };
       batch.set(cRef, { ...data, createdAt: F().serverTimestamp() });
       batch.set(ref('votes', `c_${cRef.id}_${me()}`), { uid: me(), kind: 'c', target: cRef.id, v: 1 });
       batch.update(ref('posts', post.id), { commentCount: F().increment(1) });
       await batch.commit();
       const parent = parentId && thread.comments.find(c => c.id === parentId);
-      ctx.notify('treply', cRef.id, parent ? parent.uid : post.uid, post.id, text);
+      ctx.notify('treply', cRef.id, parent ? parent.uid : post.uid, post.id, text || T(sticker ? '[стикер]' : '[картинка]'));
       myVotes.set(`c_${cRef.id}`, 1);
       thread.comments.push({ id: cRef.id, ...data, createdAt: { toMillis: () => Date.now() } });
       post.commentCount = (post.commentCount || 0) + 1;
@@ -677,7 +700,7 @@ export function setupSocial(ctx) {
         Object.assign(thread.post, { body: text, editedAt: true });
       } else {
         const c = thread.comments.find(x => x.id === form.dataset.id);
-        if (!text && !c.image) return;
+        if (!text && !c.image && !c.sticker) return;
         await F().updateDoc(ref('tcomments', c.id), { body: text, editedAt: F().serverTimestamp() });
         Object.assign(c, { body: text, editedAt: true });
       }
@@ -687,9 +710,9 @@ export function setupSocial(ctx) {
 
   // Стирает текст и картинку, ветка остаётся: на комментарий могли ответить.
   async function eraseComment(c) {
-    const clear = { body: '', deleted: true, image: F().deleteField() };
+    const clear = { body: '', deleted: true, image: F().deleteField(), sticker: F().deleteField() };
     await F().updateDoc(ref('tcomments', c.id), c.uid === me() ? { ...clear, editedAt: F().serverTimestamp() } : clear);
-    Object.assign(c, { body: '', deleted: true, image: '' });
+    Object.assign(c, { body: '', deleted: true, image: '', sticker: '' });
   }
 
   async function deleteComment(id) {
@@ -749,6 +772,22 @@ export function setupSocial(ctx) {
       </section>`;
   }
 
+  /* ---------- Кто в сети ---------- */
+
+  // Браузер отмечается раз в 2 минуты, пока вкладка открыта. «В сети» — отметка не старше 4 минут.
+  const BEAT = 2 * 60e3;
+  function beat() {
+    if (ctx.user && !document.hidden) F().setDoc(ref('presence', me()), { at: F().serverTimestamp() }).catch(console.error);
+  }
+  setInterval(beat, BEAT);
+  document.addEventListener('visibilitychange', beat);
+
+  function presenceLine(at, isMe) {
+    const online = isMe || Date.now() - ms(at) < 2 * BEAT;
+    if (!online && !ms(at)) return '';
+    return `<p class="r-presence${online ? ' online' : ''}">${online ? T('В сети') : T('Был(а) в сети {when}', { when: ago(at) })}</p>`;
+  }
+
   /* ---------- Профиль ---------- */
 
   const PROFILE_TABS = [['', 'Обзор'], ['posts', 'Посты'], ['comments', 'Комментарии'], ['followers', 'Подписчики'], ['following', 'Подписки']];
@@ -785,6 +824,7 @@ export function setupSocial(ctx) {
     }
     // Свежий профиль, а не из кэша: имя и фото могли поменяться.
     try { const d = await F().getDoc(ref('profiles', uid)); remember(uid, d.exists() ? d.data() : null); } catch { /* останется кэш */ }
+    const lastSeen = await F().getDoc(ref('presence', uid)).then(d => d.data()?.at, () => null);
     comments = comments.filter(c => !c.deleted);
     shownComments.clear();
     comments.forEach(c => shownComments.set(c.id, c));
@@ -807,7 +847,7 @@ export function setupSocial(ctx) {
       <article class="r-post r-pcomment" data-href="#post/${esc(c.postId)}/${esc(c.id)}">
         <div class="r-meta">${ICON.comment}<a class="r-ptitle" href="#post/${esc(c.postId)}">${postTitles.get(c.postId) ? esc(postTitles.get(c.postId)) : T('[пост удалён]')}</a></div>
         <div class="r-meta"><span class="r-user strong">${userLabel(uid)}</span><span>${T('ответил(а)')}</span><span class="r-dot">•</span>${time(c.createdAt)}</div>
-        <div class="r-preview">${esc(c.body) || T('[картинка]')}</div>
+        <div class="r-preview">${esc(c.body) || T(c.sticker ? '[стикер]' : '[картинка]')}</div>
         <div class="r-actions">
           ${voteBox('c', c.id, c.score)}
           ${postTitles.get(c.postId) ? `<a class="r-pill flat" href="#post/${esc(c.postId)}/${esc(c.id)}">${ICON.comment}<span>${T('Ответить')}</span></a>` : ''}
@@ -850,6 +890,7 @@ export function setupSocial(ctx) {
           <div class="r-phead-text">
             <h1>${esc(p.name || p.username)}</h1>
             <p class="r-sub">@${esc(p.username)}${!isMe && followers.has(uid) && !isMutual(uid) ? ` <span class="r-tag">${T('подписан(а) на вас')}</span>` : ''}</p>
+            ${presenceLine(lastSeen, isMe)}
             ${netLinks(uid)}
           </div>
         </header>
@@ -1151,6 +1192,7 @@ export function setupSocial(ctx) {
         ctx.drawInboxCount();
         if (ctx.route().name === 'chat') {
           drawChatList();
+          drawMsgs(); // собеседник мог прочитать: обновятся галочки
           if (roomId && !stopMsgs && chats.some(c => c.id === roomId)) openRoomStream();
           markSeen();
         }
@@ -1200,6 +1242,7 @@ export function setupSocial(ctx) {
             ${pub ? `
               <form class="r-chat-form" data-s-form="chat">
                 ${emojiBtn()}
+                ${stickerBtn()}
                 <textarea name="text" rows="1" maxlength="2000" required aria-label="${T('Сообщение')}" placeholder="${T('Сообщение')}"></textarea>
                 <button class="r-send" aria-label="${T('Отправить')}">${ICON.send}</button>
               </form>` : `<a class="r-composer-stub" href="#account">${T('Выберите @имя в профиле, чтобы писать сообщения')}</a>`}`
@@ -1242,10 +1285,13 @@ export function setupSocial(ctx) {
     );
   }
 
+  const ticks = read => `<span class="r-ticks${read ? ' read' : ''}" role="img" aria-label="${T(read ? 'Прочитано' : 'Отправлено')}">${read ? ICON.ticks : ICON.tick}</span>`;
+
   function drawMsgs() {
     const box = document.getElementById('chat-msgs');
     if (!box) return;
     const stick = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+    const peerSeen = ms(chats.find(c => c.id === roomId)?.seen?.[roomPeer]);
     let html = '';
     let prev = null;
     let lastDay = '';
@@ -1263,7 +1309,9 @@ export function setupSocial(ctx) {
           ${grouped ? '<span class="r-msg-gap"></span>' : `<a href="${profileHref(m.from)}" tabindex="-1">${ava(m.from, 32)}</a>`}
           <div class="r-msg-main">
             ${grouped ? '' : `<div class="r-meta"><b class="r-user strong">${esc(shownName(m.from))}</b><span>${new Date(t).toLocaleTimeString(ctx.lang === 'en' ? 'en-GB' : 'ru-RU', { hour: '2-digit', minute: '2-digit' })}</span></div>`}
-            <div class="r-msg-text">${rich(m.text)}</div>
+            ${m.text ? `<div class="r-msg-text">${rich(m.text)}</div>` : ''}
+            ${stickerTag(m.sticker)}
+            ${m.from === me() ? ticks(ms(m.createdAt) && ms(m.createdAt) <= peerSeen) : ''}
           </div>
         </div>`;
       prev = m;
@@ -1278,22 +1326,22 @@ export function setupSocial(ctx) {
     F().updateDoc(ref('chats', c.id), { [`seen.${me()}`]: F().serverTimestamp() }).catch(console.error);
   }
 
-  async function sendChat(form) {
+  async function sendChat(form, sticker = '') {
     if (needAccount() || !roomId) return;
     const input = form.elements.text;
-    const text = input.value.trim();
-    if (!text) return;
-    input.value = '';
+    const text = sticker ? '' : input.value.trim();
+    if (!text && !sticker) return;
+    if (!sticker) input.value = '';
     try {
       const batch = F().writeBatch(ctx.db);
       batch.set(ref('chats', roomId), {
         members: [me(), roomPeer].sort(),
-        lastText: text.slice(0, 200),
+        lastText: text.slice(0, 200) || T('[стикер]'),
         lastFrom: me(),
         lastAt: F().serverTimestamp(),
         seen: { [me()]: F().serverTimestamp() },
       }, { merge: true });
-      batch.set(F().doc(col('chats', roomId, 'msgs')), { from: me(), text, createdAt: F().serverTimestamp() });
+      batch.set(F().doc(col('chats', roomId, 'msgs')), { from: me(), text, ...(sticker ? { sticker } : {}), createdAt: F().serverTimestamp() });
       await batch.commit();
       if (!stopMsgs) openRoomStream();
     } catch (e) {
@@ -1429,6 +1477,7 @@ export function setupSocial(ctx) {
       ins?.forEach(d => followers.add(d.data().from));
     }
     watchChats();
+    beat();
   }
 
   /* ---------- Маршруты и события ---------- */
@@ -1483,10 +1532,11 @@ export function setupSocial(ctx) {
     }
     else if (d.sEditComment) {
       const c = thread.comments.find(x => x.id === d.sEditComment);
-      t.closest('.r-c-content').querySelector('.r-c-body').innerHTML = editForm('comment', c.id, c.body, !!c.image);
+      t.closest('.r-c-content').querySelector('.r-c-body').innerHTML = editForm('comment', c.id, c.body, !!(c.image || c.sticker));
     }
     else if (d.sDelComment) deleteComment(d.sDelComment);
     else if (d.sDelCard) deleteProfileComment(d.sDelCard);
+    else if (d.sticker) sendSticker(t);
     else if (d.emoji) insertEmoji(t);
     else if (d.attachClear !== undefined) clearAttach(t.closest('form'));
     else if (d.netAdd !== undefined) {

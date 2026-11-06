@@ -214,6 +214,13 @@ service cloud.firestore {
       allow delete: if signedIn() && resource.data.uid == request.auth.uid
         && getAfter(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.username != name;
     }
+    // Когда человек был на сайте. Время ставит сервер, подделать его нельзя.
+    match /presence/{uid} {
+      allow read: if true;
+      allow write: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['at'])
+        && request.resource.data.at == request.time;
+    }
     // Подписка: id = <кто>_<на кого>. Взаимная подписка отдельно не хранится.
     match /follows/{id} {
       allow read: if true;
@@ -307,14 +314,15 @@ service cloud.firestore {
     match /tcomments/{id} {
       allow read: if true;
       allow create: if signedIn() && hasProfile()
-        && request.resource.data.keys().hasOnly(['postId', 'parentId', 'uid', 'body', 'image', 'score', 'deleted', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['postId', 'parentId', 'uid', 'body', 'image', 'sticker', 'score', 'deleted', 'createdAt'])
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.postId is string
         && request.resource.data.parentId is string
         && (request.resource.data.parentId == ''
           || get(/databases/$(database)/documents/tcomments/$(request.resource.data.parentId)).data.postId == request.resource.data.postId)
         && str(request.resource.data.body, 0, 5000)
-        && (request.resource.data.body.size() > 0 || 'image' in request.resource.data)
+        && (request.resource.data.body.size() > 0 || 'image' in request.resource.data || 'sticker' in request.resource.data)
+        && str(request.resource.data.get('sticker', ''), 0, 20)
         && str(request.resource.data.get('image', ''), 0, 800000)
         && (request.resource.data.score == 0 || (request.resource.data.score == 1 && hasOwnVote('c', id)))
         && request.resource.data.deleted == false
@@ -323,16 +331,18 @@ service cloud.firestore {
           == get(/databases/$(database)/documents/posts/$(request.resource.data.postId)).data.commentCount + 1;
       allow update: if signedIn() && (
         (resource.data.uid == request.auth.uid && resource.data.deleted == false
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body', 'image', 'deleted', 'editedAt'])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body', 'image', 'sticker', 'deleted', 'editedAt'])
           && !('image' in request.resource.data && request.resource.data.image != resource.data.get('image', ''))
+          && !('sticker' in request.resource.data && request.resource.data.sticker != resource.data.get('sticker', ''))
           && str(request.resource.data.body, 0, 5000)
           && request.resource.data.deleted is bool
           && request.resource.data.editedAt == request.time)
         || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['score'])
           && request.resource.data.score == resource.data.score + voteDelta('c', id))
         || (isAdmin()
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body', 'image', 'deleted'])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body', 'image', 'sticker', 'deleted'])
           && !('image' in request.resource.data)
+          && !('sticker' in request.resource.data)
           && request.resource.data.body == '' && request.resource.data.deleted == true));
       // Совсем стереть можно свой комментарий, любой чужой админу и любой, у которого пост уже удалён.
       allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin()
@@ -437,9 +447,11 @@ service cloud.firestore {
         allow read: if signedIn()
           && request.auth.uid in get(/databases/$(database)/documents/chats/$(id)).data.members;
         allow create: if signedIn()
-          && request.resource.data.keys().hasOnly(['from', 'text', 'createdAt'])
+          && request.resource.data.keys().hasOnly(['from', 'text', 'sticker', 'createdAt'])
           && request.resource.data.from == request.auth.uid
-          && str(request.resource.data.text, 1, 2000)
+          && str(request.resource.data.text, 0, 2000)
+          && (request.resource.data.text.size() > 0 || 'sticker' in request.resource.data)
+          && str(request.resource.data.get('sticker', ''), 0, 20)
           && request.resource.data.createdAt == request.time
           && request.auth.uid in getAfter(/databases/$(database)/documents/chats/$(id)).data.members;
       }

@@ -47,6 +47,20 @@ await ok('удалить свой с картинкой (мягко)', updateDoc
 await no('подменить картинку', comment(bob, 'c5', 'bob', { image: 'data:image/gif;base64,AAAA' }).then(() => updateDoc(doc(bob, 'tcomments', 'c5'), { image: 'data:image/gif;base64,BBBB', editedAt: serverTimestamp() })));
 await ok('админ стирает чужой', updateDoc(doc(admin, 'tcomments', 'c5'), { body: '', deleted: true, image: deleteField() }));
 
+await ok('комментарий-стикер', comment(alice, 'cs1', 'alice', { sticker: 'laugh' }, ''));
+await no('слишком длинный стикер', comment(alice, 'cs2', 'alice', { sticker: 'x'.repeat(21) }, ''));
+await ok('стикер стирается с комментарием', updateDoc(doc(alice, 'tcomments', 'cs1'), { body: '', deleted: true, sticker: deleteField(), editedAt: serverTimestamp() }));
+{ const b = writeBatch(alice); const id = ['alice', 'bob'].sort().join('_');
+  b.set(doc(alice, 'chats', id), { members: ['alice', 'bob'], lastText: 'Стикер', lastFrom: 'alice', lastAt: serverTimestamp(), seen: {} });
+  b.set(doc(collection(alice, 'chats', id, 'msgs')), { from: 'alice', text: '', sticker: 'love', createdAt: serverTimestamp() });
+  await ok('стикер в личке', b.commit()); }
+await no('пустое сообщение', setDoc(doc(collection(alice, 'chats', 'alice_bob', 'msgs')), { from: 'alice', text: '', createdAt: serverTimestamp() }));
+
+await ok('отмечаю себя в сети', setDoc(doc(alice, 'presence', 'alice'), { at: serverTimestamp() }));
+await no('время нельзя подделать', setDoc(doc(alice, 'presence', 'alice'), { at: new Date(2030, 0, 1) }));
+await no('за другого нельзя', setDoc(doc(bob, 'presence', 'alice'), { at: serverTimestamp() }));
+await ok('статус видят все', getDoc(doc(anon, 'presence', 'alice')));
+
 // Комментарий к программе
 const ac = (db, uid, likedBy, extra = {}) => setDoc(doc(collection(db, 'comments')), { appId: 'a', uid, name: 'n', photo: '', text: 'x', createdAt: serverTimestamp(), likedBy, ...extra });
 await ok('свой лайк сразу', ac(alice, 'alice', ['alice']));
