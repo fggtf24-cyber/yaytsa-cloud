@@ -183,6 +183,7 @@ export const EN = {
   'Добавить картинку или гифку': 'Add an image or GIF',
   'Убрать картинку': 'Remove image',
   'Эмодзи': 'Emoji',
+  'Обрабатываем фото с iPhone, это займёт несколько секунд…': 'Processing the iPhone photo, this takes a few seconds…',
   'Выключить звук': 'Turn sound off',
   'Включить звук': 'Turn sound on',
   'Поиск по чатам и людям': 'Search chats and people',

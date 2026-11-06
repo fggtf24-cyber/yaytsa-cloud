@@ -65,6 +65,7 @@ const ICON = {
 
 export function setupSocial(ctx) {
   const { T, esc, view } = ctx;
+  onHeic = () => ctx.toast(T('Обрабатываем фото с iPhone, это займёт несколько секунд…'));
   const F = () => ctx.fs;
   const ref = (...path) => F().doc(ctx.db, ...path);
   const col = (...path) => F().collection(ctx.db, ...path);
@@ -225,7 +226,7 @@ export function setupSocial(ctx) {
       ${emojiBtn()}
       ${stickers ? stickerBtn() : ''}
       <label class="r-iconbtn" title="${T('Добавить картинку или гифку')}">${ICON.image}<span class="sr">${T('Добавить картинку или гифку')}</span>
-        <input class="sr" type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-attach></label>
+        <input class="sr" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/heic,image/heif,.heic,.heif" data-attach></label>
       <input type="hidden" name="image">
       <span class="attach-preview" hidden><img alt=""><button type="button" data-attach-clear aria-label="${T('Убрать картинку')}">×</button></span>
     </div>`;
@@ -1210,7 +1211,7 @@ export function setupSocial(ctx) {
         <div class="r-menu-list">
           ${g.owner === me() ? `
             <button type="button" data-s-group-name>${T('Изменить название')}</button>
-            <label>${T('Изменить фото')}<input id="group-photo" class="sr" type="file" accept="image/*"></label>
+            <label>${T('Изменить фото')}<input id="group-photo" class="sr" type="file" accept="image/*,.heic,.heif"></label>
             <button type="button" data-s-group-add>${T('Добавить людей')}</button>` : ''}
           <button type="button" data-s-group-leave>${T('Выйти из группы')}</button>
           ${g.owner === me() ? `<button type="button" class="r-menu-danger" data-s-group-delete>${T('Удалить группу')}</button>` : ''}
@@ -1559,7 +1560,7 @@ export function setupSocial(ctx) {
       ${pub ? `
         <div class="edit-hero-actions">
           ${pub.banner ? `<button type="button" class="glass" id="banner-remove">${T('Убрать шапку')}</button>` : ''}
-          <label class="glass">${T('Загрузить шапку')}<input id="banner" class="sr" type="file" accept="image/*"></label>
+          <label class="glass">${T('Загрузить шапку')}<input id="banner" class="sr" type="file" accept="image/*,.heic,.heif"></label>
         </div>` : ''}
     </div>`;
 
@@ -1869,6 +1870,36 @@ export function askDialog(T, { title, text = '', input = false, value = '', plac
 
 /* ---------- Картинки ---------- */
 
+// Фото с iPhone. Большинство браузеров HEIC не читает, поэтому конвертер качаем только когда такой файл выбрали.
+const HEIC_LIB = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
+const isHeic = file => /^image\/hei[cf]/i.test(file.type) || /\.hei[cf]$/i.test(file.name || '');
+let heicLib = null;
+let onHeic = () => {};
+
+function loadHeicLib() {
+  heicLib ||= new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = HEIC_LIB;
+    script.onload = () => resolve(window.heic2any);
+    script.onerror = () => { heicLib = null; reject(new Error('heic lib')); };
+    document.head.append(script);
+  });
+  return heicLib;
+}
+
+// Единая точка чтения картинки: сначала сам браузер (Safari умеет), для HEIC запасной путь через конвертер.
+export async function readImage(file) {
+  try {
+    return await createImageBitmap(file);
+  } catch (e) {
+    if (!isHeic(file)) throw e;
+  }
+  onHeic();
+  const convert = await loadHeicLib();
+  const jpeg = await convert({ blob: file, toType: 'image/jpeg', quality: 0.9 });
+  return createImageBitmap(Array.isArray(jpeg) ? jpeg[0] : jpeg);
+}
+
 // Storage на бесплатном тарифе нет, поэтому картинка лежит строкой в документе. Лимит документа в базе 1 МиБ.
 // ponytail: гифку нельзя ужать в браузере, не убив анимацию, поэтому она ограничена размером. Большие гифки — только через Storage.
 const GIF_LIMIT = 590000;
@@ -1889,7 +1920,7 @@ export async function fileToImage(file, { max = 1280, limit = 400000 } = {}) {
       reader.readAsDataURL(file);
     });
   }
-  const bitmap = await createImageBitmap(file);
+  const bitmap = await readImage(file);
   const k = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement('canvas');
   canvas.width = Math.round(bitmap.width * k);
@@ -1911,7 +1942,7 @@ export async function fileToImage(file, { max = 1280, limit = 400000 } = {}) {
 // Окно с рамкой: фото двигают мышью или пальцем, масштаб — ползунком, колесом или клавишами.
 // ratio 1 — круг для аватарки, больше 1 — вытянутая шапка, меньше 1 — портрет для селфи. Возвращает JPEG строкой или null, если нажали «Отмена».
 export async function cropImage(file, T, { ratio = 1, out = 256, limit = 95000 } = {}) {
-  const bitmap = await createImageBitmap(file);
+  const bitmap = await readImage(file);
   const { width: w, height: h } = bitmap;
   const SW = 560;  // холст в пикселях, на экране вдвое меньше — для чёткости на ретине
   const SH = Math.round(SW / ratio);

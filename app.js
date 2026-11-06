@@ -1,5 +1,5 @@
-import { EN, TERMS } from './i18n.js?v=36';
-import { setupSocial, cropImage, askDialog } from './social.js?v=23';
+import { EN, TERMS } from './i18n.js?v=37';
+import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=24';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -766,7 +766,7 @@ const field = item => ([key, label, type]) => {
       <div class="field">${T(label)}
         <div class="icon-pick">
           <img id="icon-preview" src="${icon(item)}" alt="">
-          <label class="btn">${T('Загрузить с компьютера')}<input id="icon-file" class="sr" type="file" accept="image/*"></label>
+          <label class="btn">${T('Загрузить с компьютера')}<input id="icon-file" class="sr" type="file" accept="image/*,.heic,.heif"></label>
         </div>
         <input type="hidden" name="${key}" value="${esc(value)}">
       </div>`;
@@ -876,7 +876,7 @@ function renderPublish() {
         <div class="field">${T('Ваше селфи (обязательно)')}
           <div class="icon-pick">
             <img id="selfie-preview" src="assets/favicon.svg" alt="">
-            <label class="btn">${T('Загрузить селфи')}<input id="selfie-file" class="sr" type="file" accept="image/*"></label>
+            <label class="btn">${T('Загрузить селфи')}<input id="selfie-file" class="sr" type="file" accept="image/*,.heic,.heif"></label>
           </div>
           <small class="r-hint">${T('После одобрения селфи будет видно всем на странице программы.')}</small>
           <input type="hidden" name="selfie">
@@ -1168,7 +1168,7 @@ function renderAccount() {
               <small>${social.handleOf(user.uid) ? `@${esc(social.handleOf(user.uid))}` : esc(user.email)}</small>
             </div>
             <div class="profile-photo">
-              <label class="btn">${T('Загрузить фото')}<input id="photo" class="sr" type="file" accept="image/*"></label>
+              <label class="btn">${T('Загрузить фото')}<input id="photo" class="sr" type="file" accept="image/*,.heic,.heif"></label>
               ${profile.photo ? `<button type="button" class="link linkbtn" id="photo-remove">${T('Убрать фото')}</button>` : ''}
             </div>
           </div>
@@ -1264,7 +1264,7 @@ async function saveProfile(data) {
 
 // Storage на бесплатном тарифе нет, поэтому картинки ужимаем в браузере и храним строкой в базе.
 async function photoToDataUrl(file, size = 128, type = 'image/jpeg') {
-  const bitmap = await createImageBitmap(file);
+  const bitmap = await readImage(file);
   const side = Math.min(bitmap.width, bitmap.height);
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
