@@ -102,7 +102,7 @@ h1, h2, p, ul { margin: 0; }
 
 /* Левая панель и контент */
 .shell { flex: 1; display: flex; min-height: 0; }
-.rail { flex: 0 0 76px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 0; }
+.rail { flex: 0 0 96px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 0; }
 .rail a {
   width: 72px; padding: 8px 0; display: flex; flex-direction: column; align-items: center; gap: 4px;
   font-size: 11px; color: var(--soft);
@@ -176,7 +176,7 @@ h1, h2, p, ul { margin: 0; }
   max-width: 1280px; margin: 0 auto; padding: 32px 28px;
 }
 .app-side {
-  flex: 0 1 320px; min-width: 0; position: sticky; top: 16px; display: flex; flex-direction: column; gap: 16px;
+  flex: 0 1 320px; min-width: 0; position: sticky; top: calc(var(--top-h) + 16px); display: flex; flex-direction: column; gap: 16px;
   padding: 24px; background: var(--card); border: 1px solid var(--line); border-radius: 8px;
 }
 .app-title { display: flex; align-items: center; gap: 20px; }
@@ -309,7 +309,7 @@ a.avatar { color: #141414; }
   padding: 20px 24px 48px;
 }
 .r-main { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
-.r-aside { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.r-aside { position: sticky; top: calc(var(--top-h) + 16px); display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .r-note { padding: 24px 16px; text-align: center; }
 .r-muted { color: var(--faint); }
 
@@ -531,7 +531,7 @@ a.r-stat:hover b { text-decoration: underline; }
 
 /* Чаты */
 .content:has(> .r-chat) { display: flex; }
-.r-chat { flex: 1; display: grid; grid-template-columns: 320px minmax(0, 1fr); height: calc(100vh - 66px); min-height: 420px; }
+.r-chat { flex: 1; display: grid; grid-template-columns: 320px minmax(0, 1fr); height: calc(100vh - var(--top-h)); min-height: 420px; }
 .r-chat-list { border-right: 1px solid var(--rule); display: flex; flex-direction: column; min-height: 0; }
 .r-chat-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 16px 10px; }
 .r-chat-top h1 { font-size: 19px; font-weight: 800; }
@@ -817,6 +817,33 @@ a, button, summary, input, textarea, select, .card, .comment, .rail-ico, .r-post
   .edit-id .profile-photo { padding-top: 0; }
   .edit-fields { grid-template-columns: minmax(0, 1fr); }
   .edit-hero-actions { right: 10px; top: 10px; }
+}
+
+/* ---------- Шапка и меню стоят на месте, прокручивается только содержимое ---------- */
+:root { --top-h: 66px; }
+html { scrollbar-gutter: stable; scroll-padding-top: calc(var(--top-h) + 12px); }
+.top { position: sticky; top: 0; z-index: 25; background: var(--bg); }
+.rail { position: sticky; top: var(--top-h); align-self: flex-start; height: calc(100vh - var(--top-h)); overflow-y: auto; scrollbar-width: none; }
+.rail a { width: 92px; text-align: center; }
+/* Надписи не обрываем: длинное название переносится на вторую строку */
+.s-item b, .s-item small { white-space: normal; overflow-wrap: anywhere; }
+.search-panel { width: min(480px, calc(100vw - 32px)); }
+.card h2 { min-width: 0; overflow-wrap: anywhere; }
+.card-head .tag { flex: none; white-space: nowrap; }
+@media (max-width: 640px) {
+  /* На телефоне меню внизу, как в приложениях: так оно не съедает экран */
+  .rail {
+    position: fixed; left: 0; right: 0; top: auto; bottom: 0; z-index: 25; width: 100%; height: auto;
+    flex-direction: row; flex-wrap: nowrap; justify-content: space-around; gap: 0; overflow-x: auto;
+    padding: 4px 0 max(4px, env(safe-area-inset-bottom)); background: var(--bg); border-top: 1px solid var(--line);
+  }
+  .rail a { flex: 1 0 64px; width: auto; padding: 4px 0; font-size: 10px; }
+  .shell { padding-bottom: 72px; }
+  html { scroll-padding-bottom: 84px; }
+  .toast, .cookie { bottom: 84px; }
+  .edit-bar { bottom: 80px; }
+  .r-chat { height: calc(100vh - var(--top-h) - 72px); min-height: 0; }
+  .search-panel { top: calc(var(--top-h) + 4px); }
 }
 
 /* ---------- Светлая тема в духе Creative Cloud ---------- */

@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=17';
+import { EN, TERMS } from './i18n.js?v=18';
 import { setupSocial, cropImage } from './social.js?v=4';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -511,7 +511,7 @@ function renderApp(a) {
             </div>
             ${demo}
           </div>` : (demo ? `<div class="use">${demo}</div>` : '')}
-        ${needs.length ? `<h2>${T('Что нужно')}</h2><div class="use"><div class="use-text">${list(needs)}</div></div>` : ''}
+        ${needs.length ? `<h2>${T('Системные требования')}</h2><div class="use"><div class="use-text">${list(needs)}</div></div>` : ''}
         <h2>${T('Обсуждения')}</h2>
         <div id="app-threads" class="app-threads" data-app="${esc(a.id)}"><p class="empty">${T('Загрузка…')}</p></div>
         <h2>${T('Комментарии')} <span id="comment-count"></span></h2>
@@ -829,7 +829,7 @@ const FIELDS = {
     ['file', 'Ссылка на .exe', 'url*'],
     ['size', 'Размер после установки, например 130 МБ', 'text'],
     ['features', 'Что умеет (один пункт на строку)', 'lines'],
-    ['needs', 'Что нужно (один пункт на строку)', 'lines'],
+    ['needs', 'Системные требования (один пункт на строку)', 'lines'],
     ['site', 'Сайт программы', 'url', 'Ссылки и демо'],
     ['repo', 'GitHub', 'url', 'Ссылки и демо'],
     ['demo', 'Ссылка на картинку, гифку или .mp4', 'url', 'Ссылки и демо'],
@@ -837,7 +837,7 @@ const FIELDS = {
     ['descEn', 'Описание', 'area', 'Английская версия'],
     ['sizeEn', 'Размер, например 130 MB', 'text', 'Английская версия'],
     ['featuresEn', 'Что умеет (один пункт на строку)', 'lines', 'Английская версия'],
-    ['needsEn', 'Что нужно (один пункт на строку)', 'lines', 'Английская версия'],
+    ['needsEn', 'Системные требования (один пункт на строку)', 'lines', 'Английская версия'],
   ],
   projects: [
     ['name', 'Название', 'text*'],
@@ -1891,6 +1891,10 @@ addEventListener('hashchange', () => {
   render();
   scrollTo(0, 0);
 });
+
+// Шапка на узком экране переносится на две строки, поэтому её высоту меряем, а не угадываем.
+const topBar = document.querySelector('.top');
+new ResizeObserver(() => document.documentElement.style.setProperty('--top-h', `${topBar.offsetHeight}px`)).observe(topBar);
 
 applyStaticText();
 drawCookieBar();

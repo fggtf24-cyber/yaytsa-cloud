@@ -51,7 +51,7 @@ export const EN = {
   '{size}, установка не нужна': '{size}, no installation needed',
   'Сообщить о баге или идее': 'Report a bug or idea',
   'Основное использование': 'Main features',
-  'Что нужно': 'Requirements',
+  'Системные требования': 'System requirements',
   'Комментарии': 'Comments',
   'Загрузка…': 'Loading…',
 
@@ -92,7 +92,7 @@ export const EN = {
   'Английская версия': 'English version',
   'Ссылка на картинку, гифку или .mp4': 'Link to an image, GIF or .mp4',
   'Что умеет (один пункт на строку)': 'Features (one per line)',
-  'Что нужно (один пункт на строку)': 'Requirements (one per line)',
+  'Системные требования (один пункт на строку)': 'System requirements (one per line)',
   'Ссылка': 'Link',
   'Не удалось загрузить данные. Обновите страницу.': 'Could not load data. Refresh the page.',
   'Редактировать могут только админы, вошедшие через Google.': 'Only admins signed in with Google can edit.',
