@@ -53,6 +53,7 @@ const ICON = {
   send: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12l16-8-6 16-2.5-6.5z" stroke-linejoin="round"/></svg>',
   chat: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" stroke-linejoin="round"/></svg>',
   image: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 16l-5-5-8 8" stroke-linejoin="round"/></svg>',
+  smile: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 14c1 1.5 2.3 2.2 4 2.2s3-.7 4-2.2M9 9.5v.5M15 9.5v.5"/></svg>',
   edit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z" stroke-linejoin="round"/></svg>',
 };
 
@@ -182,7 +183,7 @@ export function setupSocial(ctx) {
 
   const emojiBtn = () => `
     <details class="emoji">
-      <summary class="r-iconbtn" title="${T('Эмодзи')}" aria-label="${T('Эмодзи')}">😀</summary>
+      <summary class="r-iconbtn" title="${T('Эмодзи')}" aria-label="${T('Эмодзи')}">${ICON.smile}</summary>
       <div class="pop emoji-panel">${EMOJI.map(e => `<button type="button" data-emoji="${e}">${e}</button>`).join('')}</div>
     </details>`;
 
