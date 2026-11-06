@@ -707,7 +707,9 @@ a.r-stat:hover b { text-decoration: underline; }
 .comment-actions .btn { padding: 6px 16px; cursor: pointer; }
 #my-subs { display: flex; flex-direction: column; gap: 12px; }
 #my-subs:empty { display: none; }
-.panel.admin { max-width: 980px; }
+.panel.admin { max-width: 980px; margin: 0 auto; padding-top: 32px; gap: 24px; }
+.section.admin h1 { font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
+.admin-head p { margin-top: 6px; }
 .admin .tabs { padding: 0; border: 0; }
 .admin .table-box { max-width: none; }
 .tab { min-height: 40px; padding: 8px 14px; border-radius: 6px; font-weight: 600; color: var(--soft); }

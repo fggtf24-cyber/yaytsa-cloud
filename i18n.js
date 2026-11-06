@@ -234,9 +234,11 @@ export const EN = {
   'Админ отклонил вашу программу': 'An admin rejected your program',
 
   // Админка
-  'Заявки': 'Requests',
+  'Программы на проверку': 'Programs to review',
+  'Программы от пользователей. Одобренные появятся во вкладке «Сообщество».': 'Programs from users. Approved ones appear in the Community tab.',
+  'Все, кто заходил на сайт под своим аккаунтом.': 'Everyone who has visited the site signed in.',
   'Пользователи': 'Users',
-  'Заявок пока нет.': 'No requests yet.',
+  'Пока нет программ на проверку.': 'No programs to review yet.',
   'Селфи автора': 'Author selfie',
   'Файл': 'File',
   'Одобрить': 'Approve',

@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=18';
+import { EN, TERMS } from './i18n.js?v=19';
 import { setupSocial, cropImage } from './social.js?v=4';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -1089,16 +1089,19 @@ async function renderAdmin(tab) {
   const shell = html => {
     view.innerHTML = `
       <section class="section panel admin">
-        <h1>${T('Админка')}</h1>
+        <header class="admin-head">
+          <h1>${T('Админка')}</h1>
+          <p class="empty">${T(tab === 'users' ? 'Все, кто заходил на сайт под своим аккаунтом.' : 'Программы от пользователей. Одобренные появятся во вкладке «Сообщество».')}</p>
+        </header>
         <div class="tabs" role="group" aria-label="${T('Разделы')}">
-          <a class="tab" href="#admin" aria-current="${tab !== 'users'}">${T('Заявки')}</a>
+          <a class="tab" href="#admin" aria-current="${tab !== 'users'}">${T('Программы на проверку')}</a>
           <a class="tab" href="#admin/users" aria-current="${tab === 'users'}">${T('Пользователи')}</a>
         </div>
         ${html}
         <p id="msg" class="msg" role="alert"></p>
       </section>`;
   };
-  const empty = text => shell(`<p class="empty">${text}</p>`);
+  const empty = text => shell(`<div class="edit-card"><p class="empty">${text}</p></div>`);
   if (authState === 'loading') return empty(T('Загрузка…'));
   if (!isAdmin) return empty(T('Этот раздел видят только админы, вошедшие через Google.'));
   empty(T('Загрузка…'));
@@ -1139,7 +1142,7 @@ async function renderAdmin(tab) {
     ]);
     if (route().name !== 'admin' || route().tab === 'users') return;
     submissions = list;
-    shell(list.map(submissionCard).join('') || `<p class="empty">${T('Заявок пока нет.')}</p>`);
+    shell(list.map(submissionCard).join('') || `<div class="edit-card"><p class="empty">${T('Пока нет программ на проверку.')}</p></div>`);
   } catch (e) {
     console.error(e);
     empty(T('Не удалось загрузить данные. Обновите страницу.'));
