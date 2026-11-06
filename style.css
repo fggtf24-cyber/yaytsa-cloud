@@ -984,3 +984,6 @@ body, .content { transition: background-color .12s ease; }
 .r-names { min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
 .r-names b { color: var(--text); font-size: 14px; font-weight: 700; }
 .r-names small { color: var(--sub); font-size: 12px; }
+
+.emoji.up .emoji-panel { top: auto; bottom: calc(100% + 6px); }
+.r-c-body:empty { display: none; }

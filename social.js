@@ -1774,7 +1774,12 @@ export function setupSocial(ctx) {
   });
   // У низа экрана панель иначе открылась бы за его краем. Событие toggle не всплывает, поэтому ловим на погружении.
   document.addEventListener('toggle', e => {
-    if (e.target.matches('.emoji[open]')) e.target.querySelector('.emoji-panel').scrollIntoView({ block: 'nearest' });
+    if (!e.target.matches('.emoji[open]')) return;
+    const panel = e.target.querySelector('.emoji-panel');
+    // Внизу страницы панель вылезла бы за её край, тогда открываем вверх.
+    e.target.classList.remove('up');
+    if (panel.getBoundingClientRect().bottom > view.getBoundingClientRect().bottom) e.target.classList.add('up');
+    panel.scrollIntoView({ block: 'nearest' });
   }, true);
 
   function onSubmit(form) {
