@@ -40,7 +40,7 @@ service cloud.firestore {
     match /comments/{id} {
       allow read: if true;
       allow create: if request.auth != null
-        && request.resource.data.keys().hasOnly(['appId', 'uid', 'name', 'photo', 'text', 'createdAt', 'likedBy', 'parentId'])
+        && request.resource.data.keys().hasOnly(['appId', 'uid', 'name', 'photo', 'text', 'image', 'createdAt', 'likedBy', 'parentId'])
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.appId is string
         && request.resource.data.appId.size() <= 100
@@ -49,10 +49,12 @@ service cloud.firestore {
         && request.resource.data.photo is string
         && request.resource.data.photo.size() <= 100000
         && request.resource.data.text is string
-        && request.resource.data.text.size() > 0
         && request.resource.data.text.size() <= 1000
+        && (request.resource.data.text.size() > 0 || 'image' in request.resource.data)
+        && str(request.resource.data.get('image', ''), 0, 800000)
         && request.resource.data.createdAt == request.time
-        && request.resource.data.likedBy == []
+        // Комментарий рождается со своим лайком, как на Reddit. Пустой список принимаем от вкладок со старым кодом.
+        && (request.resource.data.likedBy == [] || request.resource.data.likedBy == [request.auth.uid])
         && (!('parentId' in request.resource.data)
           || (request.resource.data.parentId is string && request.resource.data.parentId.size() <= 100));
       allow update: if request.auth != null && (togglesOwnLike() || changesOwnProfile());
@@ -77,6 +79,7 @@ service cloud.firestore {
       return (n.type == 'dm' && isDmPartner(n.commentId, n.to))
         || (n.type == 'follow' && exists(/databases/$(database)/documents/follows/$(request.auth.uid + '_' + n.to)))
         || (n.type == 'treply' && isThreadReply(n))
+        || (n.type == 'mod' && isAdmin())
         || (n.type in ['reply', 'like'] && get(/databases/$(database)/documents/comments/$(n.commentId)).data.uid == n.to);
     }
     match /notifications/{id} {
@@ -85,7 +88,7 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['to', 'from', 'fromName', 'type', 'appId', 'commentId', 'text', 'createdAt', 'read'])
         && request.resource.data.from == request.auth.uid
         && request.resource.data.to != request.auth.uid
-        && request.resource.data.type in ['reply', 'like', 'dm', 'follow', 'treply']
+        && request.resource.data.type in ['reply', 'like', 'dm', 'follow', 'treply', 'mod']
         && request.resource.data.fromName is string
         && request.resource.data.fromName.size() <= 80
         && request.resource.data.appId is string
@@ -187,13 +190,16 @@ service cloud.firestore {
     match /profiles/{uid} {
       allow read: if true;
       allow create, update: if signedIn() && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['username', 'name', 'photo', 'bio', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['username', 'name', 'photo', 'bio', 'banner', 'links', 'createdAt'])
         && request.resource.data.username is string
-        && request.resource.data.username.matches('^[a-z0-9_]{3,20}$')
+        && request.resource.data.username.matches('^[a-z0-9_]{1,20}$')
         && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == uid
         && str(request.resource.data.get('name', ''), 0, 80)
         && str(request.resource.data.get('photo', ''), 0, 100000)
         && str(request.resource.data.get('bio', ''), 0, 300)
+        && str(request.resource.data.get('banner', ''), 0, 200000)
+        && request.resource.data.get('links', {}) is map
+        && request.resource.data.get('links', {}).size() <= 10
         && (resource == null
           ? request.resource.data.createdAt == request.time
           : request.resource.data.createdAt == resource.data.createdAt);
@@ -201,7 +207,7 @@ service cloud.firestore {
     // @имя -> uid. Занять можно только свободное имя, освободить — только своё и только сменив его в профиле.
     match /usernames/{name} {
       allow read: if true;
-      allow create: if signedIn() && name.matches('^[a-z0-9_]{3,20}$')
+      allow create: if signedIn() && name.matches('^[a-z0-9_]{1,20}$') && name != 'everyone'
         && request.resource.data.keys().hasOnly(['uid'])
         && request.resource.data.uid == request.auth.uid
         && getAfter(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.username == name;
@@ -235,6 +241,14 @@ service cloud.firestore {
           && getAfter(/databases/$(database)/documents/tcomments/$(target)).data.score
             == get(/databases/$(database)/documents/tcomments/$(target)).data.score + after - before);
     }
+    // Свой первый голос: пост или комментарий создаётся в этой же пачке записей со счётом 1.
+    function isNewOwnItem(kind, target) {
+      let path = kind == 'p' ? /databases/$(database)/documents/posts/$(target) : /databases/$(database)/documents/tcomments/$(target);
+      return !exists(path) && getAfter(path).data.uid == request.auth.uid && getAfter(path).data.score == 1;
+    }
+    function hasOwnVote(kind, target) {
+      return getAfter(/databases/$(database)/documents/votes/$(kind + '_' + target + '_' + request.auth.uid)).data.v == 1;
+    }
     // Голос: один на человека, -1, 0 или 1. Меняется только вместе со счётом поста или комментария.
     match /votes/{id} {
       allow read: if signedIn() && resource.data.uid == request.auth.uid;
@@ -245,8 +259,10 @@ service cloud.firestore {
         && request.resource.data.target is string
         && request.resource.data.v in [-1, 0, 1]
         && id == request.resource.data.kind + '_' + request.resource.data.target + '_' + request.auth.uid
-        && scoreFollows(request.resource.data.kind, request.resource.data.target,
-          resource == null ? 0 : resource.data.v, request.resource.data.v);
+        && ((resource == null && request.resource.data.v == 1
+            && isNewOwnItem(request.resource.data.kind, request.resource.data.target))
+          || scoreFollows(request.resource.data.kind, request.resource.data.target,
+            resource == null ? 0 : resource.data.v, request.resource.data.v));
     }
 
     // Пост на странице автора. appId — необязательная привязка к программе.
@@ -258,7 +274,7 @@ service cloud.firestore {
         && str(request.resource.data.title, 1, 300)
         && str(request.resource.data.body, 0, 10000)
         && str(request.resource.data.appId, 0, 100)
-        && request.resource.data.score == 0
+        && (request.resource.data.score == 0 || (request.resource.data.score == 1 && hasOwnVote('p', id)))
         && request.resource.data.commentCount == 0
         && request.resource.data.createdAt == request.time;
       allow update: if signedIn() && (
@@ -277,29 +293,104 @@ service cloud.firestore {
     match /tcomments/{id} {
       allow read: if true;
       allow create: if signedIn() && hasProfile()
-        && request.resource.data.keys().hasOnly(['postId', 'parentId', 'uid', 'body', 'score', 'deleted', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['postId', 'parentId', 'uid', 'body', 'image', 'score', 'deleted', 'createdAt'])
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.postId is string
         && request.resource.data.parentId is string
         && (request.resource.data.parentId == ''
           || get(/databases/$(database)/documents/tcomments/$(request.resource.data.parentId)).data.postId == request.resource.data.postId)
-        && str(request.resource.data.body, 1, 5000)
-        && request.resource.data.score == 0
+        && str(request.resource.data.body, 0, 5000)
+        && (request.resource.data.body.size() > 0 || 'image' in request.resource.data)
+        && str(request.resource.data.get('image', ''), 0, 800000)
+        && (request.resource.data.score == 0 || (request.resource.data.score == 1 && hasOwnVote('c', id)))
         && request.resource.data.deleted == false
         && request.resource.data.createdAt == request.time
         && getAfter(/databases/$(database)/documents/posts/$(request.resource.data.postId)).data.commentCount
           == get(/databases/$(database)/documents/posts/$(request.resource.data.postId)).data.commentCount + 1;
       allow update: if signedIn() && (
         (resource.data.uid == request.auth.uid && resource.data.deleted == false
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body', 'deleted', 'editedAt'])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body', 'image', 'deleted', 'editedAt'])
+          && !('image' in request.resource.data && request.resource.data.image != resource.data.get('image', ''))
           && str(request.resource.data.body, 0, 5000)
           && request.resource.data.deleted is bool
           && request.resource.data.editedAt == request.time)
         || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['score'])
           && request.resource.data.score == resource.data.score + voteDelta('c', id))
         || (isAdmin()
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body', 'deleted'])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body', 'image', 'deleted'])
+          && !('image' in request.resource.data)
           && request.resource.data.body == '' && request.resource.data.deleted == true));
+      // Совсем стереть можно свой комментарий, любой чужой админу и любой, у которого пост уже удалён.
+      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin()
+        || !existsAfter(/databases/$(database)/documents/posts/$(resource.data.postId)));
+    }
+
+    // Пост с @everyone: один документ на всех, браузер каждого сам показывает его в колокольчике.
+    match /broadcasts/{id} {
+      allow read: if true;
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly(['from', 'fromName', 'title', 'createdAt'])
+        && request.resource.data.from == request.auth.uid
+        && str(request.resource.data.fromName, 0, 80)
+        && str(request.resource.data.title, 0, 120)
+        && request.resource.data.createdAt == request.time
+        && getAfter(/databases/$(database)/documents/posts/$(id)).data.uid == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    // Кто зарегистрировался. Браузер пишет почту только о себе, читают только админы.
+    match /accounts/{uid} {
+      allow read: if isAdmin();
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['email', 'provider', 'created', 'lastSeen'])
+        && request.resource.data.email == request.auth.token.get('email', '')
+        && request.resource.data.provider == request.auth.token.firebase.sign_in_provider
+        && str(request.resource.data.created, 0, 40)
+        && request.resource.data.lastSeen == request.time;
+    }
+
+    // Заявки на программу. Без селфи и согласия на его показ заявку не принять.
+    // Селфи лежит отдельно: до одобрения его видят автор и админы, после одобрения все на странице программы.
+    // Одобряет админ: его браузер сам переносит заявку в apps, поэтому новых прав на каталог здесь нет.
+    match /submissions/{id} {
+      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if signedIn() && hasProfile()
+        && request.resource.data.keys().hasOnly(['uid', 'status', 'createdAt', 'icon', 'name', 'desc', 'file', 'size', 'features', 'needs', 'site', 'repo', 'demo', 'coauthors', 'selfiePublic'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.selfiePublic == true
+        && request.resource.data.createdAt == request.time
+        && str(request.resource.data.name, 1, 100)
+        && str(request.resource.data.desc, 1, 1000)
+        && str(request.resource.data.file, 9, 500)
+        && request.resource.data.file.matches('^https://.+')
+        && str(request.resource.data.get('icon', ''), 0, 200000)
+        && str(request.resource.data.get('size', ''), 0, 40)
+        && str(request.resource.data.get('site', ''), 0, 500)
+        && str(request.resource.data.get('repo', ''), 0, 500)
+        && str(request.resource.data.get('demo', ''), 0, 500)
+        && request.resource.data.get('features', []) is list
+        && request.resource.data.get('features', []).size() <= 30
+        && request.resource.data.get('needs', []) is list
+        && request.resource.data.get('needs', []).size() <= 30
+        && request.resource.data.get('coauthors', []) is list
+        && request.resource.data.get('coauthors', []).size() <= 10
+        && getAfter(/databases/$(database)/documents/selfies/$(id)).data.uid == request.auth.uid;
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'reason'])
+        && request.resource.data.status in ['approved', 'rejected']
+        && str(request.resource.data.get('reason', ''), 0, 300);
+      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+    }
+    match /selfies/{id} {
+      allow read: if (signedIn() && (resource.data.uid == request.auth.uid || isAdmin()))
+        || get(/databases/$(database)/documents/submissions/$(id)).data.status == 'approved';
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid', 'image'])
+        && request.resource.data.uid == request.auth.uid
+        && str(request.resource.data.image, 1, 300000)
+        && getAfter(/databases/$(database)/documents/submissions/$(id)).data.uid == request.auth.uid;
+      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
     }
 
     // Личный чат двоих: id = <меньший uid>_<больший uid>. Сообщения лежат внутри и видны только участникам.

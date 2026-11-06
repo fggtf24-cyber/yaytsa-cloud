@@ -1,7 +1,40 @@
 // Соцчасть: профили с @именем, посты с ветками комментариев, голоса, подписки и друзья, личные чаты.
 // Сервера нет: всё пишет браузер, а честность записей проверяют правила в firestore.rules.
 
-const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
+const USERNAME_RE = /^[a-z0-9_]{1,20}$/;
+// Картинки хранятся строкой в базе. Показываем только такие, SVG и прочее сюда не пройдёт.
+const DATA_IMAGE = /^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/;
+// Соцсети в профиле: [id, подпись, сайты]. Значок лежит в assets/net/<id>.svg.
+const NETS = [
+  ['youtube', 'YouTube', ['youtube.com', 'youtu.be']],
+  ['tiktok', 'TikTok', ['tiktok.com']],
+  ['instagram', 'Instagram', ['instagram.com']],
+  ['telegram', 'Telegram', ['t.me', 'telegram.me']],
+  ['discord', 'Discord', ['discord.gg', 'discord.com']],
+  ['twitch', 'Twitch', ['twitch.tv']],
+  ['github', 'GitHub', ['github.com']],
+  ['x', 'X', ['x.com', 'twitter.com']],
+  ['vk', 'VK', ['vk.com', 'vk.ru']],
+  ['soundcloud', 'SoundCloud', ['soundcloud.com']],
+];
+
+// Ссылку пишет посетитель: пускаем только https на сайт этой соцсети.
+function cleanLink(hosts, raw) {
+  try {
+    const url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+    url.protocol = 'https:';
+    const host = url.hostname.toLowerCase();
+    return hosts.some(h => host === h || host.endsWith(`.${h}`)) ? url.href : '';
+  } catch {
+    return '';
+  }
+}
+
+const EMOJI = '😀 😂 🤣 😅 😊 😍 🥰 😘 😎 🤩 🤔 😏 🙄 😭 🥲 😡 🤯 😱 🤡 💀 👀 👍 👎 👏 🙏 🤝 💪 🫡 ❤️ 🔥 ✨ 🎉 💯 🚀 🥚 🐣 🍳 🐔 🍆 💩'.split(' ');
+
+// Название программы в хэштеге: без пробелов, чтобы тег был одним словом.
+const appTag = name => name.replace(/\s+/g, '');
+const TAG_RE = /(^|[\s(])#([\p{L}\p{N}_-]{1,60})/gu;
 const EGG_COLORS = ['#6FA8FF', '#FFB347', '#A58BFF', '#FF6F91', '#6BE3B4', '#5ED0F0', '#FF8A5B', '#FFC531'];
 
 const ICON = {
@@ -15,6 +48,8 @@ const ICON = {
   minus: '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 10h12" stroke-linecap="round"/></svg>',
   send: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12l16-8-6 16-2.5-6.5z" stroke-linejoin="round"/></svg>',
   chat: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" stroke-linejoin="round"/></svg>',
+  image: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 16l-5-5-8 8" stroke-linejoin="round"/></svg>',
+  edit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z" stroke-linejoin="round"/></svg>',
 };
 
 export function setupSocial(ctx) {
@@ -43,6 +78,7 @@ export function setupSocial(ctx) {
   let commentSort = 'best';
   let shownProfile = null;     // uid открытого профиля
   let seq = 0;                 // защита от устаревших асинхронных отрисовок
+  const shownComments = new Map(); // комментарии на открытой странице профиля
 
   /* ---------- Люди ---------- */
 
@@ -90,6 +126,21 @@ export function setupSocial(ctx) {
     return `<span class="r-ava" style="--s:${size}px;--c:${color(uid)}" aria-hidden="true">${src ? `<img src="${src}" alt="" referrerpolicy="no-referrer">` : letter}</span>`;
   }
 
+  // Шапка профиля: своя картинка поверх цвета логотипа.
+  function bannerStyle(uid) {
+    const b = people.get(uid)?.banner || '';
+    return `--c:${color(uid)}${DATA_IMAGE.test(b) ? `;background-image:url('${b}')` : ''}`;
+  }
+
+  function netLinks(uid) {
+    const links = people.get(uid)?.links || {};
+    const html = NETS.map(([id, label, hosts]) => {
+      const url = typeof links[id] === 'string' ? cleanLink(hosts, links[id]) : '';
+      return url ? `<a class="r-net" href="${esc(url)}" target="_blank" rel="noopener nofollow ugc" aria-label="${label}" title="${label}"><img src="assets/net/${id}.svg" alt="" width="18" height="18"></a>` : '';
+    }).join('');
+    return html ? `<div class="r-nets">${html}</div>` : '';
+  }
+
   /* ---------- Мелочи ---------- */
 
   function ago(ts) {
@@ -110,10 +161,66 @@ export function setupSocial(ctx) {
   const fmt = n => (Math.abs(n) >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k` : String(n));
   const time = ts => `<time datetime="${ms(ts) ? new Date(ms(ts)).toISOString() : ''}" title="${esc(fullDate(ts))}">${ago(ts)}</time>`;
 
-  // Текст пишут посетители: сначала esc, потом ссылки (только http/https) и упоминания @имя.
+  const appByTag = tag => ctx.apps.find(a => [a.name, a.nameEn].some(n => n && appTag(n).toLowerCase() === tag.toLowerCase()));
+
+  // Текст пишут посетители: сначала esc, потом ссылки (только http/https), упоминания @имя и хэштеги программ.
   const rich = s => esc(s)
     .replace(/https?:\/\/[^\s<]+[^\s<.,:;"')\]!?]/g, u => `<a class="r-link" href="${u}" target="_blank" rel="noopener nofollow ugc">${u}</a>`)
-    .replace(/(^|[\s(])@([a-z0-9_]{3,20})\b/g, (_, pre, n) => `${pre}<a class="r-link" href="#u/${n}">@${n}</a>`);
+    .replace(/(^|[\s(])@([a-z0-9_]{1,20})\b/g, (_, pre, n) => (n === 'everyone' ? `${pre}<b class="r-all">@everyone</b>` : `${pre}<a class="r-link" href="#u/${n}">@${n}</a>`))
+    .replace(TAG_RE, (m, pre, tag) => {
+      const app = appByTag(tag);
+      return app ? `${pre}<a class="r-link" href="#app/${esc(app.id)}">#${tag}</a>` : m;
+    });
+
+  const imageTag = url => (DATA_IMAGE.test(url || '') ? `<img class="c-image" src="${url}" alt="${T('Картинка в комментарии')}" loading="lazy">` : '');
+
+  /* ---------- Картинка в комментарии ---------- */
+
+  const emojiBtn = () => `
+    <details class="emoji">
+      <summary class="r-iconbtn" title="${T('Эмодзи')}" aria-label="${T('Эмодзи')}">😀</summary>
+      <div class="pop emoji-panel">${EMOJI.map(e => `<button type="button" data-emoji="${e}">${e}</button>`).join('')}</div>
+    </details>`;
+
+  function insertEmoji(btn) {
+    const input = btn.closest('form').querySelector('textarea');
+    input.setRangeText(btn.dataset.emoji, input.selectionStart, input.selectionEnd, 'end');
+    btn.closest('details').open = false;
+    input.focus();
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  const attachBar = () => `
+    <div class="attach">
+      ${emojiBtn()}
+      <label class="r-iconbtn" title="${T('Добавить картинку или гифку')}">${ICON.image}<span class="sr">${T('Добавить картинку или гифку')}</span>
+        <input class="sr" type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-attach></label>
+      <input type="hidden" name="image">
+      <span class="attach-preview" hidden><img alt=""><button type="button" data-attach-clear aria-label="${T('Убрать картинку')}">×</button></span>
+    </div>`;
+
+  function clearAttach(form) {
+    const box = form.querySelector('.attach');
+    if (!box) return;
+    box.querySelector('[name=image]').value = '';
+    box.querySelector('.attach-preview').hidden = true;
+  }
+
+  async function attach(input) {
+    const file = input.files[0];
+    input.value = ''; // чтобы тот же файл можно было выбрать снова
+    if (!file) return;
+    const box = input.closest('.attach');
+    try {
+      const url = await fileToImage(file);
+      box.querySelector('[name=image]').value = url;
+      box.querySelector('.attach-preview img').src = url;
+      box.querySelector('.attach-preview').hidden = false;
+    } catch (e) {
+      console.error(e);
+      ctx.toast(T(e.message === 'big-gif' ? 'Гифка слишком большая: можно до 580 КБ.' : 'Не получилось открыть эту картинку. Попробуйте JPG или PNG.'));
+    }
+  }
 
   function fail(e) {
     console.error(e);
@@ -265,8 +372,11 @@ export function setupSocial(ctx) {
   async function renderFeed(sort) {
     if (notReady()) return;
     const my = ++seq;
-    document.title = `${T('Лента')} — ${T('Яйца Клауд')}`;
-    view.innerHTML = feedShell(sort, `<p class="empty r-note">${T('Загрузка…')}</p>`, '');
+    document.title = `${T('Лента')} — ${T('Яйца Cloud')}`;
+    // При смене сортировки старый список стоит на месте, пока не придёт новый: страница не прыгает.
+    const bar = view.querySelector('.r-sorts');
+    if (bar) bar.querySelectorAll('.r-sort').forEach(a => a.setAttribute('aria-current', a.getAttribute('href').replace(/^#feed\/?/, '') === (sort === 'hot' ? '' : sort) ? 'page' : 'false'));
+    else view.innerHTML = feedShell(sort, `<p class="empty r-note">${T('Загрузка…')}</p>`, '');
     let list;
     try {
       // ponytail: берём 200 свежих постов и ранжируем в браузере. Когда постов станет много, нужен серверный рейтинг.
@@ -344,7 +454,7 @@ export function setupSocial(ctx) {
   function drawPost(keepScroll = false) {
     const { post, comments, focus } = thread;
     const y = scrollY;
-    document.title = `${post.title} — ${T('Яйца Клауд')}`;
+    document.title = `${post.title} — ${T('Яйца Cloud')}`;
     const mine = post.uid === me();
     const menu = mine || ctx.isAdmin ? `
       <details class="r-menu">
@@ -399,9 +509,10 @@ export function setupSocial(ctx) {
     if (!pub) return `<a class="r-composer-stub" href="#account">${T('Выберите @имя в профиле, чтобы комментировать')}</a>`;
     return `
       <form class="r-composer${parentId ? ' reply open' : ''}" data-s-form="comment" data-parent="${esc(parentId)}">
-        <textarea name="text" rows="${parentId ? 3 : 1}" maxlength="5000" required aria-label="${T(parentId ? 'Ответ' : 'Комментарий')}"
+        <textarea name="text" rows="${parentId ? 3 : 1}" maxlength="5000" aria-label="${T(parentId ? 'Ответ' : 'Комментарий')}"
           placeholder="${T(parentId ? 'Напишите ответ' : 'Присоединиться к обсуждению')}" ${autofocus ? 'autofocus' : ''}></textarea>
         <div class="r-composer-bar">
+          ${attachBar()}
           <button type="button" class="r-pill ghost" data-s-cancel>${T('Отмена')}</button>
           <button class="r-pill primary">${T(parentId ? 'Ответить' : 'Комментировать')}</button>
         </div>
@@ -455,6 +566,7 @@ export function setupSocial(ctx) {
           <button type="button" class="r-c-line" data-s-collapse aria-label="${T('Свернуть ветку')}"></button>
           <div class="r-c-content">
             <div class="r-c-body">${c.deleted ? `<p class="r-muted">${T('[комментарий удалён]')}</p>` : rich(c.body)}</div>
+            ${c.deleted ? '' : imageTag(c.image)}
             ${c.deleted ? '' : `
               <div class="r-c-actions">
                 ${voteBox('c', c.id, c.score)}
@@ -475,7 +587,8 @@ export function setupSocial(ctx) {
   async function addComment(form) {
     if (needAccount()) return;
     const text = form.elements.text.value.trim();
-    if (!text || !thread) return;
+    const image = form.elements.image?.value || '';
+    if ((!text && !image) || !thread) return;
     const { post } = thread;
     const parentId = form.dataset.parent || '';
     const button = form.querySelector('button:not([type])');
@@ -483,12 +596,15 @@ export function setupSocial(ctx) {
     try {
       const cRef = F().doc(col('tcomments'));
       const batch = F().writeBatch(ctx.db);
-      batch.set(cRef, { postId: post.id, parentId, uid: me(), body: text, score: 0, deleted: false, createdAt: F().serverTimestamp() });
+      const data = { postId: post.id, parentId, uid: me(), body: text, score: 1, deleted: false, ...(image ? { image } : {}) };
+      batch.set(cRef, { ...data, createdAt: F().serverTimestamp() });
+      batch.set(ref('votes', `c_${cRef.id}_${me()}`), { uid: me(), kind: 'c', target: cRef.id, v: 1 });
       batch.update(ref('posts', post.id), { commentCount: F().increment(1) });
       await batch.commit();
       const parent = parentId && thread.comments.find(c => c.id === parentId);
       ctx.notify('treply', cRef.id, parent ? parent.uid : post.uid, post.id, text);
-      thread.comments.push({ id: cRef.id, postId: post.id, parentId, uid: me(), body: text, score: 0, deleted: false, createdAt: { toMillis: () => Date.now() } });
+      myVotes.set(`c_${cRef.id}`, 1);
+      thread.comments.push({ id: cRef.id, ...data, createdAt: { toMillis: () => Date.now() } });
       post.commentCount = (post.commentCount || 0) + 1;
       remember(me(), pub);
       drawPost(true);
@@ -508,10 +624,10 @@ export function setupSocial(ctx) {
     content.querySelector(':scope > .r-composer textarea').focus();
   }
 
-  function editForm(kind, id, text) {
+  function editForm(kind, id, text, optional = kind === 'post') {
     return `
       <form class="r-composer open" data-s-form="edit-${kind}" data-id="${esc(id)}">
-        <textarea name="text" rows="5" maxlength="${kind === 'post' ? 10000 : 5000}" ${kind === 'post' ? '' : 'required'} aria-label="${T('Текст')}">${esc(text)}</textarea>
+        <textarea name="text" rows="5" maxlength="${kind === 'post' ? 10000 : 5000}" ${optional ? '' : 'required'} aria-label="${T('Текст')}">${esc(text)}</textarea>
         <div class="r-composer-bar">
           <button type="button" class="r-pill ghost" data-s-cancel-edit>${T('Отмена')}</button>
           <button class="r-pill primary">${T('Сохранить')}</button>
@@ -527,30 +643,52 @@ export function setupSocial(ctx) {
         await F().updateDoc(ref('posts', thread.post.id), { body: text, editedAt: F().serverTimestamp() });
         Object.assign(thread.post, { body: text, editedAt: true });
       } else {
-        if (!text) return;
-        await F().updateDoc(ref('tcomments', form.dataset.id), { body: text, editedAt: F().serverTimestamp() });
-        Object.assign(thread.comments.find(c => c.id === form.dataset.id), { body: text, editedAt: true });
+        const c = thread.comments.find(x => x.id === form.dataset.id);
+        if (!text && !c.image) return;
+        await F().updateDoc(ref('tcomments', c.id), { body: text, editedAt: F().serverTimestamp() });
+        Object.assign(c, { body: text, editedAt: true });
       }
       drawPost(true);
     } catch (e) { fail(e); }
   }
 
+  // Стирает текст и картинку, ветка остаётся: на комментарий могли ответить.
+  async function eraseComment(c) {
+    const clear = { body: '', deleted: true, image: F().deleteField() };
+    await F().updateDoc(ref('tcomments', c.id), c.uid === me() ? { ...clear, editedAt: F().serverTimestamp() } : clear);
+    Object.assign(c, { body: '', deleted: true, image: '' });
+  }
+
   async function deleteComment(id) {
     if (!confirm(T('Удалить комментарий?'))) return;
     try {
-      const c = thread.comments.find(x => x.id === id);
-      await F().updateDoc(ref('tcomments', id), c.uid === me()
-        ? { body: '', deleted: true, editedAt: F().serverTimestamp() }
-        : { body: '', deleted: true });
-      Object.assign(c, { body: '', deleted: true });
+      await eraseComment(thread.comments.find(x => x.id === id));
       drawPost(true);
+    } catch (e) { fail(e); }
+  }
+
+  // Удаление со страницы профиля. Если пост уже удалён, ветки нет и комментарий стираем совсем.
+  async function deleteProfileComment(id) {
+    const c = shownComments.get(id);
+    if (!c || !confirm(T('Удалить комментарий?'))) return;
+    try {
+      if (postTitles.get(c.postId) === '') await F().deleteDoc(ref('tcomments', id));
+      else await eraseComment(c);
+      ctx.render();
     } catch (e) { fail(e); }
   }
 
   async function deletePost() {
     if (!confirm(T('Удалить пост? Это нельзя отменить.'))) return;
+    const { post, comments } = thread;
     try {
-      await F().deleteDoc(ref('posts', thread.post.id));
+      await F().deleteDoc(ref('posts', post.id));
+      postTitles.set(post.id, '');
+      // Комментарии без поста никому не нужны. Что не удалилось сейчас, автор сотрёт из своего профиля.
+      await Promise.allSettled([
+        ...comments.map(c => F().deleteDoc(ref('tcomments', c.id))),
+        ...(ctx.isAdmin ? [F().deleteDoc(ref('broadcasts', post.id))] : []),
+      ]);
       thread = null;
       location.hash = pub ? `u/${pub.username}` : 'feed';
     } catch (e) { fail(e); }
@@ -561,7 +699,7 @@ export function setupSocial(ctx) {
     if (!p) return '';
     return `
       <section class="r-card r-author">
-        <div class="r-banner" style="--c:${color(uid)}"></div>
+        <div class="r-banner" style="${bannerStyle(uid)}"></div>
         <div class="r-author-head">
           <a href="${profileHref(uid)}">${ava(uid, 56)}</a>
           <div>
@@ -614,6 +752,8 @@ export function setupSocial(ctx) {
     // Свежий профиль, а не из кэша: имя и фото могли поменяться.
     try { const d = await F().getDoc(ref('profiles', uid)); remember(uid, d.exists() ? d.data() : null); } catch { /* останется кэш */ }
     comments = comments.filter(c => !c.deleted);
+    shownComments.clear();
+    comments.forEach(c => shownComments.set(c.id, c));
     const insSet = new Set(ins);
     const friends = outs.filter(x => insSet.has(x));
     const listed = tab === 'followers' ? ins : tab === 'following' ? outs : tab === 'friends' ? friends : [];
@@ -629,18 +769,19 @@ export function setupSocial(ctx) {
     if (!p) return note(T('Пользователь @{name} не найден.', { name: esc(name) }));
     const isMe = uid === me();
     const karma = posts.reduce((n, x) => n + (x.score || 0), 0) + comments.reduce((n, x) => n + (x.score || 0), 0);
-    document.title = `${p.name || p.username} (@${p.username}) — ${T('Яйца Клауд')}`;
+    document.title = `${p.name || p.username} (@${p.username}) — ${T('Яйца Cloud')}`;
 
     const byTime = (a, b) => ms(b.createdAt) - ms(a.createdAt);
     const commentCard = c => `
       <article class="r-post r-pcomment" data-href="#post/${esc(c.postId)}/${esc(c.id)}">
         <div class="r-meta">${ICON.comment}<a class="r-ptitle" href="#post/${esc(c.postId)}">${postTitles.get(c.postId) ? esc(postTitles.get(c.postId)) : T('[пост удалён]')}</a></div>
         <div class="r-meta"><span class="r-user strong">${userLabel(uid)}</span><span>${T('ответил(а)')}</span><span class="r-dot">•</span>${time(c.createdAt)}</div>
-        <div class="r-preview">${esc(c.body)}</div>
+        <div class="r-preview">${esc(c.body) || T('[картинка]')}</div>
         <div class="r-actions">
           ${voteBox('c', c.id, c.score)}
-          <a class="r-pill flat" href="#post/${esc(c.postId)}/${esc(c.id)}">${ICON.comment}<span>${T('Ответить')}</span></a>
+          ${postTitles.get(c.postId) ? `<a class="r-pill flat" href="#post/${esc(c.postId)}/${esc(c.id)}">${ICON.comment}<span>${T('Ответить')}</span></a>` : ''}
           ${shareBtn(`#post/${c.postId}/${c.id}`)}
+          ${isMe || ctx.isAdmin ? `<button type="button" class="r-pill flat" data-s-del-card="${esc(c.id)}">${T('Удалить')}</button>` : ''}
         </div>
       </article>`;
     const personRow = x => `
@@ -670,6 +811,7 @@ export function setupSocial(ctx) {
     const base = `#u/${esc(p.username)}`;
     const main = `
       <div class="r-profile" data-uid="${esc(uid)}">
+        <div class="r-hero" style="${bannerStyle(uid)}">${isMe ? `<a class="r-iconbtn r-hero-edit" href="#account" aria-label="${T('Изменить шапку')}">${ICON.edit}</a>` : ''}</div>
         <header class="r-phead">
           <div class="r-pava">
             ${ava(uid, 76)}
@@ -678,6 +820,7 @@ export function setupSocial(ctx) {
           <div class="r-phead-text">
             <h1>${esc(p.name || p.username)}</h1>
             <p class="r-sub">@${esc(p.username)}${!isMe && followers.has(uid) ? ` <span class="r-tag">${T(isFriend(uid) ? 'друг' : 'подписан(а) на вас')}</span>` : ''}</p>
+            ${netLinks(uid)}
           </div>
         </header>
         <div class="r-phead-actions">
@@ -694,7 +837,6 @@ export function setupSocial(ctx) {
       </div>`;
     const aside = `
       <section class="r-card r-pcard">
-        <div class="r-banner big" style="--c:${color(uid)}"></div>
         <h2 class="r-card-title">${esc(p.name || p.username)}</h2>
         <div class="r-author-actions">
           ${isMe
@@ -730,27 +872,24 @@ export function setupSocial(ctx) {
   /* ---------- Новый пост ---------- */
 
   function renderSubmit(appId) {
+    const app = ctx.apps.find(a => a.id === appId);
     if (notReady()) return;
-    document.title = `${T('Создать пост')} — ${T('Яйца Клауд')}`;
+    document.title = `${T('Создать пост')} — ${T('Яйца Cloud')}`;
     if (!ctx.user) return note(`<a class="link" href="#account">${T('Войдите')}</a>${T(', чтобы создать пост.')}`);
     if (!pub) return note(`${T('Сначала выберите @имя.')} <a class="link" href="#account">${T('Открыть профиль')}</a>`);
     const main = `
       <h1 class="r-h1">${T('Создать пост')}</h1>
       <form class="r-submit" data-s-form="post">
         <div class="r-field">
-          <input name="title" maxlength="300" required placeholder="${T('Заголовок')}*" aria-label="${T('Заголовок')}">
+          <input name="title" maxlength="300" required autocomplete="off" data-suggest="#@" placeholder="${T('Заголовок')}*" aria-label="${T('Заголовок')}">
           <span class="r-counter" data-for="title">0/300</span>
         </div>
         <div class="r-field">
-          <textarea name="body" rows="9" maxlength="10000" placeholder="${T('Текст (необязательно)')}" aria-label="${T('Текст')}"></textarea>
+          <textarea name="body" rows="9" maxlength="10000" data-suggest="#@" placeholder="${T('Текст (необязательно)')}" aria-label="${T('Текст')}">${app ? `#${esc(appTag(ctx.nm(app)))} ` : ''}</textarea>
         </div>
-        <label class="r-field inline">${T('О программе')}
-          <select name="appId">
-            <option value="">${T('Без программы')}</option>
-            ${ctx.apps.map(a => `<option value="${esc(a.id)}" ${a.id === appId ? 'selected' : ''}>${esc(ctx.nm(a))}</option>`).join('')}
-          </select>
-        </label>
+        <p class="r-hint">${T('Чтобы привязать программу, напишите # и начните вводить её название.')}${ctx.isAdmin ? ` ${T('@everyone отметит всех: пост придёт в уведомления.')}` : ''}</p>
         <div class="r-submit-bar">
+          <div class="attach">${emojiBtn()}</div>
           <button type="button" class="r-pill ghost" data-s-back>${T('Отмена')}</button>
           <button class="r-pill primary">${T('Опубликовать')}</button>
         </div>
@@ -760,7 +899,7 @@ export function setupSocial(ctx) {
         <h3 class="r-card-title small">${T('Как писать')}</h3>
         <ol class="r-rules">
           <li>${T('Пост появится на вашей странице и в общей ленте.')}</li>
-          <li>${T('Привяжите программу — пост будет виден и на её странице.')}</li>
+          <li>${T('Напишите #название программы — пост будет виден и на её странице.')}</li>
           <li>${T('Упомяните человека через @имя, ссылки станут кликабельными.')}</li>
           <li>${T('Будьте вежливы. Админы могут удалить грубость.')}</li>
         </ol>
@@ -770,20 +909,173 @@ export function setupSocial(ctx) {
 
   async function addPost(form) {
     if (needAccount()) return;
-    const { title, body, appId } = Object.fromEntries(new FormData(form));
+    const { title, body } = Object.fromEntries(new FormData(form));
     if (!title.trim()) return;
+    const text = `${title}\n${body}`;
+    const tagged = [...text.matchAll(TAG_RE)].map(m => appByTag(m[2])).find(Boolean);
     const button = form.querySelector('button:not([type])');
     button.disabled = true;
     try {
-      const pRef = await F().addDoc(col('posts'), {
-        uid: me(), title: title.trim(), body: body.trim(), appId: appId || '', score: 0, commentCount: 0, createdAt: F().serverTimestamp(),
+      const pRef = F().doc(col('posts'));
+      const batch = F().writeBatch(ctx.db);
+      batch.set(pRef, {
+        uid: me(), title: title.trim(), body: body.trim(), appId: tagged?.id || '', score: 1, commentCount: 0, createdAt: F().serverTimestamp(),
       });
+      batch.set(ref('votes', `p_${pRef.id}_${me()}`), { uid: me(), kind: 'p', target: pRef.id, v: 1 });
+      if (ctx.isAdmin && /(^|[\s(])@everyone\b/.test(text)) {
+        batch.set(ref('broadcasts', pRef.id), {
+          from: me(), fromName: (pub.name || pub.username).slice(0, 80), title: title.trim().slice(0, 120), createdAt: F().serverTimestamp(),
+        });
+      }
+      await batch.commit();
+      myVotes.set(`p_${pRef.id}`, 1);
       location.hash = `post/${pRef.id}`;
     } catch (e) {
       button.disabled = false;
       fail(e);
     }
   }
+
+  /* ---------- Подсказки # и @ ---------- */
+
+  async function findPeople(q) {
+    if (!F() || !/^[a-z0-9_]*$/.test(q)) return [];
+    // Поиск по началу @имени: id документа в usernames и есть имя.
+    const from = q ? [F().startAt(q), F().endAt(`${q}\uf8ff`)] : [];
+    const snap = await F().getDocs(F().query(col('usernames'), F().orderBy(F().documentId()), ...from, F().limit(6)));
+    const found = snap.docs.map(d => ({ name: d.id, uid: d.data().uid }));
+    found.forEach(f => nameToUid.set(f.name, f.uid));
+    await loadPeople(found.map(f => f.uid));
+    return found;
+  }
+
+  const personLine = (uid, name) => `${ava(uid, 28)}<span><b>${esc(shownName(uid))}</b><small>@${esc(name)}</small></span>`;
+
+  let suggest = null; // открытый список: { box, input, start, items, active }
+  let suggestSeq = 0;
+
+  function closeSuggest() {
+    suggestSeq++;
+    suggest?.box.remove();
+    suggest = null;
+  }
+
+  function drawSuggest() {
+    suggest.box.innerHTML = suggest.items.map((item, i) => `
+      <button type="button" class="s-item" role="option" tabindex="-1" data-i="${i}" aria-selected="${i === suggest.active}">${item.html}</button>`).join('');
+  }
+
+  // Ищем слово с # или @ прямо перед курсором.
+  async function updateSuggest(input) {
+    const before = input.value.slice(0, input.selectionStart);
+    const m = before.match(/(?:^|[\s(])([#@])([^\s#@]*)$/);
+    if (!m || !input.dataset.suggest.includes(m[1])) return closeSuggest();
+    const [, sign, q] = m;
+    const low = q.toLowerCase();
+    const my = ++suggestSeq;
+    let items;
+    if (sign === '#') {
+      items = ctx.apps.filter(a => `${a.name} ${a.nameEn || ''}`.toLowerCase().includes(low) || appTag(`${a.name} ${a.nameEn || ''}`).toLowerCase().includes(low))
+        .slice(0, 6)
+        .map(a => ({ insert: appTag(ctx.nm(a)), html: `<img src="${ctx.icon(a)}" alt=""><span><b>${esc(ctx.nm(a))}</b><small>#${esc(appTag(ctx.nm(a)))}</small></span>` }));
+    } else {
+      const found = await findPeople(low).catch(e => { console.error(e); return []; });
+      if (my !== suggestSeq) return;
+      items = found.map(f => ({ insert: f.name, html: personLine(f.uid, f.name) }));
+      if (ctx.isAdmin && input.closest('.r-submit') && 'everyone'.startsWith(low)) {
+        items.unshift({ insert: 'everyone', html: `<span><b>@everyone</b><small>${T('Отметить всех')}</small></span>` });
+      }
+    }
+    if (!items.length) return closeSuggest();
+    const box = suggest?.box || Object.assign(document.createElement('div'), { className: 'pop suggest' });
+    box.setAttribute('role', 'listbox');
+    input.parentElement.append(box);
+    suggest = { box, input, start: before.length - q.length, items, active: 0 };
+    drawSuggest();
+  }
+
+  function pickSuggest(i) {
+    const { input, start, items } = suggest;
+    const head = `${input.value.slice(0, start)}${items[i].insert} `;
+    const tail = input.value.slice(input.selectionStart);
+    closeSuggest();
+    input.value = head + tail;
+    input.setSelectionRange(head.length, head.length);
+    input.focus();
+    input.dispatchEvent(new Event('input', { bubbles: true })); // обновит счётчик символов
+  }
+
+  /* ---------- Поиск в шапке ---------- */
+
+  const searchInput = document.getElementById('search');
+  const searchPanel = document.getElementById('search-panel');
+  let searchSeq = 0;
+  let searchTimer = null;
+  let recent = null;
+  let recentAt = 0;
+
+  // ponytail: посты ищем среди 200 свежих, как в ленте. Для поиска по всей базе нужен сервер.
+  async function recentPosts() {
+    if (!recent || Date.now() - recentAt > 60e3) {
+      recent = rows(await F().getDocs(F().query(col('posts'), F().orderBy('createdAt', 'desc'), F().limit(200))));
+      recentAt = Date.now();
+    }
+    return recent;
+  }
+
+  function closeSearch() {
+    searchSeq++;
+    searchPanel.hidden = true;
+  }
+
+  async function runSearch() {
+    const text = searchInput.value.trim();
+    if (!text) return closeSearch();
+    const my = ++searchSeq;
+    const onlyPeople = text.startsWith('@');
+    const q = text.replace(/^@/, '').toLowerCase();
+    const apps = onlyPeople ? [] : ctx.apps.filter(a => `${a.name} ${a.nameEn || ''}`.toLowerCase().includes(q)).slice(0, 5);
+    const ids = new Set(apps.map(a => a.id));
+    const quiet = p => p.catch(e => { console.error(e); return []; });
+    const [posts, found] = await Promise.all([
+      onlyPeople || !F() ? [] : quiet(recentPosts()),
+      quiet(findPeople(q)),
+    ]);
+    if (my !== searchSeq) return;
+    // Сначала посты про найденные программы, потом совпадения в заголовке.
+    const hits = posts.filter(p => ids.has(p.appId) || p.title.toLowerCase().includes(q))
+      .sort((a, b) => ids.has(b.appId) - ids.has(a.appId)).slice(0, 6);
+    const appName = id => { const a = ctx.apps.find(x => x.id === id); return a ? ctx.nm(a) : ''; };
+    const block = (title, items) => (items.length ? `<h3 class="s-title">${T(title)}</h3>${items.join('')}` : '');
+    searchPanel.innerHTML = [
+      block('Программы', apps.map(a => `
+        <a class="s-item" href="#app/${esc(a.id)}"><img src="${ctx.icon(a)}" alt=""><span><b>${esc(ctx.nm(a))}</b><small>${T(a.community ? 'Сообщество' : 'Программа')}</small></span></a>`)),
+      block('Посты', hits.map(p => `
+        <a class="s-item" href="#post/${esc(p.id)}"><span class="s-ico">${ICON.comment}</span><span><b>${esc(p.title)}</b><small>${esc(appName(p.appId) || T('Пост'))} · ${T('Комментарии: {n}', { n: p.commentCount || 0 })}</small></span></a>`)),
+      block('Люди', found.map(f => `<a class="s-item" href="#u/${esc(f.name)}">${personLine(f.uid, f.name)}</a>`)),
+    ].join('') || `<p class="empty s-empty">${T('Ничего не нашлось.')}</p>`;
+    searchPanel.hidden = false;
+  }
+
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(runSearch, 180);
+  });
+  searchInput.addEventListener('focus', runSearch);
+  searchInput.closest('.search-wrap').addEventListener('keydown', e => {
+    const links = [...searchPanel.querySelectorAll('a')];
+    const at = links.indexOf(document.activeElement);
+    if (e.key === 'Escape') { closeSearch(); searchInput.focus(); }
+    else if (e.key === 'Enter' && e.target === searchInput && links[0]) { e.preventDefault(); links[0].click(); }
+    else if (e.key === 'ArrowDown' && links.length) { e.preventDefault(); links[Math.min(at + 1, links.length - 1)].focus(); }
+    else if (e.key === 'ArrowUp' && links.length) { e.preventDefault(); (at > 0 ? links[at - 1] : searchInput).focus(); }
+  });
+  searchPanel.addEventListener('click', e => {
+    if (!e.target.closest('a')) return;
+    closeSearch();
+    searchInput.value = '';
+  });
+  document.addEventListener('click', e => { if (!e.target.closest('.search-wrap')) closeSearch(); });
 
   /* ---------- Обсуждения на странице программы ---------- */
 
@@ -835,7 +1127,7 @@ export function setupSocial(ctx) {
 
   async function renderChat(name) {
     if (notReady()) return;
-    document.title = `${T('Чаты')} — ${T('Яйца Клауд')}`;
+    document.title = `${T('Чаты')} — ${T('Яйца Cloud')}`;
     if (!ctx.user) return note(`<a class="link" href="#account">${T('Войдите')}</a>${T(', чтобы писать сообщения.')}`);
     const my = ++seq;
     let peer = null;
@@ -873,6 +1165,7 @@ export function setupSocial(ctx) {
             <div class="r-msgs" id="chat-msgs" aria-live="polite"></div>
             ${pub ? `
               <form class="r-chat-form" data-s-form="chat">
+                ${emojiBtn()}
                 <textarea name="text" rows="1" maxlength="2000" required aria-label="${T('Сообщение')}" placeholder="${T('Сообщение')}"></textarea>
                 <button class="r-send" aria-label="${T('Отправить')}">${ICON.send}</button>
               </form>` : `<a class="r-composer-stub" href="#account">${T('Выберите @имя в профиле, чтобы писать сообщения')}</a>`}`
@@ -979,20 +1272,50 @@ export function setupSocial(ctx) {
 
   const accountFields = () => `
     <label class="field">${T('Имя пользователя')}
-      <span class="r-at"><span aria-hidden="true">@</span><input name="username" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" autocomplete="username"
-        value="${esc(pub?.username || '')}" ${pub ? 'required' : ''} title="${T('3–20 символов: латиница, цифры и _')}"></span>
-      <small class="r-hint">${T('3–20 символов: латиница, цифры и _. По нему вас находят и упоминают.')}</small>
+      <span class="r-at"><span aria-hidden="true">@</span><input name="username" maxlength="20" pattern="[A-Za-z0-9_]{1,20}" autocomplete="username"
+        value="${esc(pub?.username || '')}" ${pub ? 'required' : ''} title="${T('1–20 символов: латиница, цифры и _')}"></span>
+      <small class="r-hint">${T('1–20 символов: латиница, цифры и _. По нему вас находят и упоминают.')}</small>
     </label>
-    <label class="field">${T('О себе')}<textarea name="bio" rows="3" maxlength="300">${esc(pub?.bio || '')}</textarea></label>`;
+    <label class="field">${T('О себе')}<textarea name="bio" rows="3" maxlength="300">${esc(pub?.bio || '')}</textarea></label>
+    <details class="more">
+      <summary>${T('Соцсети')}</summary>
+      <div class="more-body">
+        <small class="r-hint">${T('Значки появятся в вашем профиле. Вставьте ссылку на свою страницу.')}</small>
+        ${NETS.map(([id, label]) => `
+          <label class="field net-field"><img src="assets/net/${id}.svg" alt="" width="18" height="18">${label}
+            <input name="net_${id}" inputmode="url" autocomplete="off" value="${esc(pub?.links?.[id] || '')}"></label>`).join('')}
+      </div>
+    </details>`;
+
+  const bannerField = () => (pub ? `
+    <div class="r-banner-edit">
+      <div class="r-banner big" style="${bannerStyle(me())}"></div>
+      <div class="profile-photo">
+        <label class="btn">${T('Загрузить шапку')}<input id="banner" class="sr" type="file" accept="image/*"></label>
+        ${pub.banner ? `<button type="button" class="link linkbtn" id="banner-remove">${T('Убрать шапку')}</button>` : ''}
+      </div>
+    </div>` : '');
+
+  function readLinks(form) {
+    const links = {};
+    for (const [id, , hosts] of NETS) {
+      const raw = form.elements[`net_${id}`].value.trim();
+      if (!raw) continue;
+      links[id] = cleanLink(hosts, raw);
+      if (!links[id]) throw Object.assign(new Error('bad link'), { code: 'link/invalid' });
+    }
+    return links;
+  }
 
   const accountNote = () => (pub
     ? `<a class="btn" href="#u/${esc(pub.username)}">${T('Открыть мой профиль')}</a>`
     : `<p class="msg ok">${T('Выберите @имя: без него нельзя писать посты, комментарии и сообщения.')}</p>`);
 
-  async function saveIdentity({ username, bio, name, photo }) {
+  async function saveIdentity({ username, bio, name, photo, links }) {
     username = String(username || '').trim().replace(/^@/, '').toLowerCase();
     if (!username && !pub) return;
     if (!USERNAME_RE.test(username)) throw Object.assign(new Error('bad username'), { code: 'username/invalid' });
+    if (username === 'everyone') throw Object.assign(new Error('reserved'), { code: 'username/taken' });
     const old = pub?.username;
     const batch = F().writeBatch(ctx.db);
     if (username !== old) {
@@ -1001,8 +1324,10 @@ export function setupSocial(ctx) {
       batch.set(ref('usernames', username), { uid: me() });
       if (old) batch.delete(ref('usernames', old));
     }
-    const data = { username, name: name.slice(0, 80), photo: photo.length <= 100000 ? photo : '', bio: String(bio || '').trim().slice(0, 300) };
-    batch.set(ref('profiles', me()), pub ? data : { ...data, createdAt: F().serverTimestamp() }, { merge: true });
+    const data = { username, name: name.slice(0, 80), photo: photo.length <= 100000 ? photo : '', bio: String(bio || '').trim().slice(0, 300), links };
+    // update заменяет links целиком, иначе убранная из формы ссылка осталась бы в базе.
+    if (pub) batch.update(ref('profiles', me()), data);
+    else batch.set(ref('profiles', me()), { ...data, createdAt: F().serverTimestamp() });
     await batch.commit();
     if (old && old !== username) nameToUid.delete(old);
     pub = { ...pub, ...data, createdAt: pub?.createdAt || { toMillis: () => Date.now() } };
@@ -1010,14 +1335,21 @@ export function setupSocial(ctx) {
     ctx.drawRail();
   }
 
+  async function updatePublic(data) {
+    await F().updateDoc(ref('profiles', me()), data);
+    pub = { ...pub, ...data };
+    remember(me(), pub);
+  }
+
   // Имя и фото в публичном профиле повторяют приватный users/<uid>. Ошибка здесь не мешает сохранить основное.
-  async function mirror(data) {
-    if (!pub) return;
-    try {
-      await F().updateDoc(ref('profiles', me()), data);
-      pub = { ...pub, ...data };
-      remember(me(), pub);
-    } catch (e) { console.error(e); }
+  const mirror = data => (pub ? updatePublic(data).catch(console.error) : null);
+
+  // Соавторы пишутся как @имена, в базе лежат uid: так они переживут смену имени.
+  async function uidsByNames(text) {
+    const names = [...new Set(String(text).toLowerCase().match(/[a-z0-9_]+/g) || [])];
+    const uids = await Promise.all(names.map(uidByName));
+    if (uids.includes(null)) throw Object.assign(new Error('unknown'), { code: 'username/unknown' });
+    return uids;
   }
 
   /* ---------- Вход и выход ---------- */
@@ -1090,7 +1422,7 @@ export function setupSocial(ctx) {
     else if (d.sCancel !== undefined) {
       const form = t.closest('form');
       if (form.classList.contains('reply')) form.remove();
-      else { form.reset(); document.activeElement.blur(); }
+      else { form.reset(); clearAttach(form); document.activeElement.blur(); }
     }
     else if (d.sCancelEdit !== undefined) drawPost(true);
     else if (d.sEditPost !== undefined) {
@@ -1099,9 +1431,12 @@ export function setupSocial(ctx) {
     }
     else if (d.sEditComment) {
       const c = thread.comments.find(x => x.id === d.sEditComment);
-      t.closest('.r-c-content').querySelector('.r-c-body').innerHTML = editForm('comment', c.id, c.body);
+      t.closest('.r-c-content').querySelector('.r-c-body').innerHTML = editForm('comment', c.id, c.body, !!c.image);
     }
     else if (d.sDelComment) deleteComment(d.sDelComment);
+    else if (d.sDelCard) deleteProfileComment(d.sDelCard);
+    else if (d.emoji) insertEmoji(t);
+    else if (d.attachClear !== undefined) clearAttach(t.closest('form'));
     else if (d.sDelPost !== undefined) deletePost();
     else if (d.sBack !== undefined) { if (history.length > 1) history.back(); else location.hash = 'feed'; }
     else if (d.sJump !== undefined) {
@@ -1112,17 +1447,39 @@ export function setupSocial(ctx) {
 
   view.addEventListener('change', e => {
     if (e.target.matches('[data-s-sort]')) { commentSort = e.target.value; drawPost(true); }
+    if (e.target.matches('[data-attach]')) attach(e.target);
   });
 
   view.addEventListener('input', e => {
     if (e.target.matches('.r-submit [name=title]')) view.querySelector('.r-counter').textContent = `${e.target.value.length}/300`;
+    if (e.target.matches('[data-suggest]')) updateSuggest(e.target);
     if (e.target.matches('.r-chat-form textarea, .r-composer textarea')) {
       e.target.style.height = 'auto';
       e.target.style.height = `${Math.min(e.target.scrollHeight, 240)}px`;
     }
   });
 
+  view.addEventListener('mousedown', e => {
+    const item = e.target.closest('.suggest [data-i]');
+    if (!item) return;
+    e.preventDefault(); // иначе поле потеряет фокус раньше, чем сработает выбор
+    pickSuggest(+item.dataset.i);
+  });
+  view.addEventListener('focusout', e => { if (e.target === suggest?.input) closeSuggest(); });
+
   view.addEventListener('keydown', e => {
+    if (suggest && e.target === suggest.input) {
+      const n = suggest.items.length;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        suggest.active = (suggest.active + (e.key === 'ArrowDown' ? 1 : n - 1)) % n;
+        drawSuggest();
+      } else if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        pickSuggest(suggest.active);
+      } else if (e.key === 'Escape') closeSuggest();
+      return;
+    }
     // Enter отправляет сообщение в чате, Shift+Enter — новая строка.
     if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.target.matches('.r-chat-form textarea')) {
       e.preventDefault();
@@ -1135,6 +1492,9 @@ export function setupSocial(ctx) {
   });
 
   document.addEventListener('visibilitychange', () => { if (ctx.route().name === 'chat') markSeen(); });
+  document.addEventListener('click', e => {
+    document.querySelectorAll('.emoji[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; });
+  });
 
   function onSubmit(form) {
     const kind = form.dataset.sForm;
@@ -1152,32 +1512,76 @@ export function setupSocial(ctx) {
     fillAppThreads,
     accountFields,
     accountNote,
+    bannerField,
+    readLinks,
     saveIdentity,
     mirror,
+    updatePublic,
+    attachBar,
+    clearAttach,
+    imageTag,
+    isImage: url => DATA_IMAGE.test(url || ''),
+    loadPeople,
+    uidsByNames,
+    handleOf: handle,
+    nameOf: uid => (people.get(uid) ? shownName(uid) : ''),
     unreadChats: () => chats.filter(unread).length,
     myHref: () => (pub ? `#u/${pub.username}` : '#account'),
     hasProfile: () => !!pub,
   };
 }
 
-/* ---------- Кадрирование аватарки ---------- */
+/* ---------- Картинки ---------- */
 
-// Окно с круглой рамкой: фото двигают мышью или пальцем, масштаб — ползунком, колесом или клавишами.
-// Возвращает JPEG строкой (влезает в лимит 100 000 символов) или null, если нажали «Отмена».
-export async function cropImage(file, T) {
+// Storage на бесплатном тарифе нет, поэтому картинка лежит строкой в документе. Лимит документа в базе 1 МиБ.
+// ponytail: гифку нельзя ужать в браузере, не убив анимацию, поэтому она ограничена размером. Большие гифки — только через Storage.
+const GIF_LIMIT = 590000;
+
+export async function fileToImage(file, { max = 1280, limit = 400000 } = {}) {
+  if (file.type === 'image/gif') {
+    if (file.size > GIF_LIMIT) throw new Error('big-gif');
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  }
+  const bitmap = await createImageBitmap(file);
+  const k = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(bitmap.width * k);
+  canvas.height = Math.round(bitmap.height * k);
+  const g = canvas.getContext('2d');
+  g.fillStyle = '#1B1B1B'; // JPEG без прозрачности: прозрачный PNG ляжет на цвет сайта, а не на чёрный
+  g.fillRect(0, 0, canvas.width, canvas.height);
+  g.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close?.();
+  for (const q of [0.85, 0.75, 0.6, 0.45, 0.3]) {
+    const url = canvas.toDataURL('image/jpeg', q);
+    if (url.length <= limit) return url;
+  }
+  throw new Error('too-big');
+}
+
+/* ---------- Кадрирование ---------- */
+
+// Окно с рамкой: фото двигают мышью или пальцем, масштаб — ползунком, колесом или клавишами.
+// ratio 1 — круг для аватарки, больше 1 — вытянутая шапка. Возвращает JPEG строкой или null, если нажали «Отмена».
+export async function cropImage(file, T, { ratio = 1, out = 256, limit = 95000 } = {}) {
   const bitmap = await createImageBitmap(file);
   const { width: w, height: h } = bitmap;
-  const S = 560;   // холст в пикселях, на экране вдвое меньше — для чёткости на ретине
-  const OUT = 256;
+  const SW = 560;  // холст в пикселях, на экране вдвое меньше — для чёткости на ретине
+  const SH = Math.round(SW / ratio);
   return new Promise(resolve => {
     const dlg = document.createElement('dialog');
-    dlg.className = 'r-crop';
+    dlg.className = `r-crop${ratio === 1 ? '' : ' wide'}`;
     dlg.innerHTML = `
       <form method="dialog" class="r-crop-box">
         <h2>${T('Кадрирование фото')}</h2>
         <p class="empty">${T('Перетащите фото и выберите масштаб.')}</p>
         <div class="r-crop-stage" tabindex="0" aria-label="${T('Область кадрирования. Стрелки двигают фото, плюс и минус меняют масштаб.')}">
-          <canvas width="${S}" height="${S}"></canvas>
+          <canvas width="${SW}" height="${SH}"></canvas>
         </div>
         <label class="r-crop-zoom">
           <span aria-hidden="true">${ICON.minus}</span>
@@ -1194,24 +1598,25 @@ export async function cropImage(file, T) {
     const stage = dlg.querySelector('.r-crop-stage');
     const range = dlg.querySelector('input[type=range]');
     const g = canvas.getContext('2d');
-    const base = S / Math.min(w, h);
+    const base = Math.max(SW / w, SH / h);
     let zoom = 1;
     let cx = w / 2;
     let cy = h / 2;
 
     const clamp = () => {
-      const half = S / (2 * base * zoom);
-      cx = Math.min(Math.max(cx, half), w - half);
-      cy = Math.min(Math.max(cy, half), h - half);
+      const halfW = SW / (2 * base * zoom);
+      const halfH = SH / (2 * base * zoom);
+      cx = Math.min(Math.max(cx, halfW), w - halfW);
+      cy = Math.min(Math.max(cy, halfH), h - halfH);
     };
-    const paint = (ctx2, size) => {
-      const k = base * zoom * (size / S);
+    const paint = (ctx2, width, height) => {
+      const k = base * zoom * (width / SW);
       ctx2.fillStyle = '#1B1B1B';
-      ctx2.fillRect(0, 0, size, size);
+      ctx2.fillRect(0, 0, width, height);
       ctx2.imageSmoothingQuality = 'high';
-      ctx2.drawImage(bitmap, size / 2 - cx * k, size / 2 - cy * k, w * k, h * k);
+      ctx2.drawImage(bitmap, width / 2 - cx * k, height / 2 - cy * k, w * k, h * k);
     };
-    const draw = () => { clamp(); paint(g, S); };
+    const draw = () => { clamp(); paint(g, SW, SH); };
     const setZoom = z => { zoom = Math.min(4, Math.max(1, z)); range.value = zoom; draw(); };
 
     let drag = null;
@@ -1221,7 +1626,7 @@ export async function cropImage(file, T) {
     });
     stage.addEventListener('pointermove', e => {
       if (!drag) return;
-      const k = base * zoom * (stage.clientWidth / S);
+      const k = base * zoom * (stage.clientWidth / SW);
       cx = drag.cx - (e.clientX - drag.x) / k;
       cy = drag.cy - (e.clientY - drag.y) / k;
       draw();
@@ -1242,12 +1647,13 @@ export async function cropImage(file, T) {
     dlg.addEventListener('close', () => {
       let url = null;
       if (dlg.returnValue === 'ok') {
-        const out = document.createElement('canvas');
-        out.width = out.height = OUT;
-        paint(out.getContext('2d'), OUT);
+        const result = document.createElement('canvas');
+        result.width = out;
+        result.height = Math.round(out / ratio);
+        paint(result.getContext('2d'), result.width, result.height);
         for (const q of [0.88, 0.8, 0.7, 0.6, 0.5]) {
-          url = out.toDataURL('image/jpeg', q);
-          if (url.length <= 95000) break;
+          url = result.toDataURL('image/jpeg', q);
+          if (url.length <= limit) break;
         }
       }
       bitmap.close?.();
