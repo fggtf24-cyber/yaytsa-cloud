@@ -740,7 +740,7 @@ a, button, summary, input, textarea, select, .card, .comment, .rail-ico, .r-post
 }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 .content.enter > * { animation: fade .12s ease both; }
-.pop, .bell-panel, .r-menu-list, .toast, .cookie, .r-crop[open], .r-crop[open]::backdrop { animation: fade .12s ease both; }
+.pop, .bell-panel, .r-menu-list, .toast, .cookie, .r-crop[open], .r-crop[open]::backdrop, .r-view[open], .r-view[open]::backdrop { animation: fade .12s ease both; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -920,6 +920,19 @@ body, .content { transition: background-color .12s ease; }
 .r-media img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .r-media-bg { object-fit: cover; filter: blur(24px) brightness(.7); transform: scale(1.15); }
 .r-media-img { object-fit: contain; }
+
+/* Просмотр картинки: цвета свои, потому что фон тёмный и в светлой теме */
+.c-image, .r-media-img { cursor: zoom-in; }
+.r-post[data-href] .r-media-img { cursor: pointer; }
+.r-view { width: 100vw; height: 100dvh; max-width: none; max-height: none; padding: 0; border: 0; background: none; overflow: hidden; }
+.r-view[open] { display: flex; align-items: center; justify-content: center; }
+.r-view::backdrop { background: rgba(0, 0, 0, .9); }
+:root:has(.r-view[open]) { overflow: hidden; }
+.r-view > img { max-width: calc(100vw - 32px); max-height: calc(100dvh - 88px); margin-top: 56px; border-radius: 10px; object-fit: contain; }
+.r-view-bar { position: absolute; top: 12px; right: 16px; display: flex; gap: 8px; }
+.r-view-bar a, .r-view-bar button { padding: 8px 16px; border: 0; border-radius: 999px; background: rgba(255, 255, 255, .14); color: #fff; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.r-view-bar a:hover, .r-view-bar button:hover { background: rgba(255, 255, 255, .26); color: #fff; }
+.r-view-bar [data-view-close] { width: 38px; padding: 8px 0; }
 .r-field-body .attach-preview img { width: 36px; height: 36px; }
 
 /* Стикеры */

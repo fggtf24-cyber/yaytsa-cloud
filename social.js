@@ -3,6 +3,7 @@
 
 const USERNAME_RE = /^[a-z0-9_]{1,20}$/;
 // Картинки хранятся строкой в базе. Показываем только такие, SVG и прочее сюда не пройдёт.
+const FEED_CARD = '.r-post[data-href]'; // В ленте клик по картинке открывает пост, а не просмотр.
 const DATA_IMAGE = /^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/;
 // Соцсети в профиле: [id, подпись, сайты]. Значок лежит в assets/net/<id>.svg.
 const NETS = [
@@ -190,7 +191,7 @@ export function setupSocial(ctx) {
       return app ? `${pre}<a class="r-link" href="#app/${esc(app.id)}">#${tag}</a>` : m;
     });
 
-  const imageTag = url => (DATA_IMAGE.test(url || '') ? `<img class="c-image" src="${url}" alt="${T('Картинка в комментарии')}" loading="lazy">` : '');
+  const imageTag = url => (DATA_IMAGE.test(url || '') ? `<img class="c-image" src="${url}" alt="${T('Картинка в комментарии')}" loading="lazy" tabindex="0" role="button">` : '');
 
   /* ---------- Картинка в комментарии ---------- */
 
@@ -400,8 +401,54 @@ export function setupSocial(ctx) {
       if (!mediaFiles.has(key)) mediaFiles.set(key, (await F().getDoc(ref('postimages', id)).catch(() => null))?.data()?.image || '');
       url = mediaFiles.get(key);
     }
-    if (DATA_IMAGE.test(url || '')) box.innerHTML = `<img class="r-media-bg" src="${url}" alt=""><img class="r-media-img" src="${url}" alt="${T(chat ? 'Фото в сообщении' : 'Картинка в посте')}">`;
+    if (DATA_IMAGE.test(url || '')) box.innerHTML = `<img class="r-media-bg" src="${url}" alt=""><img class="r-media-img" src="${url}" alt="${T(chat ? 'Фото в сообщении' : 'Картинка в посте')}"${box.closest(FEED_CARD) ? '' : ' tabindex="0" role="button"'}>`;
   }
+
+  // Просмотр картинки поверх страницы, как на Reddit. Картинки у нас data:, поэтому сохранить можно прямо из src.
+  function openImage(source) {
+    const dlg = document.createElement('dialog');
+    dlg.className = 'r-view';
+    dlg.innerHTML = `
+      <div class="r-view-bar">
+        <button type="button" data-view-copy>${T('Скопировать')}</button>
+        <a data-view-save>${T('Сохранить')}</a>
+        <button type="button" data-view-close aria-label="${T('Закрыть')}">×</button>
+      </div>
+      <img alt="">`;
+    const image = dlg.querySelector('img');
+    image.src = source.src;
+    image.alt = source.alt;
+    const save = dlg.querySelector('[data-view-save]');
+    save.href = source.src;
+    save.download = `yaytsa-cloud.${source.src.slice(11, source.src.indexOf(';'))}`;
+    const copy = dlg.querySelector('[data-view-copy]');
+    copy.addEventListener('click', async () => {
+      // В буфер браузеры принимают только PNG. Промис внутри ClipboardItem нужен Safari: иначе он теряет нажатие.
+      const png = new Promise((done, fail) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = image.naturalWidth;
+        canvas.height = image.naturalHeight;
+        canvas.getContext('2d').drawImage(image, 0, 0);
+        canvas.toBlob(blob => (blob ? done(blob) : fail(new Error('png'))));
+      });
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
+        copy.textContent = T('Скопировано');
+      } catch {
+        copy.textContent = T('Не удалось скопировать');
+      }
+    });
+    dlg.addEventListener('click', e => {
+      if (e.target === dlg || e.target.closest('[data-view-close]')) dlg.close();
+    });
+    dlg.addEventListener('close', () => dlg.remove());
+    document.body.append(dlg);
+    dlg.showModal();
+  }
+  const viewable = el => el.closest('.c-image, .r-media-img:not(' + FEED_CARD + ' *)');
+  view.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && viewable(e.target)) openImage(e.target);
+  });
 
   // Качаем картинку, только когда карточка подъезжает к экрану.
   const mediaSeen = new IntersectionObserver(entries => entries.forEach(e => {
@@ -1831,6 +1878,8 @@ export function setupSocial(ctx) {
   }
 
   view.addEventListener('click', e => {
+    const picture = viewable(e.target);
+    if (picture) return openImage(picture);
     const t = e.target.closest('button, a, summary');
     if (!t) {
       // Клик по пустому месту карточки открывает пост, как на Reddit. Выделение текста не считается.

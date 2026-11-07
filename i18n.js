@@ -33,6 +33,7 @@ export const EN = {
   'Закрыть': 'Close',
   'Скопировать': 'Copy',
   'Скопировано': 'Copied',
+  'Не удалось скопировать': 'Could not copy',
   'Нажмите Cmd+C': 'Press Cmd+C',
   'Сайт': 'Website',
   'Изменить': 'Edit',
