@@ -23,7 +23,7 @@ const APPS = [
       'Сглаживает дёрганые движения мыши',
       'При клике курсор чуть сжимается и наклоняется',
       'Motion blur на быстрых движениях',
-      'Обновляется сама: новая версия скачивается в фоне, установка по кнопке «Перезапустить»',
+      'Обновляется сама при запуске',
     ],
     needs: [
       'Windows, 64-бит, или Linux: X11, а на Wayland GNOME или KDE',
@@ -36,7 +36,7 @@ const APPS = [
       'Smooths out jerky mouse movement',
       'The cursor squeezes and tilts slightly on click',
       'Motion blur on fast movement',
-      'Updates itself: the new version downloads in the background and installs with one "Restart" click',
+      'Updates itself on launch',
     ],
     needsEn: [
       'Windows, 64-bit, or Linux: X11, or GNOME or KDE on Wayland',
@@ -62,7 +62,7 @@ const APPS = [
       'YouTube: текст ролика по ссылке',
       'Чистая речь: убирает «э-э», «м-м» и повторы',
       'Словарь замен для терминов',
-      'Обновляется сама: новая версия скачивается в фоне, установка по кнопке «Перезапустить»',
+      'Обновляется сама при запуске',
     ],
     needs: [
       'Windows 10 или 11, 64-бит',
@@ -77,7 +77,7 @@ const APPS = [
       'YouTube: video text from a link',
       'Clean speech: removes filler sounds and repeats',
       'Replacement dictionary for terms',
-      'Updates itself: the new version downloads in the background and installs with one "Restart" click',
+      'Updates itself on launch',
     ],
     needsEn: [
       'Windows 10 or 11, 64-bit',
@@ -104,7 +104,7 @@ const APPS = [
       'Место на диске: схема из прямоугольников, папки по размеру, самые большие файлы, поиск, выгрузка в CSV',
       'Очистка памяти: вручную, по порогу загрузки или по расписанию',
       'Работа в фоне: значок в трее и запуск вместе с Windows',
-      'Обновляется сама: новая версия скачивается в фоне, установка по кнопке «Перезапустить»',
+      'Обновляется сама при запуске',
     ],
     needs: [
       'Windows 10 или 11, 64-бит',
@@ -118,7 +118,7 @@ const APPS = [
       'Disk space: treemap, folders by size, largest files, search, CSV export',
       'Memory cleanup: manual, by load threshold or on a schedule',
       'Background mode: tray icon and start with Windows',
-      'Updates itself: the new version downloads in the background and installs with one "Restart" click',
+      'Updates itself on launch',
     ],
     needsEn: [
       'Windows 10 or 11, 64-bit',
