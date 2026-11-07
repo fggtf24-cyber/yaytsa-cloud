@@ -230,6 +230,42 @@ const APPS = [
       'No administrator rights needed',
     ],
   },
+  {
+    id: 'forma',
+    name: 'Forma',
+    icon: 'assets/forma.png',
+    demo: 'assets/forma-demo.mp4',
+    desc: 'Конвертер файлов с круговым меню: тащите файл в Проводнике, жмёте Shift и отпускаете над нужным форматом. Раньше называлась Sweetch.',
+    descEn: 'A file converter with a radial menu: drag a file in Explorer, press Shift and drop it on the format you need. Formerly Sweetch.',
+    file: 'https://github.com/fggtf24-cyber/Sweetch/releases/latest/download/Forma-Setup.exe',
+    size: '101 МБ',
+    sizeEn: '101 MB',
+    repo: 'https://github.com/fggtf24-cyber/Sweetch',
+    features: [
+      'Перетащите файл в Проводнике или на рабочем столе, нажмите Shift и отпустите над нужным форматом',
+      'Ctrl открывает инструменты, Alt действия. Без мыши: Ctrl + Alt + Space',
+      'Изображения, включая RAW с камер, аудио, видео, PDF, документы, таблицы, презентации, субтитры и архивы',
+      'Качество остаётся исходным, а сами файлы не перезаписываются',
+      'Всё работает на вашем компьютере',
+      'Обновляется сама',
+    ],
+    needs: [
+      'Windows 10 (1809 или новее) или 11, 64-бит',
+      'LibreOffice для части операций с Office и PDF, ставится отдельно',
+    ],
+    featuresEn: [
+      'Drag a file in Explorer or on the desktop, press Shift and drop it on the format you need',
+      'Ctrl opens tools, Alt opens actions. Without a mouse: Ctrl + Alt + Space',
+      'Images, including camera RAW, audio, video, PDF, documents, spreadsheets, presentations, subtitles and archives',
+      'Quality stays the same and your original files are not overwritten',
+      'Everything runs on your computer',
+      'Updates itself',
+    ],
+    needsEn: [
+      'Windows 10 (1809 or newer) or 11, 64-bit',
+      'LibreOffice for some Office and PDF operations, installed separately',
+    ],
+  },
 ];
 
 // Стартовый список «Других проектов». Правки админов лежат в Firestore и накладываются поверх APPS и PROJECTS.
