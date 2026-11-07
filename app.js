@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=41';
+import { EN, TERMS } from './i18n.js?v=42';
 import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=27';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -13,6 +13,7 @@ const APPS = [
     desc: 'Плавный курсор для записей экрана в OBS, как в Screen Studio. Клики попадают точно в цель.',
     descEn: 'A smooth cursor for OBS screen recordings, like in Screen Studio. Clicks land exactly on target.',
     file: 'https://github.com/fggtf24-cyber/smooth-cursor-obs/releases/latest/download/SmoothCursor-Setup.exe',
+    linuxFile: 'https://github.com/fggtf24-cyber/smooth-cursor-obs/releases/latest/download/SmoothCursor-linux-x86_64.tar.gz',
     size: '130 МБ',
     sizeEn: '130 MB',
     repo: 'https://github.com/fggtf24-cyber/smooth-cursor-obs',
@@ -25,7 +26,7 @@ const APPS = [
       'Обновляется сама при запуске',
     ],
     needs: [
-      'Windows, 64-бит',
+      'Windows, 64-бит, или Linux: X11, а на Wayland GNOME или KDE',
       'OBS Studio 30 или новее',
       'ffmpeg: если его нет, программа скачает сама (около 100 МБ)',
       'Права администратора не нужны',
@@ -38,7 +39,7 @@ const APPS = [
       'Updates itself on launch',
     ],
     needsEn: [
-      'Windows, 64-bit',
+      'Windows, 64-bit, or Linux: X11, or GNOME or KDE on Wayland',
       'OBS Studio 30 or newer',
       'ffmpeg: if missing, the app downloads it (about 100 MB)',
       'No administrator rights needed',
@@ -424,7 +425,9 @@ const social = setupSocial({
 
 const platform = () => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#BDBDBD" stroke-width="1.8" role="img" aria-label="${T('Для компьютера')}"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M9 20h6M12 16v4"/></svg>`;
 const isMac = /Macintosh/.test(navigator.userAgent);
-const download = (a, cls = 'btn') => `<a class="${cls} dl" data-id="${esc(a.id)}" href="${safeUrl(a.file)}" aria-label="${T('Скачать {name}', { name: esc(nm(a)) })}">${T(a.macInstall ? 'Скачать для Windows' : 'Скачать')}</a>`;
+const isLinux = /Linux/.test(navigator.userAgent) && !/Android/.test(navigator.userAgent);
+const download = (a, cls = 'btn') => `<a class="${cls} dl" data-id="${esc(a.id)}" href="${safeUrl(a.file)}" aria-label="${T('Скачать {name}', { name: esc(nm(a)) })}">${T(a.macInstall || a.linuxFile ? 'Скачать для Windows' : 'Скачать')}</a>`;
+const linuxButton = (a, cls = 'btn') => `<a class="${cls} dl-linux" data-id="${esc(a.id)}" href="${safeUrl(a.linuxFile)}">${T('Скачать для Linux')}</a>`;
 const macButton = (a, cls = 'btn') => `<button type="button" class="${cls} dl-mac" data-id="${esc(a.id)}">${T('Скачать для Mac')}</button>`;
 const siteLink = a => (safeUrl(a.site) ? `<a class="link" href="${safeUrl(a.site)}" target="_blank" rel="noopener">${T('Сайт')}</a>` : '');
 const editLink = (kind, a) => (isAdmin ? `<a class="link" href="#edit/${kind}/${esc(a.id)}" aria-label="${T('Изменить {name}', { name: esc(nm(a)) })}">${T('Изменить')}</a>` : '');
@@ -462,7 +465,7 @@ const card = a => `
       <a class="link" href="#app/${esc(a.id)}" aria-label="${T('Подробнее о {name}', { name: esc(nm(a)) })}">${T('Подробнее')}</a>
       ${siteLink(a)}
       ${editLink('apps', a)}
-      ${isMac && a.macInstall ? macButton(a) : download(a)}
+      ${isLinux && a.linuxFile ? linuxButton(a) : isMac && a.macInstall ? macButton(a) : download(a)}
     </div>
   </article>`;
 
@@ -551,13 +554,13 @@ function renderApp(a) {
         </div>
         <p class="app-desc">${esc(tr(a, 'desc'))}</p>
         <ul class="app-meta">
-          <li>${isWindows || (isMac && a.macInstall) ? `<i class="ok">✓</i>${T('Работает на этом устройстве')}` : `<i>!</i>${T(a.macInstall ? 'Только для Windows и Mac' : 'Только для Windows')}`}</li>
+          <li>${isWindows || (isMac && a.macInstall) || (isLinux && a.linuxFile) ? `<i class="ok">✓</i>${T('Работает на этом устройстве')}` : `<i>!</i>${T(a.macInstall ? 'Только для Windows и Mac' : a.linuxFile ? 'Только для Windows и Linux' : 'Только для Windows')}`}</li>
           ${size ? `<li><i>↓</i>${T(a.portable ? '{size}, установка не нужна' : '{size} после установки', { size: esc(size) })}</li>` : ''}
           ${authorText(a) ? `<li><i>@</i><span>${authorText(a)}</span></li>` : ''}
           ${a.community ? `<li><i>!</i>${T('Программу добавил участник. Админ проверил заявку, но файл вы скачиваете на свой риск.')}</li>` : ''}
         </ul>
         ${a.community ? `<figure id="author-selfie" class="author-selfie" data-app="${esc(a.id)}" hidden></figure>` : ''}
-        ${!a.macInstall ? download(a, 'btn primary') : isMac ? macButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + macButton(a)}
+        ${a.linuxFile ? (isLinux ? linuxButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + linuxButton(a)) : !a.macInstall ? download(a, 'btn primary') : isMac ? macButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + macButton(a)}
         ${authorName(a) ? `<a class="btn report-link" href="#report/${esc(a.id)}">${T('Сообщить о баге или идее')}</a>` : ''}
         <div class="app-links">
           ${siteLink(a)}
@@ -1750,6 +1753,10 @@ view.addEventListener('click', e => {
   else if (t.classList.contains('dl')) {
     count(`dl_${t.dataset.id}`);
     toast(T('Скачивание началось. Если Windows покажет SmartScreen: «Подробнее», затем «Выполнить в любом случае».'));
+  }
+  else if (t.classList.contains('dl-linux')) {
+    count(`dl_${t.dataset.id}`);
+    toast(T('Скачивание началось. Распакуйте архив и запустите install.sh.'));
   }
   else if (t.classList.contains('dl-mac')) {
     count(`dl_${t.dataset.id}`);
