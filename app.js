@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=43';
+import { EN, TERMS } from './i18n.js?v=44';
 import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=27';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -1692,12 +1692,13 @@ function route() {
   if (['account', 'stats', 'inbox', 'publish', 'terms'].includes(name)) return { name };
   if (name === 'admin') return { name, tab: a };
   if (name === 'report') return { name, appId: a };
+  if (name === 'timer-login') return { name, target: a, state: b };
   if (name === 'edit' && FIELDS[a] && b) return { name, kind: a, id: b };
   const app = name === 'app' && apps.find(x => x.id === a);
   return app ? { name: 'app', app } : { name: 'apps' };
 }
 
-const RAIL = { feed: 'feed', post: 'feed', submit: 'feed', u: 'account', uid: 'account', chat: 'inbox', inbox: 'inbox', account: 'account', stats: 'stats', report: 'report', admin: 'admin' };
+const RAIL = { 'timer-login': 'account', feed: 'feed', post: 'feed', submit: 'feed', u: 'account', uid: 'account', chat: 'inbox', inbox: 'inbox', account: 'account', stats: 'stats', report: 'report', admin: 'admin' };
 
 function render() {
   const r = route();
@@ -1707,6 +1708,7 @@ function render() {
   });
   if (r.social) { social.render(r); return; } // заголовок вкладки social.js ставит сам, когда загрузит данные
   if (r.name === 'account') renderAccount();
+  else if (r.name === 'timer-login') renderTimerLogin(r);
   else if (r.name === 'stats') renderStats();
   else if (r.name === 'inbox') renderInbox();
   else if (r.name === 'report') renderReport(r.appId);
@@ -1717,6 +1719,50 @@ function render() {
   else if (r.name === 'app') renderApp(r.app);
   else renderApps();
   document.title = r.app ? `${nm(r.app)} — ${T('Яйца Cloud')}` : T('Яйца Cloud — все приложения');
+}
+
+// Вход в Яйцетаймер через Google. Внутри программы (WebView) Google вход не пускает, поэтому программа
+// открывает эту страницу в обычном браузере, а она передаёт сессию обратно: на ПК — странице программы
+// на 127.0.0.1 (в #фрагменте, он не уходит в сеть), на телефоне — по ссылке yaytsa://auth.
+// state — случайная строка от программы, по ней программа узнаёт свой запрос.
+function timerTarget(r) {
+  if (!/^[0-9a-f]{16,64}$/.test(r.state || '')) return null;
+  const rt = encodeURIComponent(user.refreshToken);
+  if (r.target === 'a') return `yaytsa://auth?state=${r.state}&rt=${rt}`;
+  const port = /^p(\d{2,5})$/.exec(r.target || '');
+  return port ? `http://127.0.0.1:${port[1]}/cb#state=${r.state}&rt=${rt}` : null;
+}
+
+function renderTimerLogin(r) {
+  const valid = /^(a|p\d{2,5})$/.test(r.target || '') && /^[0-9a-f]{16,64}$/.test(r.state || '');
+  if (!valid) {
+    view.innerHTML = `<section class="section panel"><h1>${T('Вход в Яйцетаймер')}</h1><p class="empty">${T('Ссылка устарела. Нажмите «Войти через Google» в Яйцетаймере ещё раз.')}</p></section>`;
+    return;
+  }
+  if (authState !== 'ready' || !user) {
+    renderAccount();
+    const box = view.querySelector('section');
+    if (box && authState === 'ready') box.insertAdjacentHTML('afterbegin', `<p class="msg ok">${T('Войдите, чтобы подключить Яйцетаймер. Потом вернётесь в программу.')}</p>`);
+    return;
+  }
+  view.innerHTML = `
+    <section class="section panel">
+      <h1>${T('Вход в Яйцетаймер')}</h1>
+      <p>${T('Аккаунт')}: <b id="timer-who"></b></p>
+      <p class="empty">${T('Яйцетаймер получит доступ только к своим данным: истории, проектам и настройкам таймера.')}</p>
+      <div class="edit-account-actions">
+        <button type="button" class="btn primary" id="timer-connect">${T('Открыть Яйцетаймер')}</button>
+        <button type="button" class="btn" id="logout">${T('Другой аккаунт')}</button>
+      </div>
+      <p class="msg ok" id="timer-done" hidden>${T('Готово. Если программа не открылась сама, вернитесь в неё вручную.')}</p>
+    </section>`;
+  view.querySelector('#timer-who').textContent = user.email || displayName();
+  view.querySelector('#timer-connect').addEventListener('click', () => {
+    const url = timerTarget(r);
+    if (!url) return;
+    view.querySelector('#timer-done').hidden = false;
+    location.href = url;
+  });
 }
 
 // На Mac ставим строкой в Терминале: у скачанного браузером файла macOS блокирует запуск, у curl такой метки нет.
