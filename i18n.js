@@ -95,6 +95,10 @@ export const EN = {
   'Иконка': 'Icon',
   'Загрузить с компьютера': 'Upload from computer',
   'Ссылки и демо': 'Links and demo',
+  'Обзор на YouTube: ссылка на видео': 'YouTube review: link to the video',
+  'Обзор': 'Review',
+  'Обзор {name}': '{name} review',
+  'Нужна ссылка на видео YouTube.': 'A link to a YouTube video is needed.',
   'Английская версия': 'English version',
   'Ссылка на картинку, гифку или .mp4': 'Link to an image, GIF or .mp4',
   'Что умеет (один пункт на строку)': 'Features (one per line)',
@@ -456,7 +460,7 @@ export const TERMS = {
   ru: [
     ['Пользовательское соглашение', 'Действует с 7 ноября 2026 года. Пользуясь сайтом Яйца Cloud, вы принимаете эти условия.'],
     ['Что это за сайт', 'Каталог бесплатных программ и сообщество вокруг них: профили, посты, комментарии и личные сообщения.'],
-    ['Куки и браузер', 'Сайт хранит в вашем браузере вход в аккаунт, язык и отметки вроде закрытой плашки. Без этого сайт не работает, поэтому отключить это нельзя. Рекламных и следящих куки нет. Заходы и скачивания считаются общим числом, без привязки к человеку. Шрифты, вход и база данных работают на серверах Google.'],
+    ['Куки и браузер', 'Сайт хранит в вашем браузере вход в аккаунт, язык и отметки вроде закрытой плашки. Без этого сайт не работает, поэтому отключить это нельзя. Рекламных и следящих куки нет. Заходы и скачивания считаются общим числом, без привязки к человеку. Шрифты, вход и база данных работают на серверах Google. Обзоры на страницах программ показывает YouTube.'],
     ['Какие данные мы храним', 'Публично видны ваши @имя, имя, фото, шапка, описание, ссылки на соцсети, посты, комментарии и время, когда вы были на сайте. Почту и способ входа видят только админы. Личные сообщения видят только их участники. Данные лежат в Google Firebase.'],
     ['Программы сообщества', 'Предлагая программу, вы подтверждаете, что имеете право её распространять и что в ней нет вредоносного кода. К заявке нужно приложить своё селфи и согласиться на его показ: до одобрения его видят только админы, после одобрения все посетители на странице программы. Селфи хранится, пока заявка не удалена. Удалить заявку можете вы сами или админ. Программы сообщества проверяет админ, но скачиваете их вы на свой риск.'],
     ['Правила поведения', 'Нельзя публиковать спам, оскорбления, чужие личные данные, вредоносные файлы и всё, что нарушает закон. Админы могут удалить такие материалы и отказать в заявке.'],
@@ -467,7 +471,7 @@ export const TERMS = {
   en: [
     ['User agreement', 'Effective from 7 November 2026. By using the Яйца Cloud site, you accept these terms.'],
     ['What this site is', 'A catalog of free programs and a community around them: profiles, posts, comments and private messages.'],
-    ['Cookies and your browser', 'The site keeps your sign-in, language and small marks such as a closed banner in your browser. The site cannot work without them, so they cannot be turned off. There are no advertising or tracking cookies. Visits and downloads are counted as totals, not tied to a person. Fonts, sign-in and the database run on Google servers.'],
+    ['Cookies and your browser', 'The site keeps your sign-in, language and small marks such as a closed banner in your browser. The site cannot work without them, so they cannot be turned off. There are no advertising or tracking cookies. Visits and downloads are counted as totals, not tied to a person. Fonts, sign-in and the database run on Google servers. Reviews on program pages are shown by YouTube.'],
     ['What data we store', 'Your @username, name, photo, banner, bio, social links, posts, comments and the time you were last on the site are public. Only admins can see your email and sign-in method. Only the participants can see private messages. The data is stored in Google Firebase.'],
     ['Community programs', 'By suggesting a program, you confirm that you have the right to distribute it and that it contains no malicious code. Your request must include your selfie and your consent to show it: before approval only admins can see it, after approval all visitors can see it on the program page. The selfie is kept until the request is deleted. You or an admin can delete the request. An admin reviews community programs, but you download them at your own risk.'],
     ['Rules of conduct', 'Do not post spam, insults, other people\'s personal data, malicious files or anything illegal. Admins can remove such content and reject requests.'],

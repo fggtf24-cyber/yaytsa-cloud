@@ -153,6 +153,7 @@ h1, h2, p, ul { margin: 0; }
 .card.wide { grid-column: 1 / -1; }
 .card.wide p { flex: none; }
 .player { width: 100%; height: 360px; border: 0; border-radius: 6px; display: block; }
+.player.review { height: auto; aspect-ratio: 16 / 9; border-radius: 8px; }
 .empty { color: var(--muted); }
 
 /* Промо-плитка */

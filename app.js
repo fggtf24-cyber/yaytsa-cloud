@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=39';
+import { EN, TERMS } from './i18n.js?v=40';
 import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=26';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -361,6 +361,8 @@ let projects = PROJECTS;
 // Всё, что вводят в редакторе, попадает в разметку только через esc и safeUrl.
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 const safeUrl = u => (/^(https:\/\/|assets\/)/.test(u || '') ? esc(u) : '');
+// Из ссылки берём только id ролика: в плеер не попадает ничего, что написал автор.
+const youtubeId = u => /^https:\/\/(?:(?:www\.|m\.)?youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([\w-]{11})(?![\w-])/.exec(u || '')?.[1] || '';
 // Иконка: файл сайта, ссылка или картинка, загруженная в редакторе и сохранённая строкой.
 const icon = a => (/^data:image\/(png|jpeg|webp);base64,/.test(a.icon || '') ? esc(a.icon) : safeUrl(a.icon)) || 'assets/favicon.svg';
 
@@ -427,6 +429,14 @@ const card = a => `
       ${isMac && a.macInstall ? macButton(a) : download(a)}
     </div>
   </article>`;
+
+const review = a => {
+  const id = youtubeId(a.review);
+  return id ? `
+    <h2>${T('Обзор')}</h2>
+    <iframe class="player review" title="${T('Обзор {name}', { name: esc(nm(a)) })}" src="https://www.youtube-nocookie.com/embed/${id}" loading="lazy"
+      allow="encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe>` : '';
+};
 
 // Ссылка на soundcloud.com в проекте сама превращается в плеер.
 const soundcloud = p => (/^https:\/\/soundcloud\.com\//.test(p.url || '') ? `
@@ -529,6 +539,7 @@ function renderApp(a) {
             </div>
             ${demo}
           </div>` : (demo ? `<div class="use">${demo}</div>` : '')}
+        ${review(a)}
         ${needs.length ? `<h2>${T('Системные требования')}</h2><div class="use"><div class="use-text">${list(needs)}</div></div>` : ''}
         <h2>${T('Обсуждения')}</h2>
         <div id="app-threads" class="app-threads" data-app="${esc(a.id)}"><p class="empty">${T('Загрузка…')}</p></div>
@@ -759,6 +770,7 @@ const FIELDS = {
     ['site', 'Сайт программы', 'url', 'Ссылки и демо'],
     ['repo', 'GitHub', 'url', 'Ссылки и демо'],
     ['demo', 'Ссылка на картинку, гифку или .mp4', 'url', 'Ссылки и демо'],
+    ['review', 'Обзор на YouTube: ссылка на видео', 'url', 'Ссылки и демо'],
     ['nameEn', 'Название', 'text', 'Английская версия'],
     ['descEn', 'Описание', 'area', 'Английская версия'],
     ['sizeEn', 'Размер, например 130 MB', 'text', 'Английская версия'],
@@ -848,6 +860,7 @@ async function readFields(form, fields) {
 async function saveItem(form) {
   const { kind, id } = form.dataset;
   const data = await readFields(form, FIELDS[kind]);
+  if (data.review && !youtubeId(data.review)) return say(T('Нужна ссылка на видео YouTube.'));
   // Для записей из кода (APPS/PROJECTS) в Firestore пишем только то, что отличается от кода.
   // Иначе первое же сохранение замораживает все поля, и следующие правки в коде (новая ссылка, размер) не видны на сайте.
   const base = id === 'new' ? null : (kind === 'apps' ? APPS : PROJECTS).find(x => x.id === id);
@@ -864,7 +877,7 @@ async function saveItem(form) {
 
 /* ---------- Заявка на программу ---------- */
 
-const PUBLISH_FIELDS = ['icon', 'name', 'coauthors', 'desc', 'file', 'size', 'features', 'needs', 'site', 'repo', 'demo']
+const PUBLISH_FIELDS = ['icon', 'name', 'coauthors', 'desc', 'file', 'size', 'features', 'needs', 'site', 'repo', 'demo', 'review']
   .map(key => FIELDS.apps.find(f => f[0] === key));
 
 const STATUS = {
@@ -955,6 +968,8 @@ async function sendSubmission(form) {
   const { selfie, ...data } = await readFields(form, PUBLISH_FIELDS);
   if (!selfie) return say(T('Добавьте своё селфи: без него заявку не принять.'));
   if (!/^https:\/\//.test(data.file)) return say(T('Ссылка должна начинаться с https://'));
+  if (data.review && !youtubeId(data.review)) return say(T('Нужна ссылка на видео YouTube.'));
+  if (!data.review) delete data.review;
   if (!await askSelfieConsent(selfie)) return;
   const sub = fs.doc(fs.collection(db, 'submissions'));
   const batch = fs.writeBatch(db);
@@ -1000,6 +1015,7 @@ const submissionCard = s => `
         ${safeUrl(s.file) ? `<a class="link" href="${safeUrl(s.file)}" target="_blank" rel="noopener nofollow">${T('Файл')}</a>` : ''}
         ${safeUrl(s.repo) ? `<a class="link" href="${safeUrl(s.repo)}" target="_blank" rel="noopener nofollow">GitHub</a>` : ''}
         ${safeUrl(s.site) ? `<a class="link" href="${safeUrl(s.site)}" target="_blank" rel="noopener nofollow">${T('Сайт')}</a>` : ''}
+        ${safeUrl(s.review) ? `<a class="link" href="${safeUrl(s.review)}" target="_blank" rel="noopener nofollow">${T('Обзор')}</a>` : ''}
       </div>
       ${s.reason ? `<p>${T('Причина: {text}', { text: esc(s.reason) })}</p>` : ''}
       <div class="comment-actions wrap">

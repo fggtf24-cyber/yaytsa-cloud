@@ -136,7 +136,7 @@ await ok('автор удаляет картинку', deleteDoc(doc(alice, 'pos
 
 // Заявка и селфи
 const sub = (db, id, uid, selfie = true, consent = true) => { const b = writeBatch(db);
-  b.set(doc(db, 'submissions', id), { uid, status: 'pending', createdAt: serverTimestamp(), icon: '', name: 'App', desc: 'd', file: 'https://x.dev/a.exe', size: '', features: [], needs: [], site: '', repo: '', demo: '', coauthors: ['bob'], selfiePublic: consent });
+  b.set(doc(db, 'submissions', id), { uid, status: 'pending', createdAt: serverTimestamp(), icon: '', name: 'App', desc: 'd', file: 'https://x.dev/a.exe', size: '', features: [], needs: [], site: '', repo: '', demo: '', review: 'https://youtu.be/dQw4w9WgXcQ', coauthors: ['bob'], selfiePublic: consent });
   if (selfie) b.set(doc(db, 'selfies', id), { uid, image: 'data:image/jpeg;base64,AA' }); return b.commit(); };
 await no('заявка без селфи', sub(alice, 's0', 'alice', false));
 await no('заявка без согласия', sub(alice, 's00', 'alice', true, false));
