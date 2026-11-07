@@ -54,6 +54,20 @@ await ok('стикер стирается с комментарием', updateDo
   b.set(doc(alice, 'chats', id), { members: ['alice', 'bob'], lastText: 'Стикер', lastFrom: 'alice', lastAt: serverTimestamp(), seen: {} });
   b.set(doc(collection(alice, 'chats', id, 'msgs')), { from: 'alice', text: '', sticker: 'love', createdAt: serverTimestamp() });
   await ok('стикер в личке', b.commit()); }
+const media = (db, chat, id, uid, kind, withFile = true) => { const b = writeBatch(db);
+  b.set(doc(db, 'chats', chat, 'msgs', id), { from: uid, text: '', media: kind, ...(kind === 'voice' ? { secs: 5 } : { ratio: 1.5 }), createdAt: serverTimestamp() });
+  if (withFile) b.set(doc(db, 'chats', chat, 'media', id), { from: uid, data: 'data:image/jpeg;base64,AA' }); return b.commit(); };
+await ok('фото в личке', media(alice, 'alice_bob', 'm1', 'alice', 'image'));
+await ok('голосовое в личке', media(alice, 'alice_bob', 'm2', 'alice', 'voice'));
+{ const b = writeBatch(alice); const id = 'm5';
+  b.set(doc(alice, 'chats', 'alice_bob', 'msgs', id), { from: 'alice', text: '', media: 'voice', secs: 90, parts: 2, createdAt: serverTimestamp() });
+  b.set(doc(alice, 'chats', 'alice_bob', 'media', id), { from: 'alice', data: 'AA' });
+  b.set(doc(alice, 'chats', 'alice_bob', 'media', id + '_1'), { from: 'alice', data: 'BB' });
+  await ok('длинное голосовое частями', b.commit()); }
+await no('отметка без файла', media(alice, 'alice_bob', 'm3', 'alice', 'image', false));
+await no('чужой тип файла', media(alice, 'alice_bob', 'm4', 'alice', 'video'));
+await ok('собеседник видит файл', getDoc(doc(bob, 'chats', 'alice_bob', 'media', 'm1')));
+await no('посторонний не видит файл', getDoc(doc(admin, 'chats', 'alice_bob', 'media', 'm1')));
 await no('пустое сообщение', setDoc(doc(collection(alice, 'chats', 'alice_bob', 'msgs')), { from: 'alice', text: '', createdAt: serverTimestamp() }));
 
 await ok('отмечаю себя в сети', setDoc(doc(alice, 'presence', 'alice'), { at: serverTimestamp() }));

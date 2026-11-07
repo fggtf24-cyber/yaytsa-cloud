@@ -60,6 +60,9 @@ const ICON = {
   sticker: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h14a1 1 0 0 1 1 1v9l-6 6H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M14 20v-5a1 1 0 0 1 1-1h5"/></svg>',
   tick: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13l5 5L19 7"/></svg>',
   ticks: '<svg width="20" height="16" viewBox="0 0 30 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l5 5L18 7"/><path d="M14 17l1 1L25 7"/></svg>',
+  mic: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+  play: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>',
+  pause: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>',
   edit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z" stroke-linejoin="round"/></svg>',
 };
 
@@ -209,7 +212,7 @@ export function setupSocial(ctx) {
   function sendSticker(btn) {
     const form = btn.closest('form');
     btn.closest('details').open = false;
-    if (form.dataset.sForm === 'chat') sendChat(form, btn.dataset.sticker);
+    if (form.dataset.sForm === 'chat') sendChat(form, { sticker: btn.dataset.sticker });
     else addComment(form, btn.dataset.sticker);
   }
 
@@ -374,15 +377,30 @@ export function setupSocial(ctx) {
   // Картинка поста. Место под неё занято сразу, поэтому лента не прыгает, когда файл догрузится.
   const postMedia = p => (p.imageRatio ? `<div class="r-media" data-media="${esc(p.id)}" style="aspect-ratio:${Math.min(3, Math.max(0.4, +p.imageRatio || 1))}"></div>` : '');
 
-  const postImages = new Map();
-  async function fillMedia(box) {
-    const { media: id } = box.dataset;
-    if (!postImages.has(id)) {
-      const image = (await F().getDoc(ref('postimages', id)).catch(() => null))?.data()?.image;
-      postImages.set(id, DATA_IMAGE.test(image || '') ? image : '');
+  // Файлы постов и личных сообщений, уже скачанные за этот визит.
+  const mediaFiles = new Map();
+  const mediaKey = box => `${box.dataset.chat || 'post'}/${box.dataset.media}`;
+
+  async function loadChatFile(chat, id, parts = 1) {
+    const key = `${chat}/${id}`;
+    if (!mediaFiles.has(key)) {
+      const ids = Array.from({ length: parts }, (_, i) => (i ? `${id}_${i}` : id));
+      const docs = await Promise.all(ids.map(x => F().getDoc(ref('chats', chat, 'media', x)).catch(() => null)));
+      mediaFiles.set(key, docs.map(d => d?.data()?.data || '').join(''));
     }
-    const url = postImages.get(id);
-    if (url) box.innerHTML = `<img class="r-media-bg" src="${url}" alt=""><img class="r-media-img" src="${url}" alt="${T('Картинка в посте')}">`;
+    return mediaFiles.get(key);
+  }
+
+  async function fillMedia(box) {
+    const { media: id, chat } = box.dataset;
+    let url;
+    if (chat) url = await loadChatFile(chat, id);
+    else {
+      const key = mediaKey(box);
+      if (!mediaFiles.has(key)) mediaFiles.set(key, (await F().getDoc(ref('postimages', id)).catch(() => null))?.data()?.image || '');
+      url = mediaFiles.get(key);
+    }
+    if (DATA_IMAGE.test(url || '')) box.innerHTML = `<img class="r-media-bg" src="${url}" alt=""><img class="r-media-img" src="${url}" alt="${T(chat ? 'Фото в сообщении' : 'Картинка в посте')}">`;
   }
 
   // Качаем картинку, только когда карточка подъезжает к экрану.
@@ -394,7 +412,9 @@ export function setupSocial(ctx) {
   new MutationObserver(() => {
     view.querySelectorAll('.r-media:not([data-watched])').forEach(box => {
       box.dataset.watched = '';
-      mediaSeen.observe(box);
+      // Переписка перерисовывается часто: уже скачанное показываем сразу, чтобы фото не мигало.
+      if (mediaFiles.has(mediaKey(box))) fillMedia(box);
+      else mediaSeen.observe(box);
     });
   }).observe(view, { childList: true, subtree: true });
 
@@ -1186,7 +1206,11 @@ export function setupSocial(ctx) {
     <form class="r-chat-form" data-s-form="chat">
       ${emojiBtn()}
       ${stickerBtn()}
-      <textarea name="text" rows="1" maxlength="2000" required aria-label="${T('Сообщение')}" placeholder="${T('Сообщение')}"></textarea>
+      <label class="r-iconbtn r-chat-photo" title="${T('Отправить фото')}">${ICON.image}<span class="sr">${T('Отправить фото')}</span>
+        <input class="sr" type="file" accept="image/*,.heic,.heif" data-chat-photo></label>
+      <textarea name="text" rows="1" maxlength="2000" aria-label="${T('Сообщение')}" placeholder="${T('Сообщение')}"></textarea>
+      <span class="r-rec"><i></i><b data-rec-time>0:00</b><button type="button" class="link linkbtn" data-rec-cancel>${T('Отмена')}</button></span>
+      <button type="button" class="r-iconbtn r-mic" data-rec-start title="${T('Записать голосовое')}" aria-label="${T('Записать голосовое')}">${ICON.mic}</button>
       <button class="r-send" aria-label="${T('Отправить')}">${ICON.send}</button>
     </form>` : `<a class="r-composer-stub" href="#account">${T('Выберите @имя в профиле, чтобы писать сообщения')}</a>`);
 
@@ -1281,7 +1305,8 @@ export function setupSocial(ctx) {
       stopMsgs?.();
       stopMsgs = null;
       const msgs = await F().getDocs(col('chats', id, 'msgs'));
-      await Promise.all(msgs.docs.map(d => F().deleteDoc(d.ref)));
+      const files = await F().getDocs(col('chats', id, 'media'));
+      await Promise.all([...msgs.docs, ...files.docs].map(d => F().deleteDoc(d.ref)));
       await F().deleteDoc(ref('chats', id));
       location.hash = 'chat';
     } catch (e) {
@@ -1451,6 +1476,118 @@ export function setupSocial(ctx) {
     );
   }
 
+  const clock = secs => `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(2, '0')}`;
+
+  /* ---------- Голосовые ---------- */
+
+  const AUDIO_DATA = /^data:audio\/(mp4|webm|ogg|mpeg)[^,]*;base64,[A-Za-z0-9+/=]+$/;
+  const voiceTag = m => `
+    <button type="button" class="r-voice" data-voice="${esc(m.id)}" data-secs="${+m.secs || 0}" data-parts="${+m.parts || 1}" aria-label="${T('Голосовое сообщение')}">
+      <span class="r-voice-btn">${ICON.play}</span><span class="r-voice-bar"><i></i></span><span class="r-voice-time">${clock(+m.secs || 0)}</span>
+    </button>`;
+
+  let playing = null; // { id, audio }
+  const voiceBtn = id => view.querySelector(`[data-voice="${CSS.escape(id)}"]`);
+
+  function drawVoice(id, on, part = 0) {
+    const btn = voiceBtn(id);
+    if (!btn) return;
+    btn.querySelector('.r-voice-btn').innerHTML = on ? ICON.pause : ICON.play;
+    btn.querySelector('i').style.width = `${Math.round(part * 100)}%`;
+  }
+
+  async function toggleVoice(btn) {
+    const id = btn.dataset.voice;
+    if (playing?.id === id) {
+      if (playing.audio.paused) playing.audio.play(); else playing.audio.pause();
+      drawVoice(id, !playing.audio.paused, playing.audio.currentTime / (+btn.dataset.secs || 1));
+      return;
+    }
+    if (playing) { playing.audio.pause(); drawVoice(playing.id, false); }
+    const url = await loadChatFile(roomId, id, +btn.dataset.parts || 1);
+    if (!AUDIO_DATA.test(url)) return ctx.toast(T('Не получилось воспроизвести запись.'));
+    const audio = new Audio(url);
+    const secs = +btn.dataset.secs || 1;
+    playing = { id, audio };
+    audio.ontimeupdate = () => drawVoice(id, !audio.paused, Math.min(1, audio.currentTime / secs));
+    audio.onended = () => { drawVoice(id, false); playing = null; };
+    audio.play().catch(() => ctx.toast(T('Не получилось воспроизвести запись.')));
+    drawVoice(id, true);
+  }
+
+  // Запись. Сначала mp4: его понимают и iPhone, и компьютеры. Chrome пишет его только на 96 кбит/с,
+  // поэтому 2 минуты не влезают в один документ базы и сохраняются частями.
+  const VOICE_LIMIT = 120;
+  const VOICE_MAX = 3000000;
+  const VOICE_PART = 750000;
+  let recorder = null; // { rec, stream, started, timer, send, form }
+
+  function stopTracks(r) {
+    clearInterval(r.timer);
+    r.stream.getTracks().forEach(t => t.stop());
+    r.form.classList.remove('recording');
+    recorder = null;
+  }
+
+  async function startRecording(form) {
+    if (needAccount() || recorder) return;
+    if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) return ctx.toast(T('Этот браузер не умеет записывать звук.'));
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      return ctx.toast(T('Нет доступа к микрофону. Разрешите его в настройках браузера.'));
+    }
+    const mimeType = ['audio/mp4;codecs=mp4a.40.2', 'audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'].find(t => MediaRecorder.isTypeSupported(t));
+    const rec = new MediaRecorder(stream, { mimeType, audioBitsPerSecond: 24000 });
+    const parts = [];
+    const r = { rec, stream, form, send: false, started: Date.now() };
+    rec.ondataavailable = e => { if (e.data.size) parts.push(e.data); };
+    rec.onstop = async () => {
+      const secs = Math.max(1, Math.round((Date.now() - r.started) / 1000));
+      stopTracks(r);
+      if (!r.send || !parts.length) return;
+      const blob = new Blob(parts, { type: rec.mimeType });
+      const data = await new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
+      if (data.length > VOICE_MAX) return ctx.toast(T('Запись слишком большая.'));
+      sendChat(form, { media: { kind: 'voice', data, secs } });
+    };
+    r.timer = setInterval(() => {
+      const secs = (Date.now() - r.started) / 1000;
+      form.querySelector('[data-rec-time]').textContent = clock(secs);
+      if (secs >= VOICE_LIMIT) finishRecording(true);
+    }, 250);
+    recorder = r;
+    form.querySelector('[data-rec-time]').textContent = '0:00';
+    form.classList.add('recording');
+    rec.start();
+  }
+
+  function finishRecording(send) {
+    if (!recorder || recorder.rec.state === 'inactive') return;
+    recorder.send = send;
+    recorder.rec.stop();
+  }
+
+  async function sendChatPhoto(input) {
+    const file = input.files[0];
+    const form = input.closest('form');
+    input.value = '';
+    if (!file) return;
+    try {
+      const data = await fileToImage(file);
+      const { width, height } = await imageSize(data);
+      await sendChat(form, { media: { kind: 'image', data, ratio: +(width / height).toFixed(3) } });
+    } catch (e) {
+      console.error(e);
+      ctx.toast(T(e.message === 'big-gif' ? 'Гифка слишком большая: можно до 580 КБ.' : 'Не получилось открыть эту картинку. Попробуйте JPG или PNG.'));
+    }
+  }
+
   const ticks = read => `<span class="r-ticks${read ? ' read' : ''}" role="img" aria-label="${T(read ? 'Прочитано' : 'Отправлено')}">${read ? ICON.ticks : ICON.tick}</span>`;
 
   function drawMsgs() {
@@ -1477,9 +1614,11 @@ export function setupSocial(ctx) {
           ${grouped ? '<span class="r-msg-gap"></span>' : `<a href="${profileHref(m.from)}" tabindex="-1">${ava(m.from, 32)}</a>`}
           <div class="r-msg-main">
             ${roomGroup && !grouped && m.from !== me() ? `<div class="r-meta"><b class="r-user strong">${esc(shownName(m.from))}</b></div>` : ''}
-            <div class="r-bubble${m.text ? '' : ' sticker'}">
+            <div class="r-bubble${m.text || m.media === 'voice' ? '' : ' sticker'}">
               ${m.text ? `<span class="r-msg-text">${rich(m.text)}</span>` : ''}
               ${stickerTag(m.sticker)}
+              ${m.media === 'image' ? `<div class="r-media" data-media="${esc(m.id)}" data-chat="${esc(roomId)}" style="aspect-ratio:${Math.min(3, Math.max(0.4, +m.ratio || 1))}"></div>` : ''}
+              ${m.media === 'voice' ? voiceTag(m) : ''}
               <span class="r-msg-info">${new Date(t).toLocaleTimeString(ctx.lang === 'en' ? 'en-GB' : 'ru-RU', { hour: '2-digit', minute: '2-digit' })}${m.from === me() ? ticks(ms(m.createdAt) && ms(m.createdAt) <= peerSeen) : ''}</span>
             </div>
           </div>
@@ -1500,22 +1639,36 @@ export function setupSocial(ctx) {
     F().updateDoc(ref('chats', c.id), { [`seen.${me()}`]: F().serverTimestamp() }).catch(console.error);
   }
 
-  async function sendChat(form, sticker = '') {
+  async function sendChat(form, { sticker = '', media = null } = {}) {
     if (needAccount() || !roomId) return;
     const input = form.elements.text;
-    const text = sticker ? '' : input.value.trim();
-    if (!text && !sticker) return;
-    if (!sticker) input.value = '';
+    const extra = sticker || media;
+    const text = extra ? '' : input.value.trim();
+    if (!text && !extra) return;
+    if (!extra) input.value = '';
     try {
       const batch = F().writeBatch(ctx.db);
-      const last = { lastText: text.slice(0, 200) || T('[стикер]'), lastFrom: me(), lastAt: F().serverTimestamp() };
+      const label = sticker ? '[стикер]' : media?.kind === 'voice' ? '[голосовое]' : '[фото]';
+      const last = { lastText: text.slice(0, 200) || T(label), lastFrom: me(), lastAt: F().serverTimestamp() };
       if (roomGroup) batch.update(ref('chats', roomId), { ...last, [`seen.${me()}`]: F().serverTimestamp() });
       else batch.set(ref('chats', roomId), { members: [me(), roomPeer].sort(), ...last, seen: { [me()]: F().serverTimestamp() } }, { merge: true });
-      batch.set(F().doc(col('chats', roomId, 'msgs')), { from: me(), text, ...(sticker ? { sticker } : {}), createdAt: F().serverTimestamp() });
+      const mRef = F().doc(col('chats', roomId, 'msgs'));
+      const chunks = [];
+      if (media) for (let i = 0; i < media.data.length; i += media.kind === 'voice' ? VOICE_PART : media.data.length) chunks.push(media.data.slice(i, i + (media.kind === 'voice' ? VOICE_PART : media.data.length)));
+      const parts = chunks.length;
+      batch.set(mRef, {
+        from: me(), text, createdAt: F().serverTimestamp(),
+        ...(sticker ? { sticker } : {}),
+        ...(media ? { media: media.kind, ...(media.kind === 'voice' ? { secs: media.secs, parts } : { ratio: media.ratio }) } : {}),
+      });
+      if (media) {
+        chunks.forEach((data, i) => batch.set(ref('chats', roomId, 'media', i ? `${mRef.id}_${i}` : mRef.id), { from: me(), data }));
+        mediaFiles.set(`${roomId}/${mRef.id}`, media.data);
+      }
       await batch.commit();
       if (!stopMsgs) openRoomStream();
     } catch (e) {
-      input.value = text;
+      if (!extra) input.value = text;
       fail(e);
     }
   }
@@ -1665,6 +1818,9 @@ export function setupSocial(ctx) {
 
   function render(r) {
     if (r.name !== 'chat') { stopMsgs?.(); stopMsgs = null; roomId = null; }
+    finishRecording(false);
+    playing?.audio.pause();
+    playing = null;
     if (r.name !== 'post') thread = null;
     if (r.name === 'feed') renderFeed(r.sort);
     else if (r.name === 'post') renderPost(r.id, r.focus);
@@ -1708,6 +1864,9 @@ export function setupSocial(ctx) {
     else if (d.sDelComment) deleteComment(d.sDelComment);
     else if (d.sDelCard) deleteProfileComment(d.sDelCard);
     else if (d.sticker) sendSticker(t);
+    else if (d.recStart !== undefined) startRecording(t.closest('form'));
+    else if (d.recCancel !== undefined) finishRecording(false);
+    else if (d.voice) toggleVoice(t);
     else if (d.sGroupAdd !== undefined) addToGroup();
     else if (d.sGroupName !== undefined) renameGroup();
     else if (d.sGroupDelete !== undefined) deleteGroup();
@@ -1739,6 +1898,7 @@ export function setupSocial(ctx) {
   view.addEventListener('change', e => {
     if (e.target.matches('[data-s-sort]')) { commentSort = e.target.value; drawPost(true); }
     if (e.target.matches('[data-attach]')) attach(e.target);
+    if (e.target.matches('[data-chat-photo]')) sendChatPhoto(e.target);
     if (e.target.id === 'group-photo') setGroupPhoto(e.target);
   });
 
@@ -1804,7 +1964,7 @@ export function setupSocial(ctx) {
     const kind = form.dataset.sForm;
     if (kind === 'comment') return addComment(form);
     if (kind === 'post') return addPost(form);
-    if (kind === 'chat') return sendChat(form);
+    if (kind === 'chat') return recorder ? finishRecording(true) : sendChat(form);
     if (kind === 'group') return createGroup(form);
     if (kind === 'edit-post' || kind === 'edit-comment') return saveEdit(form);
   }

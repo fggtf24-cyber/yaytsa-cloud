@@ -463,17 +463,36 @@ service cloud.firestore {
           && request.resource.data.members == resource.data.members.removeAll([request.auth.uid])));
       // Группу удаляет только её создатель: сначала сообщения, потом сам чат.
       allow delete: if signedIn() && resource.data.get('group', false) == true && resource.data.owner == request.auth.uid;
+      // Фото и голосовые лежат отдельно от сообщений и грузятся только когда нужны. id такой же, как у сообщения.
+      // Длинное голосовое занимает несколько документов: <id>, <id>_1, <id>_2.
+      match /media/{mid} {
+        allow read: if signedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/chats/$(id)).data.members;
+        allow create: if signedIn()
+          && request.resource.data.keys().hasOnly(['from', 'data'])
+          && request.resource.data.from == request.auth.uid
+          && str(request.resource.data.data, 1, 800000)
+          && request.auth.uid in getAfter(/databases/$(database)/documents/chats/$(id)).data.members;
+        allow delete: if signedIn()
+          && get(/databases/$(database)/documents/chats/$(id)).data.get('owner', '') == request.auth.uid;
+      }
       match /msgs/{mid} {
         allow read: if signedIn()
           && request.auth.uid in get(/databases/$(database)/documents/chats/$(id)).data.members;
         allow delete: if signedIn()
           && get(/databases/$(database)/documents/chats/$(id)).data.get('owner', '') == request.auth.uid;
         allow create: if signedIn()
-          && request.resource.data.keys().hasOnly(['from', 'text', 'sticker', 'createdAt'])
+          && request.resource.data.keys().hasOnly(['from', 'text', 'sticker', 'media', 'ratio', 'secs', 'parts', 'createdAt'])
           && request.resource.data.from == request.auth.uid
           && str(request.resource.data.text, 0, 2000)
-          && (request.resource.data.text.size() > 0 || 'sticker' in request.resource.data)
+          && (request.resource.data.text.size() > 0 || 'sticker' in request.resource.data || 'media' in request.resource.data)
           && str(request.resource.data.get('sticker', ''), 0, 20)
+          && (!('media' in request.resource.data)
+            || (request.resource.data.media in ['image', 'voice']
+              && getAfter(/databases/$(database)/documents/chats/$(id)/media/$(mid)).data.from == request.auth.uid))
+          && request.resource.data.get('ratio', 1) is number
+          && request.resource.data.get('secs', 0) is number
+          && request.resource.data.get('parts', 1) is number
           && request.resource.data.createdAt == request.time
           && request.auth.uid in getAfter(/databases/$(database)/documents/chats/$(id)).data.members;
       }

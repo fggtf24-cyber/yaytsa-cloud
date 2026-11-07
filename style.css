@@ -1025,3 +1025,22 @@ body, .content { transition: background-color .12s ease; }
 /* В окне вопроса подсказки раздвигают окно, а не закрывают кнопки */
 .r-ask .suggest { position: static; width: 100%; margin-top: 2px; border-radius: 12px; box-shadow: none; }
 .r-menu-list .r-menu-danger { color: var(--err); }
+
+/* Фото и голосовые в переписке */
+.r-chat-form .r-iconbtn { flex: none; color: var(--sub); cursor: pointer; }
+.r-chat-form .r-iconbtn:hover { color: var(--text); }
+.r-rec { display: none; flex: 1; align-items: center; gap: 10px; min-height: 32px; }
+.r-rec i { width: 10px; height: 10px; border-radius: 50%; background: #E5352B; }
+.r-rec b { font-variant-numeric: tabular-nums; font-weight: 600; }
+.r-rec .linkbtn { margin-left: auto; align-self: center; }
+.r-chat-form.recording .r-rec { display: flex; }
+.r-chat-form.recording textarea, .r-chat-form.recording .emoji, .r-chat-form.recording .r-chat-photo, .r-chat-form.recording .r-mic { display: none; }
+.r-bubble .r-media { width: 300px; max-width: 100%; margin: 0; }
+.r-voice { display: flex; align-items: center; gap: 10px; width: 230px; max-width: 100%; padding: 2px 0; border: 0; background: none; color: inherit; }
+.r-voice-btn { flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; }
+.r-msg.mine .r-voice-btn { background: #fff; color: var(--accent); }
+.r-voice-bar { flex: 1; height: 4px; border-radius: 2px; background: var(--edge); overflow: hidden; }
+.r-msg.mine .r-voice-bar { background: rgba(255, 255, 255, .35); }
+.r-voice-bar i { display: block; width: 0; height: 100%; border-radius: 2px; background: var(--accent); }
+.r-msg.mine .r-voice-bar i { background: #fff; }
+.r-voice-time { flex: none; font-size: 12px; font-variant-numeric: tabular-nums; }
