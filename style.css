@@ -623,7 +623,6 @@ a.r-stat:hover b { text-decoration: underline; }
   .top-nav { display: none; }
   .brand { flex: 1; }
   .top-right { width: 100%; }
-  .search { flex: 1; width: auto; }
   .shell { flex-direction: column; }
   .rail { flex: none; flex-direction: row; flex-wrap: wrap; justify-content: center; padding: 4px 0; }
   .content { border-top-right-radius: 16px; }
@@ -851,7 +850,6 @@ html { scrollbar-gutter: stable; scroll-padding-top: calc(var(--top-h) + 12px); 
   html { scroll-padding-bottom: 84px; }
   .toast, .cookie { bottom: 84px; }
   .edit-bar { bottom: 80px; }
-  .r-chat { height: calc(100vh - var(--top-h) - 72px); min-height: 0; }
   .search-panel { top: calc(var(--top-h) + 4px); }
 }
 
@@ -1017,9 +1015,6 @@ body, .content { transition: background-color .12s ease; }
   .r-chat { width: 100%; height: calc(100vh - 150px); margin: 0; grid-template-columns: 1fr; gap: 0; }
   .r-room { border: 0; border-radius: 0; }
 }
-@media (max-width: 640px) {
-  .r-chat { height: calc(100vh - var(--top-h) - 72px); }
-}
 
 /* Время и галочки внутри сообщения, как в Telegram */
 .r-bubble { width: fit-content; max-width: 100%; padding: 5px 10px; border-radius: 16px; background: var(--pill); }
@@ -1042,6 +1037,26 @@ body, .content { transition: background-color .12s ease; }
 /* В окне вопроса подсказки раздвигают окно, а не закрывают кнопки */
 .r-ask .suggest { position: static; width: 100%; margin-top: 2px; border-radius: 12px; box-shadow: none; }
 .r-menu-list .r-menu-danger { color: var(--err); }
+
+/* ---------- Телефон: стоит в конце, чтобы перекрывать правила выше ---------- */
+html { -webkit-tap-highlight-color: transparent; }
+/* После касания :hover залипает, поэтому на сенсорных экранах отклик даёт только нажатие */
+@media (hover: none) {
+  .btn:hover { background: none; color: inherit; }
+  .btn.primary:hover { background: #1473E6; border-color: #1473E6; color: #fff; }
+  .btn.danger:hover { background: none; color: var(--err); }
+  a:active, button:active, summary:active { opacity: .7; }
+}
+@media (max-width: 640px) {
+  /* Меньше 16px iPhone приближает страницу при вводе */
+  input, textarea, select { font-size: 16px !important; }
+  .tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .tabs button { flex: none; }
+  .sticker-panel { width: min(312px, calc(100vw - 104px)); }
+  .r-chat { height: calc(100dvh - var(--top-h) - 72px); min-height: 0; }
+  /* Открытая переписка на весь экран, как в мессенджерах: шапка и меню не отнимают место у клавиатуры */
+  .r-chat.has-room { position: fixed; inset: 0; z-index: 26; height: 100dvh; background: var(--panel); }
+}
 
 /* Фото и голосовые в переписке */
 .r-chat-form .r-iconbtn { flex: none; color: var(--sub); cursor: pointer; }
