@@ -212,6 +212,7 @@ const APPS = [
       'Интерфейс в стиле Notion: свой заголовок окна, плавные анимации, тёмная и светлая тема, русский и английский',
       'Адаптивный интерфейс: окно можно сделать маленьким, лишнее аккуратно прячется. Масштаб на Ctrl + и Ctrl −',
       'Обновляется сама: новая версия скачивается в фоне, установка по кнопке «Перезапустить»',
+      'Синхронизация ПК и телефона через аккаунт Яйца Cloud: история, проекты и настройки одинаковые везде, изменения приходят сразу',
       'Есть версия для Android: тот же интерфейс, обратный отсчёт в шторке с кнопкой паузы и сигнал в конце захода, даже если приложение закрыто',
     ],
     needs: [
@@ -234,6 +235,7 @@ const APPS = [
       'Notion-style interface: its own title bar, smooth animations, dark and light theme, Russian and English',
       'Responsive layout: make the window small and the extras tuck away neatly. Zoom with Ctrl + and Ctrl −',
       'Updates itself: the new version downloads in the background and installs with one "Restart" click',
+      'Sync between PC and phone with your Яйца Cloud account: history, projects and settings match everywhere, changes arrive instantly',
       'An Android version: the same interface, a countdown in the notification shade with a pause button and an alert at the end of a session, even when the app is closed',
     ],
     needsEn: [
