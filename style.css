@@ -590,7 +590,10 @@ a.r-stat:hover b { text-decoration: underline; }
 .r-crop-zoom { display: flex; align-items: center; gap: 10px; color: var(--sub); }
 .r-crop-zoom input { flex: 1; accent-color: var(--accent); }
 .r-crop-bar { display: flex; justify-content: flex-end; gap: 10px; }
-.r-crop-bar .btn { padding: 8px 20px; }
+.r-crop-bar .btn { padding: 8px 20px; cursor: pointer; }
+.dl-mac { cursor: pointer; }
+.mac-steps { display: grid; gap: 6px; padding-left: 20px; color: var(--muted); }
+.mac-cmd { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font: 13px/1.5 ui-monospace, Menlo, Consolas, monospace; word-break: break-all; user-select: all; }
 
 @media (max-width: 1100px) {
   .r-page { grid-template-columns: minmax(0, 756px); }

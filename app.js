@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=38';
+import { EN, TERMS } from './i18n.js?v=39';
 import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=26';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -133,6 +133,7 @@ const APPS = [
     desc: 'Переносит макеты из Figma в After Effects одной кнопкой: фигуры, текст, градиенты и эффекты остаются редактируемыми.',
     descEn: 'Moves Figma designs into After Effects with one button: shapes, text, gradients and effects stay editable.',
     file: 'https://github.com/fggtf24-cyber/fig2ae/raw/main/Fig2AE-Setup.exe',
+    macInstall: 'curl -fsSL https://raw.githubusercontent.com/fggtf24-cyber/fig2ae/main/install-mac.sh | bash',
     size: '190 КБ',
     sizeEn: '190 KB',
     repo: 'https://github.com/fggtf24-cyber/fig2ae',
@@ -152,10 +153,12 @@ const APPS = [
       'Обновляется сама, без переустановки и перезапуска After Effects',
     ],
     needs: [
-      'Windows 10 или 11 (macOS — установка через Node.js)',
+      'Windows 10 или 11, либо macOS',
       'After Effects 2022 или новее',
       'Figma desktop: плагин подключается через Plugins → Development → Import plugin from manifest',
-      'Установка: запустите Fig2AE-Setup.exe и нажмите «Установить»',
+      'Установка на Windows: запустите Fig2AE-Setup.exe и нажмите «Установить»',
+      'Установка на Mac: одна строка в Терминале, Node.js не нужен',
+      'На Mac нет окна прогресса в After Effects: «Стоп» и «Отмена» находятся в окне плагина Figma',
       'Права администратора не нужны',
     ],
     featuresEn: [
@@ -174,10 +177,12 @@ const APPS = [
       'Updates itself, no reinstall and no After Effects restart',
     ],
     needsEn: [
-      'Windows 10 or 11 (macOS: install with Node.js)',
+      'Windows 10 or 11, or macOS',
       'After Effects 2022 or newer',
       'Figma desktop: the plugin is added via Plugins → Development → Import plugin from manifest',
-      'Setup: run Fig2AE-Setup.exe and click Install',
+      'Windows setup: run Fig2AE-Setup.exe and click Install',
+      'Mac setup: one line in Terminal, no Node.js needed',
+      'On a Mac there is no progress window in After Effects: Stop and Cancel are in the Figma plugin window',
       'No administrator rights needed',
     ],
   },
@@ -380,7 +385,9 @@ const social = setupSocial({
 /* ---------- Приложения ---------- */
 
 const platform = () => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#BDBDBD" stroke-width="1.8" role="img" aria-label="${T('Для компьютера')}"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M9 20h6M12 16v4"/></svg>`;
-const download = (a, cls = 'btn') => `<a class="${cls} dl" data-id="${esc(a.id)}" href="${safeUrl(a.file)}" aria-label="${T('Скачать {name}', { name: esc(nm(a)) })}">${T('Скачать')}</a>`;
+const isMac = /Macintosh/.test(navigator.userAgent);
+const download = (a, cls = 'btn') => `<a class="${cls} dl" data-id="${esc(a.id)}" href="${safeUrl(a.file)}" aria-label="${T('Скачать {name}', { name: esc(nm(a)) })}">${T(a.macInstall ? 'Скачать для Windows' : 'Скачать')}</a>`;
+const macButton = (a, cls = 'btn') => `<button type="button" class="${cls} dl-mac" data-id="${esc(a.id)}">${T('Скачать для Mac')}</button>`;
 const siteLink = a => (safeUrl(a.site) ? `<a class="link" href="${safeUrl(a.site)}" target="_blank" rel="noopener">${T('Сайт')}</a>` : '');
 const editLink = (kind, a) => (isAdmin ? `<a class="link" href="#edit/${kind}/${esc(a.id)}" aria-label="${T('Изменить {name}', { name: esc(nm(a)) })}">${T('Изменить')}</a>` : '');
 const media = a => {
@@ -417,7 +424,7 @@ const card = a => `
       <a class="link" href="#app/${esc(a.id)}" aria-label="${T('Подробнее о {name}', { name: esc(nm(a)) })}">${T('Подробнее')}</a>
       ${siteLink(a)}
       ${editLink('apps', a)}
-      ${download(a)}
+      ${isMac && a.macInstall ? macButton(a) : download(a)}
     </div>
   </article>`;
 
@@ -498,13 +505,13 @@ function renderApp(a) {
         </div>
         <p class="app-desc">${esc(tr(a, 'desc'))}</p>
         <ul class="app-meta">
-          <li>${isWindows ? `<i class="ok">✓</i>${T('Работает на этом устройстве')}` : `<i>!</i>${T('Только для Windows')}`}</li>
+          <li>${isWindows || (isMac && a.macInstall) ? `<i class="ok">✓</i>${T('Работает на этом устройстве')}` : `<i>!</i>${T(a.macInstall ? 'Только для Windows и Mac' : 'Только для Windows')}`}</li>
           ${size ? `<li><i>↓</i>${T(a.portable ? '{size}, установка не нужна' : '{size} после установки', { size: esc(size) })}</li>` : ''}
           ${authorText(a) ? `<li><i>@</i><span>${authorText(a)}</span></li>` : ''}
           ${a.community ? `<li><i>!</i>${T('Программу добавил участник. Админ проверил заявку, но файл вы скачиваете на свой риск.')}</li>` : ''}
         </ul>
         ${a.community ? `<figure id="author-selfie" class="author-selfie" data-app="${esc(a.id)}" hidden></figure>` : ''}
-        ${download(a, 'btn primary')}
+        ${!a.macInstall ? download(a, 'btn primary') : isMac ? macButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + macButton(a)}
         ${authorName(a) ? `<a class="btn report-link" href="#report/${esc(a.id)}">${T('Сообщить о баге или идее')}</a>` : ''}
         <div class="app-links">
           ${siteLink(a)}
@@ -1642,6 +1649,39 @@ function render() {
   document.title = r.app ? `${nm(r.app)} — ${T('Яйца Cloud')}` : T('Яйца Cloud — все приложения');
 }
 
+// На Mac ставим строкой в Терминале: у скачанного браузером файла macOS блокирует запуск, у curl такой метки нет.
+function macInstallDialog(a) {
+  const dlg = document.createElement('dialog');
+  dlg.className = 'r-crop';
+  dlg.innerHTML = `
+    <form method="dialog" class="r-crop-box">
+      <h2>${T('Установка {name} на Mac', { name: esc(nm(a)) })}</h2>
+      <ol class="mac-steps">
+        <li>${T('Откройте Терминал: Cmd+Пробел, введите Terminal.')}</li>
+        <li>${T('Вставьте эту строку и нажмите Return:')}</li>
+      </ol>
+      <code class="mac-cmd">${esc(a.macInstall)}</code>
+      <p class="empty">${T('Пароль не нужен. Что сделать дальше в After Effects и Figma, покажет сам Терминал.')}</p>
+      <div class="r-crop-bar">
+        <button class="btn">${T('Закрыть')}</button>
+        <button type="button" class="btn primary">${T('Скопировать')}</button>
+      </div>
+    </form>`;
+  const copy = dlg.querySelector('button[type=button]');
+  copy.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(a.macInstall);
+      copy.textContent = T('Скопировано');
+    } catch {
+      getSelection().selectAllChildren(dlg.querySelector('code'));
+      copy.textContent = T('Нажмите Cmd+C');
+    }
+  });
+  dlg.addEventListener('close', () => dlg.remove());
+  document.body.append(dlg);
+  dlg.showModal();
+}
+
 let toastTimer;
 function toast(text) {
   toastEl.textContent = text;
@@ -1658,6 +1698,10 @@ view.addEventListener('click', e => {
   else if (t.classList.contains('dl')) {
     count(`dl_${t.dataset.id}`);
     toast(T('Скачивание началось. Если Windows покажет SmartScreen: «Подробнее», затем «Выполнить в любом случае».'));
+  }
+  else if (t.classList.contains('dl-mac')) {
+    count(`dl_${t.dataset.id}`);
+    macInstallDialog(apps.find(x => x.id === t.dataset.id));
   }
   else if (t.dataset.approve) attempt(() => decide(t.dataset.approve, true));
   else if (t.dataset.reject) attempt(() => decide(t.dataset.reject, false));
