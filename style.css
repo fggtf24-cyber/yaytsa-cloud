@@ -136,7 +136,7 @@ h1, h2, p, ul { margin: 0; }
 .card h2 a:hover { text-decoration: underline; }
 .card p { flex: 1; color: var(--muted); }
 .card-foot { display: flex; align-items: center; gap: 14px; }
-.card-foot .dl, .card-foot .dl-linux, .card-foot .open { margin-left: auto; }
+.card-foot .dl, .card-foot .dl-linux, .card-foot .dl-android, .card-foot .open { margin-left: auto; }
 .link { font-weight: 600; color: var(--muted); }
 .link:hover { color: var(--strong); text-decoration: underline; }
 .btn {

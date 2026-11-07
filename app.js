@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=42';
+import { EN, TERMS } from './i18n.js?v=43';
 import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=27';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -195,6 +195,7 @@ const APPS = [
     desc: 'Помодоро-таймер с учётом рабочих часов. Проекты с дедлайнами, время в программах как в Steam, карта активности из квадратиков и напоминание поверх всех окон.',
     descEn: 'A pomodoro timer that tracks your work hours. Projects with deadlines, Steam-like time in your programs, an activity heatmap and a reminder on top of every window.',
     file: 'https://github.com/brlk33/Yaytsa-Timer/raw/main/YaytsaTimer-Setup.exe',
+    androidFile: 'https://github.com/brlk33/Yaytsa-Timer/raw/main/YaytsaTimer.apk',
     size: '3 МБ',
     sizeEn: '3 MB',
     repo: 'https://github.com/brlk33/Yaytsa-Timer',
@@ -211,12 +212,14 @@ const APPS = [
       'Интерфейс в стиле Notion: свой заголовок окна, плавные анимации, тёмная и светлая тема, русский и английский',
       'Адаптивный интерфейс: окно можно сделать маленьким, лишнее аккуратно прячется. Масштаб на Ctrl + и Ctrl −',
       'Обновляется сама: новая версия скачивается в фоне, установка по кнопке «Перезапустить»',
+      'Есть версия для Android: тот же интерфейс, обратный отсчёт в шторке с кнопкой паузы и сигнал в конце захода, даже если приложение закрыто',
     ],
     needs: [
       'Windows 10 или 11, 64-бит',
       'Около 3 МБ на диске',
       'Работает на встроенном в Windows движке Edge (WebView2), он есть в Windows 10 и 11',
       'Права администратора не нужны',
+      'Для телефона: Android 8 или новее, APK весит меньше 100 КБ',
     ],
     featuresEn: [
       'Custom intervals: 25/5 by default, focus and break change in 5-minute steps',
@@ -231,12 +234,14 @@ const APPS = [
       'Notion-style interface: its own title bar, smooth animations, dark and light theme, Russian and English',
       'Responsive layout: make the window small and the extras tuck away neatly. Zoom with Ctrl + and Ctrl −',
       'Updates itself: the new version downloads in the background and installs with one "Restart" click',
+      'An Android version: the same interface, a countdown in the notification shade with a pause button and an alert at the end of a session, even when the app is closed',
     ],
     needsEn: [
       'Windows 10 or 11, 64-bit',
       'About 3 MB of disk space',
       'Runs on the Edge engine built into Windows (WebView2), included in Windows 10 and 11',
       'No administrator rights needed',
+      'On the phone: Android 8 or newer, the APK is under 100 KB',
     ],
   },
   {
@@ -434,8 +439,10 @@ const social = setupSocial({
 const platform = () => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#BDBDBD" stroke-width="1.8" role="img" aria-label="${T('Для компьютера')}"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M9 20h6M12 16v4"/></svg>`;
 const isMac = /Macintosh/.test(navigator.userAgent);
 const isLinux = /Linux/.test(navigator.userAgent) && !/Android/.test(navigator.userAgent);
-const download = (a, cls = 'btn') => `<a class="${cls} dl" data-id="${esc(a.id)}" href="${safeUrl(a.file)}" aria-label="${T('Скачать {name}', { name: esc(nm(a)) })}">${T(a.macInstall || a.linuxFile ? 'Скачать для Windows' : 'Скачать')}</a>`;
+const isAndroid = /Android/.test(navigator.userAgent);
+const download = (a, cls = 'btn') => `<a class="${cls} dl" data-id="${esc(a.id)}" href="${safeUrl(a.file)}" aria-label="${T('Скачать {name}', { name: esc(nm(a)) })}">${T(a.macInstall || a.linuxFile || a.androidFile ? 'Скачать для Windows' : 'Скачать')}</a>`;
 const linuxButton = (a, cls = 'btn') => `<a class="${cls} dl-linux" data-id="${esc(a.id)}" href="${safeUrl(a.linuxFile)}">${T('Скачать для Linux')}</a>`;
+const androidButton = (a, cls = 'btn') => `<a class="${cls} dl-android" data-id="${esc(a.id)}" href="${safeUrl(a.androidFile)}">${T('Скачать для Android')}</a>`;
 const macButton = (a, cls = 'btn') => `<button type="button" class="${cls} dl-mac" data-id="${esc(a.id)}">${T('Скачать для Mac')}</button>`;
 const siteLink = a => (safeUrl(a.site) ? `<a class="link" href="${safeUrl(a.site)}" target="_blank" rel="noopener">${T('Сайт')}</a>` : '');
 const editLink = (kind, a) => (isAdmin ? `<a class="link" href="#edit/${kind}/${esc(a.id)}" aria-label="${T('Изменить {name}', { name: esc(nm(a)) })}">${T('Изменить')}</a>` : '');
@@ -473,7 +480,7 @@ const card = a => `
       <a class="link" href="#app/${esc(a.id)}" aria-label="${T('Подробнее о {name}', { name: esc(nm(a)) })}">${T('Подробнее')}</a>
       ${siteLink(a)}
       ${editLink('apps', a)}
-      ${isLinux && a.linuxFile ? linuxButton(a) : isMac && a.macInstall ? macButton(a) : download(a)}
+      ${isAndroid && a.androidFile ? androidButton(a) : isLinux && a.linuxFile ? linuxButton(a) : isMac && a.macInstall ? macButton(a) : download(a)}
     </div>
   </article>`;
 
@@ -562,13 +569,13 @@ function renderApp(a) {
         </div>
         <p class="app-desc">${esc(tr(a, 'desc'))}</p>
         <ul class="app-meta">
-          <li>${isWindows || (isMac && a.macInstall) || (isLinux && a.linuxFile) ? `<i class="ok">✓</i>${T('Работает на этом устройстве')}` : `<i>!</i>${T(a.macInstall ? 'Только для Windows и Mac' : a.linuxFile ? 'Только для Windows и Linux' : 'Только для Windows')}`}</li>
+          <li>${isWindows || (isMac && a.macInstall) || (isLinux && a.linuxFile) || (isAndroid && a.androidFile) ? `<i class="ok">✓</i>${T('Работает на этом устройстве')}` : `<i>!</i>${T(a.macInstall ? 'Только для Windows и Mac' : a.linuxFile ? 'Только для Windows и Linux' : a.androidFile ? 'Только для Windows и Android' : 'Только для Windows')}`}</li>
           ${size ? `<li><i>↓</i>${T(a.portable ? '{size}, установка не нужна' : '{size} после установки', { size: esc(size) })}</li>` : ''}
           ${authorText(a) ? `<li><i>@</i><span>${authorText(a)}</span></li>` : ''}
           ${a.community ? `<li><i>!</i>${T('Программу добавил участник. Админ проверил заявку, но файл вы скачиваете на свой риск.')}</li>` : ''}
         </ul>
         ${a.community ? `<figure id="author-selfie" class="author-selfie" data-app="${esc(a.id)}" hidden></figure>` : ''}
-        ${a.linuxFile ? (isLinux ? linuxButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + linuxButton(a)) : !a.macInstall ? download(a, 'btn primary') : isMac ? macButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + macButton(a)}
+        ${a.androidFile ? (isAndroid ? androidButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + androidButton(a)) : a.linuxFile ? (isLinux ? linuxButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + linuxButton(a)) : !a.macInstall ? download(a, 'btn primary') : isMac ? macButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + macButton(a)}
         ${authorName(a) ? `<a class="btn report-link" href="#report/${esc(a.id)}">${T('Сообщить о баге или идее')}</a>` : ''}
         <div class="app-links">
           ${siteLink(a)}
@@ -1765,6 +1772,10 @@ view.addEventListener('click', e => {
   else if (t.classList.contains('dl-linux')) {
     count(`dl_${t.dataset.id}`);
     toast(T('Скачивание началось. Распакуйте архив и запустите install.sh.'));
+  }
+  else if (t.classList.contains('dl-android')) {
+    count(`dl_${t.dataset.id}`);
+    toast(T('Скачивание началось. Откройте файл, Android попросит разрешить установку.'));
   }
   else if (t.classList.contains('dl-mac')) {
     count(`dl_${t.dataset.id}`);
