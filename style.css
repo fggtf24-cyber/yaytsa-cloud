@@ -195,7 +195,8 @@ h1, h2, p, ul { margin: 0; }
   display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 11px; font-weight: 700;
 }
 .app-meta i.ok { border-color: #3DBE6C; color: #3DBE6C; }
-.app-side .btn.primary { padding: 10px 26px; font-size: 15px; text-align: center; }
+.app-side .btn { text-align: center; }
+.app-side .btn.primary { padding: 10px 26px; font-size: 15px; }
 .report-link { text-align: center; }
 .app-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; }
 .app-links:empty { display: none; }
