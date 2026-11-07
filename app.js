@@ -212,7 +212,7 @@ const APPS = [
       'Интерфейс в стиле Notion: свой заголовок окна, плавные анимации, тёмная и светлая тема, русский и английский',
       'Адаптивный интерфейс: окно можно сделать маленьким, лишнее аккуратно прячется. Масштаб на Ctrl + и Ctrl −',
       'Обновляется сама: новая версия скачивается в фоне, установка по кнопке «Перезапустить»',
-      'Синхронизация ПК и телефона через аккаунт Яйца Cloud: история, проекты и настройки одинаковые везде, изменения приходят сразу',
+      'Синхронизация ПК и телефона через аккаунт Яйца Cloud: запустили таймер на телефоне — он идёт и на ПК. История, проекты и настройки одинаковые везде',
       'Есть версия для Android, сделанная под большой палец: вкладки-иконки внизу, переход свайпом, крупные кнопки внизу экрана. Обратный отсчёт в шторке, сигнал в конце захода даже при закрытом приложении, свой звук сигнала',
     ],
     needs: [
@@ -235,7 +235,7 @@ const APPS = [
       'Notion-style interface: its own title bar, smooth animations, dark and light theme, Russian and English',
       'Responsive layout: make the window small and the extras tuck away neatly. Zoom with Ctrl + and Ctrl −',
       'Updates itself: the new version downloads in the background and installs with one "Restart" click',
-      'Sync between PC and phone with your Яйца Cloud account: history, projects and settings match everywhere, changes arrive instantly',
+      'Sync between PC and phone with your Яйца Cloud account: start the timer on the phone and it runs on the PC too. History, projects and settings match everywhere',
       'An Android version made for your thumb: icon tabs at the bottom, swipe between them, big buttons low on the screen. A countdown in the notification shade, an alert at the end of a session even when the app is closed, your own alert sound',
     ],
     needsEn: [
