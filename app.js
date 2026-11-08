@@ -191,7 +191,7 @@ const APPS = [
     id: 'yaytsa-timer',
     name: 'Яйцетаймер',
     nameEn: 'Яйцетаймер',
-    icon: 'assets/yaytsa-timer.png',
+    icon: 'assets/yaytsa-timer.png?v=2',
     desc: 'Помодоро-таймер с учётом рабочих часов. Проекты с дедлайнами, время в программах как в Steam, карта активности из квадратиков и напоминание поверх всех окон.',
     descEn: 'A pomodoro timer that tracks your work hours. Projects with deadlines, Steam-like time in your programs, an activity heatmap and a reminder on top of every window.',
     file: 'https://github.com/brlk33/Yaytsa-Timer/raw/main/YaytsaTimer-Setup.exe',
