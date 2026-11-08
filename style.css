@@ -1143,3 +1143,8 @@ h1 .r-tag { font-size: 12px; margin-left: 6px; }
 .ban-bar { padding: 10px 20px; background: rgba(255, 79, 122, .14); color: var(--text); font-size: 14px; text-align: center; }
 .mod-acts { display: flex; flex-direction: column; gap: 8px; }
 .table-box td .r-tag { margin-left: 6px; }
+.r-pcard-mod .r-menu, .r-pcard-mod summary { width: 100%; justify-content: center; }
+.r-pcard-mod { position: relative; z-index: 10; }
+.r-pcard-mod .r-menu-list { left: 0; right: 0; }
+summary.r-pill { list-style: none; cursor: pointer; }
+summary.r-pill::-webkit-details-marker { display: none; }

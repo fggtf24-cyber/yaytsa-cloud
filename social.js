@@ -989,6 +989,7 @@ export function setupSocial(ctx) {
             ? `<a class="r-pill ghost wide" href="#account">${T('Изменить профиль')}</a>`
             : `${followBtn(uid, 'wide')}${writeBtn(uid, p, ' wide')}`}
         </div>
+        ${!isMe && modMenu(uid) ? `<div class="r-pcard-mod">${modMenu(uid)}</div>` : ''}
         ${p.bio ? `<p class="r-card-text">${rich(p.bio)}</p>` : ''}
         <div class="r-stats">
           ${stat(ins.length, 'Подписчики', `${base}/followers`)}
