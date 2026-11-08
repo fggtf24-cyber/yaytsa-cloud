@@ -921,7 +921,8 @@ body, .content { transition: background-color .12s ease; }
 .r-media-img { object-fit: contain; }
 
 /* Просмотр картинки: цвета свои, потому что фон тёмный и в светлой теме */
-.c-image, .r-media-img { cursor: zoom-in; }
+.c-image, .r-media-img, .attach-preview img { cursor: zoom-in; }
+.platforms { display: flex; gap: 8px; margin-left: auto; flex: none; color: var(--sub); }
 .r-post[data-href] .r-media-img { cursor: pointer; }
 .r-view { width: 100vw; height: 100dvh; max-width: none; max-height: none; padding: 0; border: 0; background: none; overflow: hidden; }
 .r-view[open] { display: flex; align-items: center; justify-content: center; }

@@ -440,7 +440,15 @@ const social = setupSocial({
 
 /* ---------- Приложения ---------- */
 
-const platform = () => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#BDBDBD" stroke-width="1.8" role="img" aria-label="${T('Для компьютера')}"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M9 20h6M12 16v4"/></svg>`;
+// Значки систем, для которых есть сборка. Windows есть всегда, остальные по наличию файла.
+const OS_ICON = {
+  Windows: 'M3 5.5l7.5-1v7H3zM11.5 4.4L21 3v8.5h-9.5zM3 12.5h7.5v7L3 18.5zM11.5 12.5H21V21l-9.5-1.4z',
+  macOS: 'M16.4 12.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9-.7 0-1.8-.8-3-.8-1.5 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2.1-1.1 2.8-2.3.9-1.3 1.3-2.6 1.3-2.6s-2.5-1-2.5-3.8zM14.2 5.8c.6-.8 1.1-1.8 1-2.8-.9 0-2 .6-2.7 1.4-.6.7-1.1 1.7-1 2.7 1 .1 2-.5 2.7-1.3z',
+  Linux: 'M12 2C9.5 2 8 4 8 7c0 1.5-.5 2.5-1.5 4S4 14.5 5 17c.5 1.3 2 2 3 3 1 .8 2.3 2 4 2s3-1.2 4-2c1-1 2.5-1.7 3-3 1-2.5-.5-4.5-1.5-6S16 8.5 16 7c0-3-1.5-5-4-5z',
+  Android: 'M6 18v-8h12v8a1 1 0 0 1-1 1h-1v2.5a1.5 1.5 0 0 1-3 0V19h-2v2.5a1.5 1.5 0 0 1-3 0V19H7a1 1 0 0 1-1-1zM3.5 10A1.5 1.5 0 0 1 5 11.5v5a1.5 1.5 0 0 1-3 0v-5A1.5 1.5 0 0 1 3.5 10zm17 0a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1-3 0v-5a1.5 1.5 0 0 1 1.5-1.5zM6 9a6 6 0 0 1 12 0z',
+};
+const platform = a => `<span class="platforms">${['Windows', a.macInstall && 'macOS', a.linuxFile && 'Linux', a.androidFile && 'Android'].filter(Boolean)
+  .map(os => `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" role="img" aria-label="${os}"><title>${os}</title><path d="${OS_ICON[os]}"/></svg>`).join('')}</span>`;
 const isMac = /Macintosh/.test(navigator.userAgent);
 const isLinux = /Linux/.test(navigator.userAgent) && !/Android/.test(navigator.userAgent);
 const isAndroid = /Android/.test(navigator.userAgent);
@@ -476,7 +484,7 @@ const card = a => `
       <img src="${icon(a)}" alt="">
       <h2><a href="#app/${esc(a.id)}">${esc(nm(a))}</a></h2>
       ${a.community ? `<span class="tag">${T('Сообщество')}</span>` : ''}
-      ${platform()}
+      ${platform(a)}
     </div>
     ${authorLine(a)}
     <p>${esc(tr(a, 'desc'))}</p>

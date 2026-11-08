@@ -232,7 +232,7 @@ export function setupSocial(ctx) {
       <label class="r-iconbtn" title="${T('Добавить картинку или гифку')}">${ICON.image}<span class="sr">${T('Добавить картинку или гифку')}</span>
         <input class="sr" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/heic,image/heif,.heic,.heif" data-attach></label>
       <input type="hidden" name="image">
-      <span class="attach-preview" hidden><img alt=""><button type="button" data-attach-clear aria-label="${T('Убрать картинку')}">×</button></span>
+      <span class="attach-preview" hidden><img alt="${T('Открыть картинку')}" tabindex="0" role="button"><button type="button" data-attach-clear aria-label="${T('Убрать картинку')}">×</button></span>
     </div>`;
 
   function clearAttach(form) {
@@ -445,7 +445,7 @@ export function setupSocial(ctx) {
     document.body.append(dlg);
     dlg.showModal();
   }
-  const viewable = el => el.closest('.c-image, .r-media-img:not(' + FEED_CARD + ' *)');
+  const viewable = el => el.closest('.c-image, .attach-preview img, .r-media-img:not(' + FEED_CARD + ' *)');
   view.addEventListener('keydown', e => {
     if (e.key === 'Enter' && viewable(e.target)) openImage(e.target);
   });

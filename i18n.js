@@ -20,7 +20,7 @@ export const EN = {
   'Переключить на русский': 'Switch to Russian',
 
   // Каталог
-  'Для компьютера': 'For desktop',
+  'Открыть картинку': 'Open image',
   'Скачать': 'Download',
   'Скачать {name}': 'Download {name}',
   'Скачать для Windows': 'Download for Windows',
