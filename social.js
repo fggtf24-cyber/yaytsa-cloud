@@ -791,12 +791,12 @@ export function setupSocial(ctx) {
     Object.assign(c, { body: '', deleted: true, image: '', sticker: '' });
   }
 
-  const askDelete = title => askDialog(T, { title, ok: 'Удалить', danger: true });
 
   async function deleteComment(id) {
-    if (!await askDelete(T('Удалить комментарий?'))) return;
+    const c = thread.comments.find(x => x.id === id);
+    if (!c || !await confirmDelete(T('Удалить комментарий?'), c.uid)) return;
     try {
-      await eraseComment(thread.comments.find(x => x.id === id));
+      await eraseComment(c);
       drawPost(true);
     } catch (e) { fail(e); }
   }
@@ -804,7 +804,7 @@ export function setupSocial(ctx) {
   // Удаление со страницы профиля. Если пост уже удалён, ветки нет и комментарий стираем совсем.
   async function deleteProfileComment(id) {
     const c = shownComments.get(id);
-    if (!c || !await askDelete(T('Удалить комментарий?'))) return;
+    if (!c || !await confirmDelete(T('Удалить комментарий?'), c.uid)) return;
     try {
       if (postTitles.get(c.postId) === '') await F().deleteDoc(ref('tcomments', id));
       else await eraseComment(c);
@@ -813,8 +813,8 @@ export function setupSocial(ctx) {
   }
 
   async function deletePost() {
-    if (!await askDelete(T('Удалить пост? Это нельзя отменить.'))) return;
     const { post, comments } = thread;
+    if (!await confirmDelete(T('Удалить пост? Это нельзя отменить.'), post.uid)) return;
     try {
       await F().deleteDoc(ref('posts', post.id));
       postTitles.set(post.id, '');
@@ -1794,11 +1794,13 @@ export function setupSocial(ctx) {
   async function loadRoles(uids, fresh = false) {
     const need = [...new Set(uids)].filter(u => u && (fresh || !roles.has(u)));
     await Promise.all(need.map(async uid => {
-      const [m, b] = await Promise.all([F().getDoc(ref('mods', uid)), F().getDoc(ref('bans', uid))].map(x => x.catch(() => null)));
-      roles.set(uid, { mod: !!m?.exists(), ban: b?.exists() ? b.data() : null });
+      const [m, b, a] = await Promise.all([F().getDoc(ref('mods', uid)), F().getDoc(ref('bans', uid)), F().getDoc(ref('authors', uid))].map(x => x.catch(() => null)));
+      roles.set(uid, { mod: !!m?.exists(), ban: b?.exists() ? b.data() : null, admin: !!a?.exists() });
     }));
   }
   const isModUid = uid => !!roles.get(uid)?.mod;
+  // Админа видно по authors/<uid>: этот документ при входе пишет только админ (сам список админов закрыт).
+  const isAdminUid = uid => !!roles.get(uid)?.admin;
   // Действующее ограничение: until — мс до конца отстранения, null — бан навсегда. Истёкшее не считается.
   const banOf = uid => {
     const b = roles.get(uid)?.ban;
@@ -1807,18 +1809,19 @@ export function setupSocial(ctx) {
     return until === null || until > Date.now() ? { until, reason: b.reason || '' } : null;
   };
   const banText = b => (b.until === null ? T('Бан навсегда') : T('Отстранение до {date}', { date: new Date(b.until).toLocaleString(ctx.lang === 'en' ? 'en-GB' : 'ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) }));
-  const roleTags = uid => `${isModUid(uid) ? ` <span class="r-tag mod">${T('Модератор')}</span>` : ''}${banOf(uid) ? ` <span class="r-tag ban" title="${esc(banOf(uid).reason)}">${esc(banText(banOf(uid)))}</span>` : ''}`;
+  const roleTags = uid => `${isAdminUid(uid) ? ` <span class="r-tag admin">${T('Админ')}</span>` : isModUid(uid) ? ` <span class="r-tag mod">${T('Модератор')}</span>` : ''}${banOf(uid) ? ` <span class="r-tag ban" title="${esc(banOf(uid).reason)}">${esc(banText(banOf(uid)))}</span>` : ''}`;
 
   // Меню модерации на чужом профиле: модератор и админ ограничивают, назначать модераторов может только админ.
+  const canRestrict = uid => ctx.isStaff && uid !== me() && !isAdminUid(uid) && (ctx.isAdmin || !isModUid(uid));
+
   function modMenu(uid) {
-    if (!ctx.isStaff || uid === me()) return '';
-    const canTouch = ctx.isAdmin || !isModUid(uid);
-    if (!canTouch && !ctx.isAdmin) return '';
+    if (!ctx.isStaff || uid === me() || isAdminUid(uid)) return '';
+    if (!canRestrict(uid) && !ctx.isAdmin) return '';
     return `
       <details class="r-menu">
         <summary class="r-pill ghost">${T('Модерация')}</summary>
         <div class="r-menu-list">
-          ${banOf(uid) ? `<button type="button" data-s-unrestrict="${esc(uid)}">${T('Снять ограничение')}</button>` : `<button type="button" class="r-menu-danger" data-s-restrict="${esc(uid)}">${T('Отстранить или забанить…')}</button>`}
+          ${!canRestrict(uid) ? '' : banOf(uid) ? `<button type="button" data-s-unrestrict="${esc(uid)}">${T('Снять ограничение')}</button>` : `<button type="button" class="r-menu-danger" data-s-restrict="${esc(uid)}">${T('Отстранить или забанить…')}</button>`}
           ${ctx.isAdmin ? `<button type="button" data-s-mod="${esc(uid)}">${T(isModUid(uid) ? 'Снять модератора' : 'Сделать модератором')}</button>` : ''}
         </div>
       </details>`;
@@ -1827,7 +1830,7 @@ export function setupSocial(ctx) {
   // Действия над человеком окном, а не выпадающим меню: в таблице админки меню обрезала бы рамка прокрутки.
   function modChooser(uid) {
     const acts = [
-      banOf(uid) ? ['Снять ограничение', () => unrestrict(uid)] : ['Отстранить или забанить…', () => restrict(uid)],
+      ...(!canRestrict(uid) ? [] : banOf(uid) ? [['Снять ограничение', () => unrestrict(uid)]] : [['Отстранить или забанить…', () => restrict(uid)]]),
       ...(ctx.isAdmin && handle(uid) ? [[isModUid(uid) ? 'Снять модератора' : 'Сделать модератором', () => toggleMod(uid)]] : []),
     ];
     const dlg = document.createElement('dialog');
@@ -1849,27 +1852,63 @@ export function setupSocial(ctx) {
     dlg.showModal();
   }
 
-  const TERMS_MS = [['1h', 'На 1 час', 36e5], ['1d', 'На 1 день', 864e5], ['7d', 'На 7 дней', 7 * 864e5], ['30d', 'На 30 дней', 30 * 864e5], ['ban', 'Забанить навсегда', null]];
+  // Поля ограничения: отстранить на N минут/часов/дней или забанить навсегда. toggle — галочка «ограничить автора»
+  // в окне удаления: поля появляются, только когда её отметили.
+  const UNITS = [['m', 'минут', 6e4], ['h', 'часов', 36e5], ['d', 'дней', 864e5]];
+  const restrictFields = (uid, toggle) => `
+    ${toggle ? `<label class="mod-check"><input type="checkbox" name="on"><span>${T('Ограничить автора: {who}', { who: userLabel(uid) })}</span></label>` : ''}
+    <div class="mod-fields"${toggle ? ' hidden' : ''}>
+      ${toggle ? '' : `<p class="empty">${T('Пока ограничение действует, человек может только читать: не пишет посты, комментарии и сообщения, не ставит лайки и не подписывается.')}</p>`}
+      <label class="field">${T('Что сделать')}<select name="kind"><option value="temp">${T('Отстранить на время')}</option><option value="ban">${T('Забанить навсегда')}</option></select></label>
+      <div class="field mod-term"><span>${T('Срок')}</span>
+        <span class="mod-term-row">
+          <input type="number" name="n" min="1" max="999" value="1" inputmode="numeric" aria-label="${T('Сколько')}">
+          <select name="unit" aria-label="${T('Единица')}">${UNITS.map(([id, label]) => `<option value="${id}"${id === 'h' ? ' selected' : ''}>${T(label)}</option>`).join('')}</select>
+        </span>
+      </div>
+      <label class="field">${T('Причина')}<input name="reason" maxlength="300" autocomplete="off" placeholder="${T('Её увидит человек')}"></label>
+    </div>`;
 
-  function restrictDialog(uid) {
+  function wireRestrict(dlg) {
+    const f = dlg.querySelector('form').elements;
+    const sync = () => {
+      dlg.querySelector('.mod-fields').hidden = f.on ? !f.on.checked : false;
+      dlg.querySelector('.mod-term').hidden = f.kind.value === 'ban';
+    };
+    dlg.addEventListener('change', sync);
+    sync();
+  }
+
+  // { until: мс | null (навсегда), reason } или null, если ограничивать не нужно.
+  function readRestrict(f) {
+    if (f.on && !f.on.checked) return null;
+    const reason = f.reason.value.trim().slice(0, 300);
+    if (f.kind.value === 'ban') return { until: null, reason };
+    const n = Math.min(999, Math.max(1, parseInt(f.n.value, 10) || 1));
+    return { until: Date.now() + n * UNITS.find(u => u[0] === f.unit.value)[2], reason };
+  }
+
+  // Общее окно: подтверждение (удаление или ограничение) и, если можно, поля ограничения.
+  function modDialog({ title, text = '', ok, uid, toggle }) {
     return new Promise(resolve => {
       const dlg = document.createElement('dialog');
       dlg.className = 'r-crop r-ask';
       dlg.innerHTML = `
         <form method="dialog" class="r-crop-box">
-          <h2>${T('Ограничить {who}', { who: userLabel(uid) })}</h2>
-          <p class="empty">${T('Пока ограничение действует, человек может только читать: не пишет посты, комментарии и сообщения, не ставит лайки и не подписывается.')}</p>
-          <label class="field">${T('Срок')}<select name="term">${TERMS_MS.map(([id, label]) => `<option value="${id}">${T(label)}</option>`).join('')}</select></label>
-          <label class="field">${T('Причина')}<input name="reason" maxlength="300" autocomplete="off" placeholder="${T('Её увидит человек')}"></label>
+          <h2></h2>
+          ${text ? '<p class="empty"></p>' : ''}
+          ${uid ? restrictFields(uid, toggle) : ''}
           <div class="r-crop-bar">
             <button type="button" class="btn" data-ask-cancel>${T('Отмена')}</button>
-            <button class="btn danger" value="yes">${T('Ограничить')}</button>
+            <button class="btn danger" value="yes">${T(ok)}</button>
           </div>
         </form>`;
+      dlg.querySelector('h2').textContent = title;
+      if (text) dlg.querySelector('p.empty').textContent = text;
+      if (uid) wireRestrict(dlg);
       dlg.querySelector('[data-ask-cancel]').addEventListener('click', () => dlg.close());
       dlg.addEventListener('close', () => {
-        const f = dlg.querySelector('form').elements;
-        resolve(dlg.returnValue === 'yes' ? { term: f.term.value, reason: f.reason.value.trim().slice(0, 300) } : null);
+        resolve(dlg.returnValue === 'yes' ? { restrict: uid ? readRestrict(dlg.querySelector('form').elements) : null } : null);
         dlg.remove();
       });
       document.getElementById('view').append(dlg);
@@ -1877,17 +1916,36 @@ export function setupSocial(ctx) {
     });
   }
 
+  async function applyRestrict(uid, r) {
+    const data = { until: r.until === null ? null : F().Timestamp.fromMillis(r.until), reason: r.reason, by: me(), at: F().serverTimestamp() };
+    await F().setDoc(ref('bans', uid), data);
+    roles.set(uid, { ...roles.get(uid), ban: data });
+  }
+
   async function restrict(uid) {
-    const choice = await restrictDialog(uid);
-    if (!choice) return;
-    const term = TERMS_MS.find(t => t[0] === choice.term);
+    const answer = await modDialog({ title: T('Ограничить {who}', { who: userLabel(uid) }), ok: 'Ограничить', uid, toggle: false });
+    if (!answer?.restrict) return;
     try {
-      const data = { until: term[2] === null ? null : F().Timestamp.fromMillis(Date.now() + term[2]), reason: choice.reason, by: me(), at: F().serverTimestamp() };
-      await F().setDoc(ref('bans', uid), data);
-      roles.set(uid, { ...roles.get(uid), ban: { ...data, until: data.until } });
+      await applyRestrict(uid, answer.restrict);
       ctx.toast(T('Ограничение поставлено.'));
       ctx.render();
     } catch (e) { fail(e); }
+  }
+
+  // Удаление чужого поста или комментария: модератору сразу предлагаем ограничить автора, как в Telegram.
+  // true — удалять; ограничение, если выбрано, ставится тут же.
+  async function confirmDelete(title, author) {
+    const offer = author && author !== me() && canRestrict(author);
+    if (offer) await loadRoles([author]);
+    const answer = await modDialog({ title, ok: 'Удалить', uid: offer && canRestrict(author) ? author : null, toggle: true });
+    if (!answer) return false;
+    if (answer.restrict) {
+      try {
+        await applyRestrict(author, answer.restrict);
+        ctx.toast(T('Удалено, автор ограничен.'));
+      } catch (e) { fail(e); }
+    }
+    return true;
   }
 
   async function unrestrict(uid) {

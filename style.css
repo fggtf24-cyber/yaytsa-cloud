@@ -1148,3 +1148,12 @@ h1 .r-tag { font-size: 12px; margin-left: 6px; }
 .r-pcard-mod .r-menu-list { left: 0; right: 0; }
 summary.r-pill { list-style: none; cursor: pointer; }
 summary.r-pill::-webkit-details-marker { display: none; }
+.r-tag.admin { background: rgba(255, 197, 49, .18); color: #FFC531; vertical-align: middle; }
+html[data-theme=light] .r-tag.admin { color: #A86A00; }
+.mod-check { display: flex; align-items: center; gap: 10px; font-weight: 600; cursor: pointer; }
+.mod-check input { width: 18px; height: 18px; accent-color: var(--accent); }
+.mod-fields { display: flex; flex-direction: column; gap: 12px; }
+.mod-term-row { display: flex; gap: 8px; }
+.mod-term-row input { width: 90px; flex: none; }
+.mod-term-row select { flex: 1; }
+.mod-term-row input, .mod-term-row select { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
