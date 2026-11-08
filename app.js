@@ -1,10 +1,46 @@
-import { EN, TERMS } from './i18n.js?v=45';
+import { EN, TERMS } from './i18n.js?v=46';
 import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=28';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
 // site — необязательно: если поля нет, кнопки «Сайт» не будет.
 const APPS = [
+  {
+    id: 'yaytsa-cloud',
+    name: 'Яйца Cloud',
+    nameEn: 'Yaytsa Cloud',
+    icon: 'assets/yaytsa-cloud.png',
+    desc: 'Приложение Яйца Cloud для Windows: ставит и обновляет все программы с сайта в один клик, а сообщения и ответы приходят уведомлениями.',
+    descEn: 'The Yaytsa Cloud app for Windows: installs and updates every program from the site in one click, with messages and replies as notifications.',
+    file: 'https://github.com/fggtf24-cyber/yaytsa-cloud-desktop/releases/latest/download/YaytsaCloud.exe',
+    size: '1 МБ',
+    sizeEn: '1 MB',
+    repo: 'https://github.com/fggtf24-cyber/yaytsa-cloud-desktop',
+    features: [
+      'Все программы сайта в одном окне: «Установить», «Открыть», «Обновить» и «Удалить» без поиска файлов',
+      'Сам замечает новые версии программ и напоминает обновиться',
+      'Лента, профиль и чаты как на сайте, со всеми новыми функциями сразу',
+      'Сообщения, ответы и лайки приходят уведомлениями Windows',
+      'Значок в трее и запуск вместе с Windows, крестик прячет окно',
+      'Обновляется сам',
+    ],
+    needs: [
+      'Windows 10 или 11, 64-бит',
+      'Права администратора не нужны: ставится в папку пользователя',
+    ],
+    featuresEn: [
+      'Every program from the site in one window: Install, Open, Update and Remove without hunting for files',
+      'Notices new versions of your programs and reminds you to update',
+      'Feed, profile and chats just like on the site, with every new feature right away',
+      'Messages, replies and likes arrive as Windows notifications',
+      'Tray icon and start with Windows, the close button hides the window',
+      'Updates itself',
+    ],
+    needsEn: [
+      'Windows 10 or 11, 64-bit',
+      'No administrator rights needed: installs into your user folder',
+    ],
+  },
   {
     id: 'smooth-cursor',
     name: 'Smooth Cursor',
@@ -452,7 +488,34 @@ const platform = a => `<span class="platforms">${['Windows', a.macInstall && 'ma
 const isMac = /Macintosh/.test(navigator.userAgent);
 const isLinux = /Linux/.test(navigator.userAgent) && !/Android/.test(navigator.userAgent);
 const isAndroid = /Android/.test(navigator.userAgent);
-const download = (a, cls = 'btn') => `<a class="${cls} dl" data-id="${esc(a.id)}" href="${safeUrl(a.file)}" aria-label="${T('Скачать {name}', { name: esc(nm(a)) })}">${T(a.macInstall || a.linuxFile || a.androidFile ? 'Скачать для Windows' : 'Скачать')}</a>`;
+// Сайт открыт в приложении Яйца Cloud для Windows: программы ставятся, открываются и обновляются кнопкой.
+const desktop = / YaytsaCloud\//.test(navigator.userAgent) ? window.chrome?.webview : null;
+let installed = {}; // id -> { state: installed | update | busy, progress, open }, присылает приложение
+const desktopButton = (a, cls = 'btn') => {
+  const s = installed[a.id];
+  const [act, label] = !s ? ['install', 'Установить'] : s.state === 'update' ? ['install', 'Обновить'] : s.state === 'busy' ? ['', s.progress >= 0 ? `${Math.round(s.progress * 100)}%` : 'Подождите…'] : s.open ? ['open', 'Открыть'] : ['', 'Установлено'];
+  // «Открыть» и «Обновить» синие: это главное действие для уже установленной программы.
+  const blue = s && (act === 'open' || s.state === 'update') && !cls.includes('primary') ? ' primary' : '';
+  return `<button type="button" class="${cls}${blue} dt" data-dt="${act}" data-dt-id="${esc(a.id)}" data-cls="${cls}"${act ? '' : ' disabled'}>${T(label)}</button>`;
+};
+const removeButton = a => (installed[a.id] && installed[a.id].state !== 'busy'
+  ? `<button type="button" class="btn dt-rm" data-dt="remove" data-dt-id="${esc(a.id)}">${T('Удалить')}</button>`
+  : `<span class="dt-rm" data-dt-id="${esc(a.id)}" hidden></span>`);
+// Состояние поменялось: перерисовываем только кнопки, а не страницу.
+function drawDesktop() {
+  view.querySelectorAll('[data-dt-id]').forEach(b => {
+    const a = apps.find(x => x.id === b.dataset.dtId);
+    if (a) b.outerHTML = b.classList.contains('dt-rm') ? removeButton(a) : desktopButton(a, b.dataset.cls);
+  });
+}
+const sendCatalog = () => desktop?.postMessage({ type: 'catalog', apps: apps.filter(a => safeUrl(a.file) && a.id !== 'yaytsa-cloud').map(a => ({ id: a.id, name: a.name, file: a.file })) });
+sendCatalog();
+desktop?.addEventListener('message', ({ data }) => {
+  if (data.type === 'apps') { installed = data.apps || {}; drawDesktop(); }
+  else if (data.type === 'go' && data.href) location.hash = data.href.replace(/^#/, '');
+  else if (data.type === 'error') toast(data.text);
+});
+const download = (a, cls = 'btn') => desktop && a.id === 'yaytsa-cloud' ? '' : desktop ? desktopButton(a, cls) : `<a class="${cls} dl" data-id="${esc(a.id)}" href="${safeUrl(a.file)}" aria-label="${T('Скачать {name}', { name: esc(nm(a)) })}">${T(a.macInstall || a.linuxFile || a.androidFile ? 'Скачать для Windows' : 'Скачать')}</a>`;
 const linuxButton = (a, cls = 'btn') => `<a class="${cls} dl-linux" data-id="${esc(a.id)}" href="${safeUrl(a.linuxFile)}">${T('Скачать для Linux')}</a>`;
 const androidButton = (a, cls = 'btn') => `<a class="${cls} dl-android" data-id="${esc(a.id)}" href="${safeUrl(a.androidFile)}">${T('Скачать для Android')}</a>`;
 const macButton = (a, cls = 'btn') => `<button type="button" class="${cls} dl-mac" data-id="${esc(a.id)}">${T('Скачать для Mac')}</button>`;
@@ -588,6 +651,7 @@ function renderApp(a) {
         </ul>
         ${a.community ? `<figure id="author-selfie" class="author-selfie" data-app="${esc(a.id)}" hidden></figure>` : ''}
         ${a.androidFile ? (isAndroid ? androidButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + androidButton(a)) : a.linuxFile ? (isLinux ? linuxButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + linuxButton(a)) : !a.macInstall ? download(a, 'btn primary') : isMac ? macButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + macButton(a)}
+        ${desktop ? removeButton(a) : ''}
         ${authorName(a) ? `<a class="btn report-link" href="#report/${esc(a.id)}">${T('Сообщить о баге или идее')}</a>` : ''}
         <div class="app-links">
           ${siteLink(a)}
@@ -662,8 +726,12 @@ function ping() {
 // в это время подгружаются старые уведомления, и они не новые.
 const heard = { bell: 0, inbox: 0 };
 let quietUntil = 0;
-function soundOnGrowth(kind, count) {
-  if (count > heard[kind] && Date.now() > quietUntil) ping();
+function soundOnGrowth(kind, count, note) {
+  if (count > heard[kind] && Date.now() > quietUntil) {
+    ping();
+    // В приложении то же самое приходит уведомлением Windows, если окно свёрнуто или в трее.
+    if (desktop && note) desktop.postMessage({ type: 'notify', ...note() });
+  }
   heard[kind] = count;
 }
 
@@ -801,7 +869,11 @@ function drawBell() {
   bellWrap.hidden = !user;
   bellCount.hidden = !unread;
   bellCount.textContent = unread > 9 ? '9+' : unread;
-  soundOnGrowth('bell', unread);
+  soundOnGrowth('bell', unread, () => {
+    const n = groups.find(g => !g.read);
+    const title = new DOMParser().parseFromString(noteTitle(n), 'text/html').body.textContent;
+    return { title, body: n.text || '', href: noteHref(n) };
+  });
   bell.setAttribute('aria-label', unread ? T('Уведомления, новых: {n}', { n: unread }) : T('Уведомления'));
   if (!bellPanel.hidden) {
     bellPanel.innerHTML = groups.map(noteItem).join('') || `<p class="empty">${T('Пока нет уведомлений.')}</p>`;
@@ -1199,6 +1271,7 @@ function merge(base, snap) {
 async function loadContent() {
   const [a, p, people] = await Promise.all(['apps', 'projects', 'authors'].map(c => fs.getDocs(fs.collection(db, c))));
   apps = merge(APPS, a);
+  sendCatalog();
   projects = merge(PROJECTS, p);
   people.forEach(d => { authors[d.id] = d.data(); });
   await social.loadPeople(apps.flatMap(authorUids));
@@ -1491,7 +1564,7 @@ function drawInboxCount() {
   const count = document.getElementById('inbox-count');
   count.hidden = !unread;
   count.textContent = unread > 9 ? '9+' : unread;
-  soundOnGrowth('inbox', unread);
+  soundOnGrowth('inbox', unread, () => ({ title: T('Новое сообщение'), body: '', href: '#chat' }));
 }
 
 // Имена, почту и текст пишут посетители: только через esc.
@@ -1824,6 +1897,13 @@ view.addEventListener('click', e => {
   if (!t) return;
   if (t.dataset.cat) { cat = t.dataset.cat; renderApps(); }
   else if (t.dataset.mode) { authMode = t.dataset.mode; renderAccount(); }
+  else if (t.dataset.dt) {
+    const id = t.dataset.dtId;
+    if (t.dataset.dt === 'install') count(`dl_${id}`);
+    if (t.dataset.dt !== 'remove') desktop.postMessage({ type: t.dataset.dt, id });
+    else askDialog(T, { title: T('Удалить {name}?', { name: nm(apps.find(x => x.id === id)) }), ok: 'Удалить', danger: true })
+      .then(yes => yes && desktop.postMessage({ type: 'remove', id }));
+  }
   else if (t.classList.contains('dl')) {
     count(`dl_${t.dataset.id}`);
     toast(T('Скачивание началось. Если Windows покажет SmartScreen: «Подробнее», затем «Выполнить в любом случае».'));

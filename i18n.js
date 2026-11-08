@@ -22,6 +22,12 @@ export const EN = {
   // Каталог
   'Открыть картинку': 'Open image',
   'Скачать': 'Download',
+  'Установить': 'Install',
+  'Обновить': 'Update',
+  'Подождите…': 'Please wait…',
+  'Установлено': 'Installed',
+  'Удалить {name}?': 'Remove {name}?',
+  'Новое сообщение': 'New message',
   'Скачать {name}': 'Download {name}',
   'Скачать для Windows': 'Download for Windows',
   'Скачать для Mac': 'Download for Mac',
