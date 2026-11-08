@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=55';
+import { EN, TERMS } from './i18n.js?v=56';
 import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=34';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -991,6 +991,18 @@ const field = item => ([key, label, type]) => {
         <input type="hidden" name="${key}" value="${esc(value)}">
       </div>`;
   }
+  if (key === 'demo') {
+    return `
+      <label class="field">${T(label)}<input name="${key}" value="${esc(value)}" pattern="(https://|assets/).+|file" title="${T('Ссылка должна начинаться с https://')}"></label>
+      <div class="field">${T('Или загрузите картинку либо гифку')}
+        <div class="icon-pick">
+          <img id="demo-preview" class="demo-preview" src="assets/favicon.svg" alt="">
+          <label class="btn">${T('Загрузить файл')}<input id="demo-file" class="sr" type="file" accept="image/png,image/jpeg,image/webp,image/gif,.heic,.heif"></label>
+        </div>
+        <small class="r-hint">${T('Картинка до 20 МБ: после загрузки выберите, какая часть попадёт в рамку. Гифка до 500 КБ, её края обрежутся по рамке. Видео загрузить нельзя, дайте ссылку на .mp4.')}</small>
+        <input type="hidden" name="demoFile">
+      </div>`;
+  }
   if (t === 'people') {
     const names = (item[key] || []).map(social.handleOf).filter(Boolean).map(h => `@${h}`).join(' ');
     return `
@@ -1009,7 +1021,7 @@ const field = item => ([key, label, type]) => {
     </select>`
     : t === 'area' || t === 'lines'
     ? `<textarea name="${key}" rows="${t === 'lines' ? 6 : 3}" ${required}>${esc(value)}</textarea>`
-    : `<input name="${key}" value="${esc(value)}" ${required} ${t === 'url' ? `pattern="(https://|assets/).+${key === 'demo' ? '|file' : ''}" title="${T('Ссылка должна начинаться с https://')}"` : ''}>`;
+    : `<input name="${key}" value="${esc(value)}" ${required} ${t === 'url' ? `pattern="(https://|assets/).+" title="${T('Ссылка должна начинаться с https://')}"` : ''}>`;
   return `<label class="field">${T(label)}${control}</label>`;
 };
 
@@ -1050,8 +1062,9 @@ async function readFields(form, fields) {
 
 async function saveItem(form) {
   const { kind, id } = form.dataset;
-  const data = await readFields(form, FIELDS[kind]);
+  const { demoFile, ...data } = await readFields(form, FIELDS[kind]);
   if (data.review && !youtubeId(data.review)) return say(T('Нужна ссылка на видео YouTube.'));
+  if (demoFile) data.demo = 'file';
   // Для записей из кода (APPS/PROJECTS) в Firestore пишем только то, что отличается от кода.
   // Иначе первое же сохранение замораживает все поля, и следующие правки в коде (новая ссылка, размер) не видны на сайте.
   const base = id === 'new' ? null : (kind === 'apps' ? APPS : PROJECTS).find(x => x.id === id);
@@ -1062,6 +1075,7 @@ async function saveItem(form) {
   const col = fs.collection(db, kind);
   const ref = id === 'new' ? fs.doc(col) : fs.doc(col, id);
   await fs.setDoc(ref, data, { merge: true });
+  if (demoFile) await fs.setDoc(fs.doc(db, 'demos', ref.id), { uid: user.uid, image: demoFile });
   await loadContent();
   location.hash = kind === 'apps' ? `app/${ref.id}` : 'apps';
 }
@@ -1092,16 +1106,7 @@ function renderPublish() {
         ${PUBLISH_FIELDS.filter(f => !f[3]).map(field({})).join('')}
         <details class="more">
           <summary>${T('Ссылки и демо')}</summary>
-          <div class="more-body">
-            ${PUBLISH_FIELDS.filter(f => f[3]).map(field({})).join('')}
-            <div class="field">${T('Или загрузите картинку либо гифку')}
-              <div class="icon-pick">
-                <img id="demo-preview" src="assets/favicon.svg" alt="">
-                <label class="btn">${T('Загрузить файл')}<input id="demo-file" class="sr" type="file" accept="image/png,image/jpeg,image/webp,image/gif,.heic,.heif"></label>
-              </div>
-              <small class="r-hint">${T('PNG, JPG или WebP до 20 МБ: сайт сам их ужмёт. Гифка до 500 КБ. Видео загрузить нельзя, дайте ссылку на .mp4.')}</small>
-              <input type="hidden" name="demoFile">
-            </div>
+          <div class="more-body">${PUBLISH_FIELDS.filter(f => f[3]).map(field({})).join('')}</div>
           </div>
         </details>
         <div class="field">${T('Ваше селфи (обязательно)')}
@@ -1518,6 +1523,7 @@ async function photoToDataUrl(file, size = 128, type = 'image/jpeg') {
 
 // Демо из заявки. Лимит документа в базе 1 МиБ, поэтому строка не длиннее DEMO_MAX.
 const DEMO_MAX = 700000;
+const DEMO_RATIO = 540 / 608;
 const DEMO_IMAGE = /^data:image\/(png|jpeg|webp|gif);base64,/;
 const fileToDataUrl = file => new Promise((resolve, reject) => {
   const reader = new FileReader();
@@ -1532,17 +1538,8 @@ async function demoToDataUrl(file) {
     return fileToDataUrl(file);
   }
   if (file.size > 20 * 1024 * 1024) throw new Error('big');
-  const bitmap = await readImage(file);
-  for (const [width, q] of [[1280, 0.85], [1280, 0.7], [960, 0.7], [720, 0.6]]) {
-    const scale = Math.min(1, width / bitmap.width);
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(bitmap.width * scale);
-    canvas.height = Math.round(bitmap.height * scale);
-    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    const url = canvas.toDataURL('image/webp', q);
-    if (url.length <= DEMO_MAX && DEMO_IMAGE.test(url)) return url;
-  }
-  throw new Error('big');
+  // Рамка демо на странице программы 540×608 (как у наших гифок): пользователь сам выбирает, что в неё попадёт.
+  return cropImage(file, T, { ratio: DEMO_RATIO, out: 810, limit: DEMO_MAX });
 }
 
 /* ---------- Баги и идеи ---------- */
@@ -2173,6 +2170,7 @@ view.addEventListener('change', e => {
     e.target.value = '';
     demoToDataUrl(file)
       .then(url => {
+        if (!url) return; // кадрирование отменили
         view.querySelector('[name=demoFile]').value = url;
         view.querySelector('#demo-preview').src = url;
         say('');

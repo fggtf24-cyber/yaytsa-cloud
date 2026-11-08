@@ -113,7 +113,7 @@ export const EN = {
   '{name} в работе': '{name} in action',
   'Или загрузите картинку либо гифку': 'Or upload an image or a GIF',
   'Загрузить файл': 'Upload a file',
-  'PNG, JPG или WebP до 20 МБ: сайт сам их ужмёт. Гифка до 500 КБ. Видео загрузить нельзя, дайте ссылку на .mp4.': 'PNG, JPG or WebP up to 20 MB: the site shrinks them itself. GIF up to 500 KB. Videos can’t be uploaded, give a link to an .mp4.',
+  'Картинка до 20 МБ: после загрузки выберите, какая часть попадёт в рамку. Гифка до 500 КБ, её края обрежутся по рамке. Видео загрузить нельзя, дайте ссылку на .mp4.': 'Image up to 20 MB: after uploading, choose which part fits the frame. GIF up to 500 KB, its edges are trimmed to the frame. Videos can’t be uploaded, give a link to an .mp4.',
   'Гифка больше 500 КБ. Уменьшите её или дайте ссылку.': 'The GIF is over 500 KB. Make it smaller or give a link.',
   'Файл слишком большой. Нужно до 20 МБ.': 'The file is too big. It must be under 20 MB.',
   'Не получилось открыть этот файл. Попробуйте PNG, JPG или GIF.': 'Couldn’t open this file. Try PNG, JPG or GIF.',

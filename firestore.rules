@@ -442,15 +442,23 @@ service cloud.firestore {
     }
     // Демо, загруженное файлом в заявке. Как селфи: отдельный документ, виден после одобрения.
     match /demos/{id} {
+      function demoImage() {
+        return request.resource.data.keys().hasOnly(['uid', 'image'])
+          && request.resource.data.uid == request.auth.uid
+          && str(request.resource.data.image, 1, 700000)
+          && request.resource.data.image.matches('^data:image/(png|jpeg|webp|gif);base64,.+');
+      }
+      // Видно всем, когда программа на сайте показывает файл, или заявка уже одобрена.
       allow read: if (signedIn() && (resource.data.uid == request.auth.uid || isAdmin()))
+        || (exists(/databases/$(database)/documents/apps/$(id))
+          && get(/databases/$(database)/documents/apps/$(id)).data.get('demo', '') == 'file')
         || get(/databases/$(database)/documents/submissions/$(id)).data.status == 'approved';
-      allow create: if signedIn()
-        && request.resource.data.keys().hasOnly(['uid', 'image'])
-        && request.resource.data.uid == request.auth.uid
-        && str(request.resource.data.image, 1, 700000)
-        && request.resource.data.image.matches('^data:image/(png|jpeg|webp|gif);base64,.+')
-        && getAfter(/databases/$(database)/documents/submissions/$(id)).data.uid == request.auth.uid
-        && getAfter(/databases/$(database)/documents/submissions/$(id)).data.demo == 'file';
+      // Участник кладёт файл вместе с заявкой, админ из формы программы.
+      allow create: if signedIn() && demoImage()
+        && (isAdmin()
+          || (getAfter(/databases/$(database)/documents/submissions/$(id)).data.uid == request.auth.uid
+            && getAfter(/databases/$(database)/documents/submissions/$(id)).data.demo == 'file'));
+      allow update: if isAdmin() && demoImage();
       allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
     }
     match /selfies/{id} {

@@ -206,7 +206,10 @@ h1, h2, p, ul { margin: 0; }
 .app-main h2:not(:first-child) { margin-top: 14px; }
 .use { display: flex; flex-wrap: wrap; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 /* Гифка 540×608: держим не больше родного размера, иначе видно низкое разрешение */
-.use img, .use video { flex: 0 1 340px; min-width: 0; max-width: 100%; height: auto; display: block; margin-left: auto; }
+.use img, .use video { flex: 0 1 340px; min-width: 0; max-width: 100%; height: auto; display: block; margin-left: auto;
+  /* Рамка постоянной пропорции: иначе flex тянет картинку по высоте текста и она сплющивается */
+  aspect-ratio: 540 / 608; object-fit: cover; align-self: center; }
+.demo-preview { width: 72px; height: 81px; object-fit: cover; }
 .use-text { flex: 1 1 260px; min-width: 0; padding: 28px; display: flex; flex-direction: column; gap: 16px; justify-content: center; }
 .use-lead { padding-left: 14px; border-left: 2px solid var(--text); font-weight: 700; }
 .use-text ul { list-style: none; padding: 0; display: grid; gap: 14px; color: var(--muted); }
