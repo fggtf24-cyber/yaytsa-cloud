@@ -498,7 +498,7 @@ const desktopButton = (a, cls = 'btn') => {
   const blue = s && (act === 'open' || s.state === 'update') && !cls.includes('primary') ? ' primary' : '';
   return `<button type="button" class="${cls}${blue} dt" data-dt="${act}" data-dt-id="${esc(a.id)}" data-cls="${cls}"${act ? '' : ' disabled'}>${T(label)}</button>`;
 };
-const removeButton = a => (installed[a.id] && installed[a.id].state !== 'busy'
+const removeButton = a => (installed[a.id] && installed[a.id].state !== 'busy' && installed[a.id].removable !== false
   ? `<button type="button" class="btn dt-rm" data-dt="remove" data-dt-id="${esc(a.id)}">${T('Удалить')}</button>`
   : `<span class="dt-rm" data-dt-id="${esc(a.id)}" hidden></span>`);
 // Состояние поменялось: перерисовываем только кнопки, а не страницу.
