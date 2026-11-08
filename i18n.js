@@ -337,6 +337,7 @@ export const EN = {
   'Входя на сайт, вы принимаете': 'By signing in, you accept',
   'Куки': 'Cookies',
   'Понятно': 'Got it',
+  'Мы храним в приложении вход и настройки: без этого оно не работает. Рекламы и слежки нет.': 'We keep your sign-in and settings in the app: it needs them to work. No ads and no tracking.',
   'Мы храним в браузере вход и настройки: без этого сайт не работает. Рекламы и слежки нет.': 'We keep your sign-in and settings in the browser: the site needs them to work. No ads and no tracking.',
 
   // Прочее

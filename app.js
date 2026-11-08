@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=46';
+import { EN, TERMS } from './i18n.js?v=47';
 import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=28';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -490,6 +490,12 @@ const isLinux = /Linux/.test(navigator.userAgent) && !/Android/.test(navigator.u
 const isAndroid = /Android/.test(navigator.userAgent);
 // Сайт открыт в приложении Яйца Cloud для Windows: программы ставятся, открываются и обновляются кнопкой.
 const desktop = / YaytsaCloud\//.test(navigator.userAgent) ? window.chrome?.webview : null;
+// В приложении вход и настройки лежат в его собственной папке, а не в браузере.
+if (desktop) {
+  const note = cookieBar.querySelector('[data-t]');
+  note.dataset.t = 'Мы храним в приложении вход и настройки: без этого оно не работает. Рекламы и слежки нет.';
+  note.textContent = T(note.dataset.t);
+}
 let installed = {}; // id -> { state: installed | update | busy, progress, open }, присылает приложение
 const desktopButton = (a, cls = 'btn') => {
   const s = installed[a.id];
