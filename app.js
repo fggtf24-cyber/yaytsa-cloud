@@ -415,6 +415,7 @@ function toggleTheme() {
   document.documentElement.dataset.theme = next;
   try { localStorage.setItem('theme', next); } catch { /* приватный режим */ }
   drawThemeButton();
+  sendTheme();
 }
 
 function setLang(next) {
@@ -496,6 +497,15 @@ if (desktop) {
   const note = cookieBar.querySelector('[data-t]');
   note.dataset.t = 'Мы храним в приложении вход и настройки: без этого оно не работает. Рекламы и слежки нет.';
   note.textContent = T(note.dataset.t);
+}
+// Заголовок окна приложения красится в цвет сайта, а полоса прокрутки — в стиле сайта.
+function sendTheme() {
+  // Цвет берём из переменной темы: у фона страницы плавный переход, и в первый момент он ещё старый.
+  desktop?.postMessage({ type: 'theme', bg: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim(), light: isLight() });
+}
+if (desktop) {
+  document.documentElement.classList.add('in-app');
+  sendTheme();
 }
 let installed = {}; // id -> { state: installed | update | busy, progress, open }, присылает приложение
 const desktopButton = (a, cls = 'btn') => {
