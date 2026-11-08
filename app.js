@@ -545,7 +545,8 @@ const editLink = (kind, a) => (isAdmin ? `<a class="link" href="#edit/${kind}/${
 // Каждый раз спрашиваем аккаунт: иначе Google молча входит в последний и сменить его нельзя.
 const googleProvider = () => { const p = new fb.GoogleAuthProvider(); p.setCustomParameters({ prompt: 'select_account' }); return p; };
 const media = a => {
-  const src = safeUrl(a.demo);
+  // Ссылка на страницу файла в GitHub (/blob/) отдаёт HTML, а не картинку: берём сам файл (/raw/).
+  const src = safeUrl(a.demo).replace(/^(https:\/\/github\.com\/[^/]+\/[^/]+)\/blob\//, '$1/raw/');
   if (!src) return '';
   return /\.(mp4|webm)(\?|$)/i.test(src)
     ? `<video src="${src}" autoplay muted loop playsinline aria-label="${T('{name} в работе', { name: esc(nm(a)) })}"></video>`
