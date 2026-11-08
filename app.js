@@ -1,5 +1,5 @@
-import { EN, TERMS } from './i18n.js?v=51';
-import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=30';
+import { EN, TERMS } from './i18n.js?v=52';
+import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=31';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -436,6 +436,7 @@ let auth = null;
 let db = null;
 let user = null;
 let realAdmin = false; // почта есть в admins
+let isMod = false;     // документ mods/<uid>: отстраняет, банит, удаляет посты и комментарии, но не ходит в админку
 let isAdmin = false;   // админские кнопки на экране: админ может смотреть сайт глазами обычного пользователя
 let authState = 'loading';    // loading | ready | failed
 let contentState = 'loading'; // loading | ready | failed
@@ -465,6 +466,7 @@ const social = setupSocial({
   get db() { return db; },
   get user() { return user; },
   get isAdmin() { return isAdmin; },
+  get isStaff() { return isAdmin || isMod; },
   get lang() { return lang; },
   get apps() { return apps; },
   get authState() { return authState; },
@@ -1223,22 +1225,23 @@ async function renderAdmin(tab) {
       const snap = await fs.getDocs(fs.collection(db, 'accounts'));
       const list = snap.docs.map(d => ({ id: d.id, ...d.data() }))
         .sort((a, b) => (Date.parse(b.created) || 0) - (Date.parse(a.created) || 0));
-      await social.loadPeople(list.map(a => a.id));
+      await Promise.all([social.loadPeople(list.map(a => a.id)), social.loadRoles(list.map(a => a.id), true)]);
       if (route().tab !== 'users') return;
       const date = text => (Date.parse(text) ? new Date(text).toLocaleDateString(lang === 'en' ? 'en-GB' : 'ru-RU') : '—');
       const way = { 'google.com': 'Google', password: T('Почта') };
       return shell(`
         <p class="empty">${T('Всего: {n}. Человек попадает сюда, когда заходит на сайт под своим аккаунтом.', { n: list.length })}</p>
         <div class="table-box"><table>
-          <thead><tr><th scope="col">${T('Почта')}</th><th scope="col">${T('Логин')}</th><th scope="col">${T('Имя')}</th><th scope="col">${T('Способ входа')}</th><th scope="col">${T('Регистрация')}</th><th scope="col">${T('Был на сайте')}</th></tr></thead>
+          <thead><tr><th scope="col">${T('Почта')}</th><th scope="col">${T('Логин')}</th><th scope="col">${T('Имя')}</th><th scope="col">${T('Способ входа')}</th><th scope="col">${T('Регистрация')}</th><th scope="col">${T('Был на сайте')}</th><th scope="col"><span class="sr">${T('Действия')}</span></th></tr></thead>
           <tbody>${list.map(a => `
             <tr>
               <th scope="row">${esc(a.email) || '—'}</th>
-              <td>${social.handleOf(a.id) ? authorLink(a.id) : '—'}</td>
+              <td>${social.handleOf(a.id) ? authorLink(a.id) : '—'}${social.roleTags(a.id)}</td>
               <td>${esc(social.nameOf(a.id)) || '—'}</td>
               <td>${esc(way[a.provider] || a.provider)}</td>
               <td>${date(a.created)}</td>
               <td>${a.lastSeen ? date(a.lastSeen.toDate()) : '—'}</td>
+              <td>${a.id === user.uid ? '' : `<button type="button" class="r-iconbtn small" data-mod-menu="${esc(a.id)}" title="${T('Модерация')}" aria-label="${T('Модерация')}">⋯</button>`}</td>
             </tr>`).join('')}</tbody>
         </table></div>`);
     }
@@ -1587,6 +1590,17 @@ function setAdminView(on) {
   render();
 }
 
+// Своё ограничение: человек должен понимать, почему не получается писать.
+function drawBanBar(u) {
+  const bar = document.getElementById('ban-bar');
+  const b = u && social.banOf(u.uid);
+  bar.hidden = !b;
+  if (!b) return;
+  const when = b.until && new Date(b.until).toLocaleString(lang === 'en' ? 'en-GB' : 'ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  bar.textContent = (b.until ? T('Вы отстранены до {date}. До этого времени можно только читать сайт.', { date: when }) : T('Ваш аккаунт заблокирован. Можно только читать сайт.'))
+    + (b.reason ? ` ${T('Причина')}: ${b.reason}` : '');
+}
+
 function savedAdminView() {
   try { return !localStorage.getItem('userView'); } catch { return true; }
 }
@@ -1774,7 +1788,9 @@ async function initFirebase() {
       .catch(e => { console.error(e); contentState = 'failed'; }) // каталог останется стартовым
       .then(render);
     fb.onAuthStateChanged(auth, async u => {
-      [realAdmin, profile] = await Promise.all([checkAdmin(u), loadProfile(u)]);
+      [realAdmin, profile] = await Promise.all([checkAdmin(u), loadProfile(u), u && social.loadRoles([u.uid], true)]);
+      isMod = !!u && social.isModUid(u.uid);
+      drawBanBar(u);
       isAdmin = realAdmin && savedAdminView();
       user = u;
       quietUntil = Date.now() + 4000;
@@ -1989,6 +2005,7 @@ view.addEventListener('click', e => {
     count(`dl_${t.dataset.id}`);
     macInstallDialog(apps.find(x => x.id === t.dataset.id));
   }
+  else if (t.dataset.modMenu) social.modChooser(t.dataset.modMenu);
   else if (t.dataset.approve) attempt(() => decide(t.dataset.approve, true));
   else if (t.dataset.reject) attempt(() => decide(t.dataset.reject, false));
   else if (t.dataset.delSub) attempt(() => deleteSubmission(t.dataset.delSub));

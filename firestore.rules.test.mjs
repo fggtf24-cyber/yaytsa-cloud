@@ -211,6 +211,37 @@ await ok('bob открыл сообщения', updateDoc(doc(bob, 'profiles', '
   await ok('автор удаляет своё', deleteDoc(mine)); }
 await ok('автор удаляет своё фото', deleteDoc(doc(alice, 'chats', 'alice_bob', 'media', 'm1')));
 
+// Модераторы и ограничения
+await env.withSecurityRulesDisabled(async c => {
+  const db = c.firestore();
+  await setDoc(doc(db, 'profiles', 'carol'), { username: 'carol', name: 'carol', photo: '', bio: '', createdAt: new Date() });
+  await setDoc(doc(db, 'accounts', 'adm'), { email: ADMIN, provider: 'google.com', created: '', lastSeen: new Date() });
+  await setDoc(doc(db, 'posts', 'pm'), { uid: 'alice', title: 't', body: '', appId: '', score: 0, commentCount: 0, createdAt: new Date() });
+});
+const carol = as('carol');
+const ban = (db, uid, until = null) => setDoc(doc(db, 'bans', uid), { until, reason: 'спам', by: db === admin ? 'adm' : 'bob', at: serverTimestamp() });
+await no('обычный не назначает модератора', setDoc(doc(alice, 'mods', 'bob'), { by: 'alice', at: serverTimestamp() }));
+await ok('админ назначает модератора', setDoc(doc(admin, 'mods', 'bob'), { by: 'adm', at: serverTimestamp() }));
+await no('модератор не назначает модераторов', setDoc(doc(bob, 'mods', 'carol'), { by: 'bob', at: serverTimestamp() }));
+await no('обычный не банит', ban(alice, 'carol'));
+await no('модератор не банит себя', ban(bob, 'bob'));
+await no('модератор не банит админа', ban(bob, 'adm'));
+await ok('модератор отстраняет на день', ban(bob, 'carol', new Date(Date.now() + 864e5)));
+await no('отстранённый не пишет пост', setDoc(doc(carol, 'posts', 'pc'), { uid: 'carol', title: 'x', body: '', appId: '', score: 0, commentCount: 0, createdAt: serverTimestamp() }));
+await no('отстранённый не подписывается', setDoc(doc(carol, 'follows', 'carol_alice'), { from: 'carol', to: 'alice', createdAt: serverTimestamp() }));
+await no('отстранённый не пишет в личку', setDoc(doc(carol, 'chats', 'alice_carol'), { members: ['alice', 'carol'], lastText: 'x', lastFrom: 'carol', lastAt: serverTimestamp(), seen: {} }));
+await ok('модератор снимает ограничение', deleteDoc(doc(bob, 'bans', 'carol')));
+await ok('снятое — снова пишет пост', setDoc(doc(carol, 'posts', 'pc'), { uid: 'carol', title: 'x', body: '', appId: '', score: 0, commentCount: 0, createdAt: serverTimestamp() }));
+await ok('истёкшее отстранение не мешает', ban(bob, 'carol', new Date(Date.now() - 1000)));
+await ok('после срока подписывается', setDoc(doc(carol, 'follows', 'carol_alice'), { from: 'carol', to: 'alice', createdAt: serverTimestamp() }));
+await ok('админ банит навсегда', ban(admin, 'carol'));
+await no('забаненный не пишет пост', setDoc(doc(carol, 'posts', 'pc2'), { uid: 'carol', title: 'x', body: '', appId: '', score: 0, commentCount: 0, createdAt: serverTimestamp() }));
+await ok('модератор удаляет чужой пост', deleteDoc(doc(bob, 'posts', 'pm')));
+await no('модератор не трогает другого модератора', (async () => { await env.withSecurityRulesDisabled(c => setDoc(doc(c.firestore(), 'mods', 'alice'), { by: 'adm', at: new Date() })); return ban(bob, 'alice'); })());
+await ok('админ банит модератора', ban(admin, 'alice'));
+await ok('админ снимает модератора', deleteDoc(doc(admin, 'mods', 'bob')));
+await no('бывший модератор больше не банит', ban(bob, 'carol'));
+
 await env.cleanup();
 assert.ok(n > 30);
 console.log(`\nвсе проверки прошли: ${n}`);

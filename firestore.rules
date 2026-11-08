@@ -11,6 +11,18 @@ service cloud.firestore {
       return isGoogle()
         && exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
     }
+    // Модератор = документ mods/<uid>. Назначает и снимает только админ.
+    // Модератор отстраняет и банит людей, удаляет посты и комментарии; в админку не ходит.
+    function isMod() {
+      return request.auth != null && exists(/databases/$(database)/documents/mods/$(request.auth.uid));
+    }
+    function isStaff() { return isAdmin() || isMod(); }
+    // Ограничение = документ bans/<uid>: until — до какого времени (отстранение), null — навсегда (бан).
+    function restricted() {
+      return request.auth != null && exists(/databases/$(database)/documents/bans/$(request.auth.uid))
+        && (get(/databases/$(database)/documents/bans/$(request.auth.uid)).data.until == null
+          || get(/databases/$(database)/documents/bans/$(request.auth.uid)).data.until > request.time);
+    }
     match /apps/{id} {
       allow read: if true;
       allow write: if isAdmin();
@@ -39,7 +51,7 @@ service cloud.firestore {
     }
     match /comments/{id} {
       allow read: if true;
-      allow create: if request.auth != null
+      allow create: if request.auth != null && !restricted()
         && request.resource.data.keys().hasOnly(['appId', 'uid', 'name', 'photo', 'text', 'image', 'createdAt', 'likedBy', 'parentId'])
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.appId is string
@@ -59,7 +71,7 @@ service cloud.firestore {
           || (request.resource.data.parentId is string && request.resource.data.parentId.size() <= 100));
       allow update: if request.auth != null && (togglesOwnLike() || changesOwnProfile());
       allow delete: if request.auth != null
-        && (resource.data.uid == request.auth.uid || isAdmin());
+        && (resource.data.uid == request.auth.uid || isStaff());
     }
     // Уведомления: читает и отмечает прочитанным только получатель. Создать можно только про настоящий комментарий
     // этого получателя. У лайка id постоянный и обновлять его чужому нельзя, поэтому повторного уведомления не будет.
@@ -183,7 +195,8 @@ service cloud.firestore {
     /* ---------- Соцчасть: профили, посты, ветки, голоса, подписки, чаты ---------- */
 
     function signedIn() { return request.auth != null; }
-    function hasProfile() { return exists(/databases/$(database)/documents/profiles/$(request.auth.uid)); }
+    // Отстранённый или забаненный не пишет посты и комментарии, не подписывается и не подаёт заявки.
+    function hasProfile() { return exists(/databases/$(database)/documents/profiles/$(request.auth.uid)) && !restricted(); }
     function str(v, min, max) { return v is string && v.size() >= min && v.size() <= max; }
 
     // Публичный профиль. username должен быть закреплён за этим же uid в usernames — так имена не повторяются.
@@ -262,7 +275,7 @@ service cloud.firestore {
     // Голос: один на человека, -1, 0 или 1. Меняется только вместе со счётом поста или комментария.
     match /votes/{id} {
       allow read: if signedIn() && resource.data.uid == request.auth.uid;
-      allow create, update: if signedIn()
+      allow create, update: if signedIn() && !restricted()
         && request.resource.data.keys().hasOnly(['uid', 'kind', 'target', 'v'])
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.kind in ['p', 'c']
@@ -300,7 +313,7 @@ service cloud.firestore {
         // ponytail: +1 к счётчику может прислать любой вошедший; честно его считал бы только сервер
         || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentCount'])
           && request.resource.data.commentCount == resource.data.commentCount + 1));
-      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isStaff());
     }
     // Картинка поста лежит отдельно, чтобы лента не качала все картинки разом. id такой же, как у поста.
     match /postimages/{id} {
@@ -310,7 +323,7 @@ service cloud.firestore {
         && request.resource.data.uid == request.auth.uid
         && str(request.resource.data.image, 1, 800000)
         && getAfter(/databases/$(database)/documents/posts/$(id)).data.uid == request.auth.uid;
-      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin()
+      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isStaff()
         || !existsAfter(/databases/$(database)/documents/posts/$(id)));
     }
     // Комментарии в ветке поста. parentId = '' — ответ на сам пост. Удаление стирает текст, ветка остаётся.
@@ -342,13 +355,13 @@ service cloud.firestore {
           && request.resource.data.editedAt == request.time)
         || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['score'])
           && request.resource.data.score == resource.data.score + voteDelta('c', id))
-        || (isAdmin()
+        || (isStaff()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body', 'image', 'sticker', 'deleted'])
           && !('image' in request.resource.data)
           && !('sticker' in request.resource.data)
           && request.resource.data.body == '' && request.resource.data.deleted == true));
-      // Совсем стереть можно свой комментарий, любой чужой админу и любой, у которого пост уже удалён.
-      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin()
+      // Совсем стереть можно свой комментарий, любой чужой админу и модератору и любой, у которого пост уже удалён.
+      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isStaff()
         || !existsAfter(/databases/$(database)/documents/posts/$(resource.data.postId)));
     }
 
@@ -447,7 +460,7 @@ service cloud.firestore {
       allow get: if signedIn()
         && (resource == null ? request.auth.uid in id.split('_') : request.auth.uid in resource.data.members);
       allow list: if signedIn() && request.auth.uid in resource.data.members;
-      allow create: if signedIn()
+      allow create: if signedIn() && !restricted()
         && request.resource.data.keys().hasOnly(['members', 'lastText', 'lastFrom', 'lastAt', 'seen', 'group', 'name', 'owner'])
         && request.resource.data.members is list
         && request.auth.uid in request.resource.data.members
@@ -481,7 +494,7 @@ service cloud.firestore {
       match /media/{mid} {
         allow read: if signedIn()
           && request.auth.uid in get(/databases/$(database)/documents/chats/$(id)).data.members;
-        allow create: if signedIn()
+        allow create: if signedIn() && !restricted()
           && request.resource.data.keys().hasOnly(['from', 'data'])
           && request.resource.data.from == request.auth.uid
           && str(request.resource.data.data, 1, 800000)
@@ -505,7 +518,7 @@ service cloud.firestore {
           && resource.data.text.size() > 0
           && str(request.resource.data.text, 1, 2000)
           && request.resource.data.edited == request.time;
-        allow create: if signedIn()
+        allow create: if signedIn() && !restricted()
           && request.resource.data.keys().hasOnly(['from', 'text', 'sticker', 'media', 'ratio', 'secs', 'parts', 'createdAt'])
           && request.resource.data.from == request.auth.uid
           && str(request.resource.data.text, 0, 2000)
@@ -523,6 +536,38 @@ service cloud.firestore {
           && (getAfter(/databases/$(database)/documents/chats/$(id)).data.get('group', false) == true
             || allowsDm(peerOf(getAfter(/databases/$(database)/documents/chats/$(id)).data.members)));
       }
+    }
+
+    // Модераторы. Видны всем: на сайте у них значок и кнопки модерации.
+    match /mods/{uid} {
+      allow read: if true;
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly(['by', 'at'])
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.at == request.time
+        && exists(/databases/$(database)/documents/profiles/$(uid));
+      allow delete: if isAdmin();
+    }
+
+    // Отстранение и бан. Ставят админ и модератор. Модератор не трогает других модераторов и админов,
+    // никто не ограничивает сам себя, админа не ограничивает никто. Админа узнаём по почте из accounts.
+    function isAdminUid(uid) {
+      return exists(/databases/$(database)/documents/accounts/$(uid))
+        && exists(/databases/$(database)/documents/admins/$(get(/databases/$(database)/documents/accounts/$(uid)).data.email));
+    }
+    function canRestrict(uid) {
+      return isStaff() && uid != request.auth.uid && !isAdminUid(uid)
+        && (isAdmin() || !exists(/databases/$(database)/documents/mods/$(uid)));
+    }
+    match /bans/{uid} {
+      allow read: if true;
+      allow create, update: if canRestrict(uid)
+        && request.resource.data.keys().hasOnly(['until', 'reason', 'by', 'at'])
+        && (request.resource.data.until == null || request.resource.data.until is timestamp)
+        && str(request.resource.data.reason, 0, 300)
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.at == request.time;
+      allow delete: if canRestrict(uid);
     }
 
     // Админ = документ admins/<почта>. Список читать нельзя, только проверить себя. Меняется из консоли.

@@ -586,7 +586,7 @@ export function setupSocial(ctx) {
     const y = scrollY;
     document.title = `${post.title} — ${T('Яйца Cloud')}`;
     const mine = post.uid === me();
-    const menu = mine || ctx.isAdmin ? `
+    const menu = mine || ctx.isStaff ? `
       <details class="r-menu">
         <summary class="r-iconbtn" aria-label="${T('Ещё')}">${ICON.dots}</summary>
         <div class="r-menu-list">
@@ -673,7 +673,7 @@ export function setupSocial(ctx) {
       if (c.deleted && !inner) return ''; // удалённый лист не показываем, как Reddit
       const mine = c.uid === me();
       const more = depth >= MAX_DEPTH && children.length;
-      const menu = !c.deleted && (mine || ctx.isAdmin) ? `
+      const menu = !c.deleted && (mine || ctx.isStaff) ? `
         <details class="r-menu">
           <summary class="r-iconbtn small" aria-label="${T('Ещё')}">${ICON.dots}</summary>
           <div class="r-menu-list">
@@ -824,8 +824,9 @@ export function setupSocial(ctx) {
         ...(ctx.isAdmin ? [F().deleteDoc(ref('broadcasts', post.id))] : []),
         ...(post.imageRatio ? [F().deleteDoc(ref('postimages', post.id))] : []),
       ]);
+      const mine = post.uid === me();
       thread = null;
-      location.hash = pub ? `u/${pub.username}` : 'feed';
+      location.hash = mine && pub ? `u/${pub.username}` : 'feed';
     } catch (e) { fail(e); }
   }
 
@@ -899,6 +900,7 @@ export function setupSocial(ctx) {
     // Свежий профиль, а не из кэша: имя и фото могли поменяться.
     try { const d = await F().getDoc(ref('profiles', uid)); remember(uid, d.exists() ? d.data() : null); } catch { /* останется кэш */ }
     const lastSeen = await F().getDoc(ref('presence', uid)).then(d => d.data()?.at, () => null);
+    await loadRoles([uid], true);
     comments = comments.filter(c => !c.deleted);
     shownComments.clear();
     comments.forEach(c => shownComments.set(c.id, c));
@@ -926,7 +928,7 @@ export function setupSocial(ctx) {
           ${voteBox('c', c.id, c.score)}
           ${postTitles.get(c.postId) ? `<a class="r-pill flat" href="#post/${esc(c.postId)}/${esc(c.id)}">${ICON.comment}<span>${T('Ответить')}</span></a>` : ''}
           ${shareBtn(`#post/${c.postId}/${c.id}`)}
-          ${isMe || ctx.isAdmin ? `<button type="button" class="r-pill flat" data-s-del-card="${esc(c.id)}">${T('Удалить')}</button>` : ''}
+          ${isMe || ctx.isStaff ? `<button type="button" class="r-pill flat" data-s-del-card="${esc(c.id)}">${T('Удалить')}</button>` : ''}
         </div>
       </article>`;
     const personRow = x => `
@@ -962,7 +964,7 @@ export function setupSocial(ctx) {
             ${isOnline(lastSeen, isMe) ? `<span class="r-online" role="img" title="${T('В сети')}" aria-label="${T('В сети')}"></span>` : ''}
           </div>
           <div class="r-phead-text">
-            <h1>${esc(p.name || p.username)}</h1>
+            <h1>${esc(p.name || p.username)}${roleTags(uid)}</h1>
             <p class="r-sub">@${esc(p.username)}${!isOnline(lastSeen, isMe) && ms(lastSeen) ? `<span class="r-dot">•</span><span>${T('Был(а) в сети {when}', { when: ago(lastSeen) })}</span>` : ''}${!isMe && followers.has(uid) && !isMutual(uid) ? ` <span class="r-tag">${T('подписан(а) на вас')}</span>` : ''}</p>
           </div>
           ${netLinks(uid)}
@@ -970,7 +972,7 @@ export function setupSocial(ctx) {
         <div class="r-phead-actions">
           ${isMe
             ? `<a class="r-pill ghost" href="#account">${T('Изменить профиль')}</a>`
-            : `${followBtn(uid)}${writeBtn(uid, p)}`}
+            : `${followBtn(uid)}${writeBtn(uid, p)}${modMenu(uid)}`}
           <span class="r-sub">${T('Подписчики')}: <b>${fmt(ins.length)}</b> · ${T('Подписки')}: <b>${fmt(outs.length)}</b></span>
         </div>
         <nav class="r-tabs" aria-label="${T('Разделы профиля')}">
@@ -1784,6 +1786,130 @@ export function setupSocial(ctx) {
     } catch (e) { fail(e); }
   }
 
+  /* ---------- Модерация ---------- */
+
+  // Роли и ограничения людей: uid -> { mod, ban: { until, reason } | null }. Читать их может любой.
+  const roles = new Map();
+  async function loadRoles(uids, fresh = false) {
+    const need = [...new Set(uids)].filter(u => u && (fresh || !roles.has(u)));
+    await Promise.all(need.map(async uid => {
+      const [m, b] = await Promise.all([F().getDoc(ref('mods', uid)), F().getDoc(ref('bans', uid))].map(x => x.catch(() => null)));
+      roles.set(uid, { mod: !!m?.exists(), ban: b?.exists() ? b.data() : null });
+    }));
+  }
+  const isModUid = uid => !!roles.get(uid)?.mod;
+  // Действующее ограничение: until — мс до конца отстранения, null — бан навсегда. Истёкшее не считается.
+  const banOf = uid => {
+    const b = roles.get(uid)?.ban;
+    if (!b) return null;
+    const until = b.until ? ms(b.until) : null;
+    return until === null || until > Date.now() ? { until, reason: b.reason || '' } : null;
+  };
+  const banText = b => (b.until === null ? T('Бан навсегда') : T('Отстранение до {date}', { date: new Date(b.until).toLocaleString(ctx.lang === 'en' ? 'en-GB' : 'ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) }));
+  const roleTags = uid => `${isModUid(uid) ? ` <span class="r-tag mod">${T('Модератор')}</span>` : ''}${banOf(uid) ? ` <span class="r-tag ban" title="${esc(banOf(uid).reason)}">${esc(banText(banOf(uid)))}</span>` : ''}`;
+
+  // Меню модерации на чужом профиле: модератор и админ ограничивают, назначать модераторов может только админ.
+  function modMenu(uid) {
+    if (!ctx.isStaff || uid === me()) return '';
+    const canTouch = ctx.isAdmin || !isModUid(uid);
+    if (!canTouch && !ctx.isAdmin) return '';
+    return `
+      <details class="r-menu">
+        <summary class="r-pill ghost">${T('Модерация')}</summary>
+        <div class="r-menu-list">
+          ${banOf(uid) ? `<button type="button" data-s-unrestrict="${esc(uid)}">${T('Снять ограничение')}</button>` : `<button type="button" class="r-menu-danger" data-s-restrict="${esc(uid)}">${T('Отстранить или забанить…')}</button>`}
+          ${ctx.isAdmin ? `<button type="button" data-s-mod="${esc(uid)}">${T(isModUid(uid) ? 'Снять модератора' : 'Сделать модератором')}</button>` : ''}
+        </div>
+      </details>`;
+  }
+
+  // Действия над человеком окном, а не выпадающим меню: в таблице админки меню обрезала бы рамка прокрутки.
+  function modChooser(uid) {
+    const acts = [
+      banOf(uid) ? ['Снять ограничение', () => unrestrict(uid)] : ['Отстранить или забанить…', () => restrict(uid)],
+      ...(ctx.isAdmin && handle(uid) ? [[isModUid(uid) ? 'Снять модератора' : 'Сделать модератором', () => toggleMod(uid)]] : []),
+    ];
+    const dlg = document.createElement('dialog');
+    dlg.className = 'r-crop r-ask';
+    dlg.innerHTML = `
+      <form method="dialog" class="r-crop-box">
+        <h2>${T('Модерация')}: ${userLabel(uid)}</h2>
+        <div class="mod-acts">${acts.map(([label], n) => `<button type="button" class="btn" data-n="${n}">${T(label)}</button>`).join('')}</div>
+        <div class="r-crop-bar"><button class="btn">${T('Отмена')}</button></div>
+      </form>`;
+    dlg.addEventListener('click', e => {
+      const b = e.target.closest('[data-n]');
+      if (!b) return;
+      dlg.close();
+      acts[+b.dataset.n][1]();
+    });
+    dlg.addEventListener('close', () => dlg.remove());
+    document.getElementById('view').append(dlg);
+    dlg.showModal();
+  }
+
+  const TERMS_MS = [['1h', 'На 1 час', 36e5], ['1d', 'На 1 день', 864e5], ['7d', 'На 7 дней', 7 * 864e5], ['30d', 'На 30 дней', 30 * 864e5], ['ban', 'Забанить навсегда', null]];
+
+  function restrictDialog(uid) {
+    return new Promise(resolve => {
+      const dlg = document.createElement('dialog');
+      dlg.className = 'r-crop r-ask';
+      dlg.innerHTML = `
+        <form method="dialog" class="r-crop-box">
+          <h2>${T('Ограничить {who}', { who: userLabel(uid) })}</h2>
+          <p class="empty">${T('Пока ограничение действует, человек может только читать: не пишет посты, комментарии и сообщения, не ставит лайки и не подписывается.')}</p>
+          <label class="field">${T('Срок')}<select name="term">${TERMS_MS.map(([id, label]) => `<option value="${id}">${T(label)}</option>`).join('')}</select></label>
+          <label class="field">${T('Причина')}<input name="reason" maxlength="300" autocomplete="off" placeholder="${T('Её увидит человек')}"></label>
+          <div class="r-crop-bar">
+            <button type="button" class="btn" data-ask-cancel>${T('Отмена')}</button>
+            <button class="btn danger" value="yes">${T('Ограничить')}</button>
+          </div>
+        </form>`;
+      dlg.querySelector('[data-ask-cancel]').addEventListener('click', () => dlg.close());
+      dlg.addEventListener('close', () => {
+        const f = dlg.querySelector('form').elements;
+        resolve(dlg.returnValue === 'yes' ? { term: f.term.value, reason: f.reason.value.trim().slice(0, 300) } : null);
+        dlg.remove();
+      });
+      document.getElementById('view').append(dlg);
+      dlg.showModal();
+    });
+  }
+
+  async function restrict(uid) {
+    const choice = await restrictDialog(uid);
+    if (!choice) return;
+    const term = TERMS_MS.find(t => t[0] === choice.term);
+    try {
+      const data = { until: term[2] === null ? null : F().Timestamp.fromMillis(Date.now() + term[2]), reason: choice.reason, by: me(), at: F().serverTimestamp() };
+      await F().setDoc(ref('bans', uid), data);
+      roles.set(uid, { ...roles.get(uid), ban: { ...data, until: data.until } });
+      ctx.toast(T('Ограничение поставлено.'));
+      ctx.render();
+    } catch (e) { fail(e); }
+  }
+
+  async function unrestrict(uid) {
+    if (!await askDialog(T, { title: T('Снять ограничение с {who}?', { who: userLabel(uid) }), ok: 'Снять' })) return;
+    try {
+      await F().deleteDoc(ref('bans', uid));
+      roles.set(uid, { ...roles.get(uid), ban: null });
+      ctx.toast(T('Ограничение снято.'));
+      ctx.render();
+    } catch (e) { fail(e); }
+  }
+
+  async function toggleMod(uid) {
+    const on = !isModUid(uid);
+    if (!await askDialog(T, { title: T(on ? 'Сделать {who} модератором?' : 'Снять модератора с {who}?', { who: userLabel(uid) }), text: on ? T('Модератор сможет отстранять и банить людей, удалять посты и комментарии. В админку он не попадёт.') : '', ok: on ? 'Назначить' : 'Снять' })) return;
+    try {
+      if (on) await F().setDoc(ref('mods', uid), { by: me(), at: F().serverTimestamp() });
+      else await F().deleteDoc(ref('mods', uid));
+      roles.set(uid, { ...roles.get(uid), mod: on });
+      ctx.render();
+    } catch (e) { fail(e); }
+  }
+
   /* ---------- Приватность ---------- */
 
   const writeBtn = (uid, p, wide = '') => (allows(uid, 'dm')
@@ -2030,6 +2156,9 @@ export function setupSocial(ctx) {
     else if (d.recStart !== undefined) startRecording(t.closest('form'));
     else if (d.recCancel !== undefined) finishRecording(false);
     else if (d.voice) toggleVoice(t);
+    else if (d.sRestrict) { t.closest('details')?.removeAttribute('open'); restrict(d.sRestrict); }
+    else if (d.sUnrestrict) { t.closest('details')?.removeAttribute('open'); unrestrict(d.sUnrestrict); }
+    else if (d.sMod) { t.closest('details')?.removeAttribute('open'); toggleMod(d.sMod); }
     else if (d.sMsgEdit) startEdit(d.sMsgEdit);
     else if (d.sMsgDel) deleteMsg(d.sMsgDel);
     else if (d.sMsgCancel !== undefined) stopEdit();
@@ -2145,6 +2274,11 @@ export function setupSocial(ctx) {
     accountFields,
     netFields,
     privacyFields,
+    loadRoles,
+    roleTags,
+    banOf,
+    isModUid,
+    modChooser,
     accountNote,
     bannerField,
     readLinks,

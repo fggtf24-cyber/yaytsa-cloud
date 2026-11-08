@@ -1135,3 +1135,11 @@ html { -webkit-tap-highlight-color: transparent; }
 .r-pill.off { opacity: .45; cursor: not-allowed; }
 .r-group-who small a { color: inherit; }
 .r-group-who small a:hover, .r-meta a.r-user:hover { text-decoration: underline; }
+
+/* Модерация */
+.r-tag.mod { background: rgba(20, 115, 230, .22); color: var(--link); vertical-align: middle; }
+.r-tag.ban { background: rgba(255, 79, 122, .18); color: #FF4F7A; vertical-align: middle; }
+h1 .r-tag { font-size: 12px; margin-left: 6px; }
+.ban-bar { padding: 10px 20px; background: rgba(255, 79, 122, .14); color: var(--text); font-size: 14px; text-align: center; }
+.mod-acts { display: flex; flex-direction: column; gap: 8px; }
+.table-box td .r-tag { margin-left: 6px; }
