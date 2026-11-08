@@ -1383,7 +1383,7 @@ export function setupSocial(ctx) {
         // estimate: своя отметка «прочитано» ещё летит на сервер, но уже считается, иначе чат выглядел бы непрочитанным.
         chats = snap.docs.map(d => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) }))
           .sort((a, b) => (ms(b.lastAt) || Date.now()) - (ms(a.lastAt) || Date.now()));
-        await loadPeople(chats.map(peerOf));
+        await loadPeople(chats.flatMap(c => [peerOf(c), c.lastFrom]).filter(Boolean)); // lastFrom — для имени в уведомлении из группы
         ctx.drawInboxCount();
         if (ctx.route().name === 'chat') {
           drawChatList();
@@ -2038,6 +2038,17 @@ export function setupSocial(ctx) {
     handleOf: handle,
     nameOf: uid => (people.get(uid) ? shownName(uid) : ''),
     unreadChats: () => chats.filter(unread).length,
+    // Самый свежий непрочитанный чат: от кого и что, для уведомления в приложении для Windows.
+    lastUnread: () => {
+      const c = chats.find(unread); // chats отсортированы от новых к старым
+      if (!c) return null;
+      const from = shownName(c.lastFrom);
+      return {
+        title: c.group ? `${from} · ${c.name}` : from,
+        body: c.lastText || '',
+        href: c.group ? `#group/${c.id}` : handle(c.lastFrom) ? `#chat/${handle(c.lastFrom)}` : profileHref(c.lastFrom),
+      };
+    },
     myHref: () => (pub ? `#u/${pub.username}` : '#account'),
     hasProfile: () => !!pub,
   };

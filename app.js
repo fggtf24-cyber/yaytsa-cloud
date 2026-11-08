@@ -1,5 +1,5 @@
 import { EN, TERMS } from './i18n.js?v=50';
-import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=28';
+import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=29';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -1597,7 +1597,7 @@ function drawInboxCount() {
   const count = document.getElementById('inbox-count');
   count.hidden = !unread;
   count.textContent = unread > 9 ? '9+' : unread;
-  soundOnGrowth('inbox', unread, () => ({ title: T('Новое сообщение'), body: '', href: '#chat' }));
+  soundOnGrowth('inbox', unread, () => social.lastUnread() || { title: T('Новое сообщение'), body: '', href: '#chat' });
 }
 
 // Имена, почту и текст пишут посетители: только через esc.
