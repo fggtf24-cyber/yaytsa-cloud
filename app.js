@@ -1705,7 +1705,8 @@ const RAIL = { 'timer-login': 'account', feed: 'feed', post: 'feed', submit: 'fe
 function render() {
   const r = route();
   document.querySelectorAll('.rail a').forEach(a => {
-    if (a.dataset.route === (RAIL[r.name] || 'apps')) a.setAttribute('aria-current', 'page');
+    // Соглашение ни к одному разделу меню не относится, поэтому ничего не подсвечиваем
+    if (r.name !== 'terms' && a.dataset.route === (RAIL[r.name] || 'apps')) a.setAttribute('aria-current', 'page');
     else a.removeAttribute('aria-current');
   });
   if (r.social) { social.render(r); return; } // заголовок вкладки social.js ставит сам, когда загрузит данные

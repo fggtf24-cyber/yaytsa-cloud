@@ -1077,3 +1077,24 @@ html { -webkit-tap-highlight-color: transparent; }
 .r-voice-bar i { display: block; width: 0; height: 100%; border-radius: 2px; background: var(--accent); }
 .r-msg.mine .r-voice-bar i { background: #fff; }
 .r-voice-time { flex: none; font-size: 12px; font-variant-numeric: tabular-nums; }
+
+/* ---------- Телефон с крупным системным шрифтом: ничего не вылезает за экран ---------- */
+.card-foot { flex-wrap: wrap; row-gap: 10px; }
+.card-foot .btn { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 640px) {
+  /* Уведомления листом под шапкой во всю ширину, как в VK и Instagram */
+  .bell-panel {
+    position: fixed; left: 8px; right: 8px; top: calc(var(--top-h) - 6px); width: auto;
+    max-height: calc(100dvh - var(--top-h) - 96px); border-radius: 14px;
+  }
+  /* Нижнее меню всегда влезает: подписи в одну строку, лишнее — многоточием */
+  .rail { overflow-x: hidden; }
+  .rail a { flex: 1 1 0; min-width: 0; }
+  .rail a > span:last-child { max-width: 100%; padding: 0 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rail-admin { flex: 2 1 0; min-width: 0; }
+  /* Значки шапки всегда в строке с логотипом: сжимается название, а не ряд */
+  .brand { flex: 1 1 0; min-width: 0; }
+  .brand span { overflow: hidden; text-overflow: ellipsis; }
+  /* У админа семь пунктов: только значки, как в Instagram и X; подпись остаётся для экранного диктора */
+  .rail:has(.rail-admin:not([hidden])) a > span:last-child { position: absolute; width: 1px; height: 1px; padding: 0; clip-path: inset(50%); }
+}
