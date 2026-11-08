@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=48';
+import { EN, TERMS } from './i18n.js?v=49';
 import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=28';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -590,15 +590,26 @@ const projectCard = p => `
     </div>
   </article>`;
 
-const promo = () => `
+// Промо-плитка заодно карточка приложения Яйца Cloud: отдельной карточки в общей сетке у него нет.
+const promo = () => {
+  const a = apps.find(x => x.id === 'yaytsa-cloud');
+  return `
   <article class="card promo">
     <svg width="28" height="28" aria-hidden="true"><use href="#logo"/></svg>
     <p>${T('Все программы бесплатные. Без подписки.')}</p>
+    ${a && !desktop && /Windows/.test(navigator.userAgent) ? `
+      <p class="promo-sub">${T('Ставьте и обновляйте их в один клик в приложении для Windows.')}</p>
+      <div class="card-foot">
+        <a class="link" href="#app/${esc(a.id)}">${T('Подробнее')}</a>
+        ${editLink('apps', a)}
+        ${download(a)}
+      </div>` : ''}
     <div class="eggs" aria-hidden="true">
       ${['#6FA8FF', '#FFB347', '#A58BFF', '#FF6F91', '#FFFFFF', '#6BE3B4', '#5ED0F0', '#FF8A5B', '#FFC531']
         .map(c => `<i style="background:${c}"></i>`).join('')}
     </div>
   </article>`;
+};
 
 function renderApps() {
   const q = search.value.trim().toLowerCase();
@@ -620,7 +631,7 @@ function renderApps() {
     <section class="section">
       <h1>${T(onProjects ? 'Другие наши проекты' : onCommunity ? 'Программы сообщества' : 'Программы с яйцами')}</h1>
       ${list.length
-        ? `<div class="grid">${cat === 'all' && !q ? promo() : ''}${list.map(onProjects ? projectCard : card).join('')}</div>`
+        ? `<div class="grid">${cat === 'all' && !q ? promo() + list.filter(a => a.id !== 'yaytsa-cloud').map(card).join('') : list.map(onProjects ? projectCard : card).join('')}</div>`
         : `<p class="empty">${T(onCommunity && !q ? 'Здесь появятся программы участников. Предложите свою первым!' : 'Ничего не нашлось.')}</p>`}
     </section>`;
 }
