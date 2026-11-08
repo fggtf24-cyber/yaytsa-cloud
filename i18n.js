@@ -81,6 +81,7 @@ export const EN = {
   'часов': 'hours',
   'дней': 'days',
   'Удалено, автор ограничен.': 'Deleted, the author is restricted.',
+  'Упоминание от {name}': 'Mention from {name}',
   'Установка {n}%': 'Installing {n}%',
   'Установка…': 'Installing…',
   'Удаление…': 'Removing…',

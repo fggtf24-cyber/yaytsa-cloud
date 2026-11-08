@@ -1,5 +1,5 @@
-import { EN, TERMS } from './i18n.js?v=54';
-import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=33';
+import { EN, TERMS } from './i18n.js?v=55';
+import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=34';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -794,6 +794,7 @@ function notify(type, commentId, to, appId, text = '') {
   const col = fs.collection(db, 'notifications');
   const ref = type === 'like' ? fs.doc(col, `like_${commentId}_${user.uid}`)
     : type === 'follow' ? fs.doc(col, `follow_${user.uid}_${to}`)
+    : type === 'mention' ? fs.doc(col, `mention_${commentId || appId}_${to}`)
     : fs.doc(col);
   fs.setDoc(ref, {
     to,
@@ -890,6 +891,7 @@ const noteTitle = n => {
     like: 'Лайк от {name}',
     follow: '{name} подписался(-ась) на вас',
     everyone: '{name} отметил(а) всех в посте',
+    mention: 'Упоминание от {name}',
     mod: n.appId ? 'Админ одобрил вашу программу' : 'Админ отклонил вашу программу',
   }[n.type] || 'Ответ от {name}';
   if (count === 1) return T(single, { name: names[0] });
@@ -903,6 +905,7 @@ const noteHref = n => ({
   follow: `#uid/${esc(n.from)}`,
   treply: `#post/${esc(n.appId)}/${esc(n.commentId)}`,
   everyone: `#post/${esc(n.appId)}`,
+  mention: n.commentId ? `#post/${esc(n.appId)}/${esc(n.commentId)}` : `#post/${esc(n.appId)}`,
   mod: n.appId ? `#app/${esc(n.appId)}` : '#publish',
 }[n.type] || `#app/${esc(n.appId)}/${esc(n.commentId)}`);
 

@@ -641,7 +641,7 @@ export function setupSocial(ctx) {
     if (!pub) return `<a class="r-composer-stub" href="#account">${T('Выберите @имя в профиле, чтобы комментировать')}</a>`;
     return `
       <form class="r-composer${parentId ? ' reply open' : ''}" data-s-form="comment" data-parent="${esc(parentId)}">
-        <textarea name="text" rows="${parentId ? 3 : 1}" maxlength="5000" aria-label="${T(parentId ? 'Ответ' : 'Комментарий')}"
+        <textarea name="text" rows="${parentId ? 3 : 1}" maxlength="5000" data-suggest="@" aria-label="${T(parentId ? 'Ответ' : 'Комментарий')}"
           placeholder="${T(parentId ? 'Напишите ответ' : 'Присоединиться к обсуждению')}" ${autofocus ? 'autofocus' : ''}></textarea>
         <div class="r-composer-bar">
           ${attachBar(true)}
@@ -735,6 +735,7 @@ export function setupSocial(ctx) {
       await batch.commit();
       const parent = parentId && thread.comments.find(c => c.id === parentId);
       ctx.notify('treply', cRef.id, parent ? parent.uid : post.uid, post.id, text || T(sticker ? '[стикер]' : '[картинка]'));
+      notifyMentions(text, post.id, cRef.id, parent ? parent.uid : post.uid);
       myVotes.set(`c_${cRef.id}`, 1);
       thread.comments.push({ id: cRef.id, ...data, createdAt: { toMillis: () => Date.now() } });
       post.commentCount = (post.commentCount || 0) + 1;
@@ -759,7 +760,7 @@ export function setupSocial(ctx) {
   function editForm(kind, id, text, optional = kind === 'post') {
     return `
       <form class="r-composer open" data-s-form="edit-${kind}" data-id="${esc(id)}">
-        <textarea name="text" rows="5" maxlength="${kind === 'post' ? 10000 : 5000}" ${optional ? '' : 'required'} aria-label="${T('Текст')}">${esc(text)}</textarea>
+        <textarea name="text" rows="5" maxlength="${kind === 'post' ? 10000 : 5000}" ${optional ? '' : 'required'} data-suggest="@" aria-label="${T('Текст')}">${esc(text)}</textarea>
         <div class="r-composer-bar">
           <button type="button" class="r-pill ghost" data-s-cancel-edit>${T('Отмена')}</button>
           <button class="r-pill primary">${T('Сохранить')}</button>
@@ -1078,11 +1079,22 @@ export function setupSocial(ctx) {
         });
       }
       await batch.commit();
+      notifyMentions(`${title} ${body}`, pRef.id, '');
       myVotes.set(`p_${pRef.id}`, 1);
       location.hash = `post/${pRef.id}`;
     } catch (e) {
       button.disabled = false;
       fail(e);
+    }
+  }
+
+  // Кого отметили через @имя — тем уведомление «Упоминание от …». skip — кому уже ушло уведомление об ответе.
+  async function notifyMentions(text, postId, commentId, skip = '') {
+    const names = [...new Set([...(text || '').matchAll(/(^|[^a-z0-9_])@([a-z0-9_]{1,20})(?![a-z0-9_])/g)].map(m => m[2]))]
+      .filter(n => n !== 'everyone').slice(0, 10);
+    for (const n of names) {
+      const uid = await uidByName(n).catch(() => null);
+      if (uid && uid !== me() && uid !== skip) ctx.notify('mention', commentId, uid, postId, text.trim());
     }
   }
 
@@ -1700,7 +1712,7 @@ export function setupSocial(ctx) {
 
   async function sendChat(form, { sticker = '', media = null } = {}) {
     if (needAccount() || !roomId) return;
-    if (editingMsg && !sticker && !media) return saveEdit(form);
+    if (editingMsg && !sticker && !media) return saveMsgEdit(form);
     const input = form.elements.text;
     const extra = sticker || media;
     const text = extra ? '' : input.value.trim();
@@ -1734,7 +1746,7 @@ export function setupSocial(ctx) {
   }
 
   // Правка своего сообщения — в строке ввода, как в Telegram: так сохраняются переносы строк.
-  function startEdit(id) {
+  function startMsgEdit(id) {
     const m = roomMsgs.find(x => x.id === id);
     const form = view.querySelector('.r-chat-form');
     if (!m || !form) return;
@@ -1748,7 +1760,7 @@ export function setupSocial(ctx) {
     input.dispatchEvent(new Event('input', { bubbles: true })); // подогнать высоту поля
   }
 
-  function stopEdit() {
+  function stopMsgEdit() {
     editingMsg = null;
     view.querySelector('.r-edit-bar')?.remove();
     const input = view.querySelector('.r-chat-form textarea');
@@ -1758,18 +1770,18 @@ export function setupSocial(ctx) {
   // Строка в списке чатов, если правят или удаляют последнее сообщение.
   const summary = m => (m ? m.text.slice(0, 200) || T(m.sticker ? '[стикер]' : m.media === 'voice' ? '[голосовое]' : '[фото]') : '');
 
-  async function saveEdit(form) {
+  async function saveMsgEdit(form) {
     const id = editingMsg;
     const text = form.elements.text.value.trim();
     const m = roomMsgs.find(x => x.id === id);
     if (!m || !text) return;
-    if (text === m.text) return stopEdit();
+    if (text === m.text) return stopMsgEdit();
     try {
       const batch = F().writeBatch(ctx.db);
       batch.update(ref('chats', roomId, 'msgs', id), { text, edited: F().serverTimestamp() });
       if (roomMsgs.at(-1)?.id === id) batch.update(ref('chats', roomId), { lastText: text.slice(0, 200) });
       await batch.commit();
-      stopEdit();
+      stopMsgEdit();
     } catch (e) { fail(e); }
   }
 
@@ -1783,7 +1795,7 @@ export function setupSocial(ctx) {
       if (m.media) for (let i = 0; i < (m.parts || 1); i++) batch.delete(ref('chats', roomId, 'media', i ? `${id}_${i}` : id));
       if (roomMsgs.at(-1)?.id === id) batch.update(ref('chats', roomId), { lastText: summary(roomMsgs.at(-2)) || T('Сообщение удалено') });
       await batch.commit();
-      if (editingMsg === id) stopEdit();
+      if (editingMsg === id) stopMsgEdit();
     } catch (e) { fail(e); }
   }
 
@@ -2218,9 +2230,9 @@ export function setupSocial(ctx) {
     else if (d.sRestrict) { t.closest('details')?.removeAttribute('open'); restrict(d.sRestrict); }
     else if (d.sUnrestrict) { t.closest('details')?.removeAttribute('open'); unrestrict(d.sUnrestrict); }
     else if (d.sMod) { t.closest('details')?.removeAttribute('open'); toggleMod(d.sMod); }
-    else if (d.sMsgEdit) startEdit(d.sMsgEdit);
+    else if (d.sMsgEdit) startMsgEdit(d.sMsgEdit);
     else if (d.sMsgDel) deleteMsg(d.sMsgDel);
-    else if (d.sMsgCancel !== undefined) stopEdit();
+    else if (d.sMsgCancel !== undefined) stopMsgEdit();
     else if (d.sGroupAdd !== undefined) addToGroup();
     else if (d.sGroupName !== undefined) renameGroup();
     else if (d.sGroupDelete !== undefined) deleteGroup();

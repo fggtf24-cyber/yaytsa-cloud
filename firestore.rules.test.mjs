@@ -211,6 +211,19 @@ await ok('bob открыл сообщения', updateDoc(doc(bob, 'profiles', '
   await ok('автор удаляет своё', deleteDoc(mine)); }
 await ok('автор удаляет своё фото', deleteDoc(doc(alice, 'chats', 'alice_bob', 'media', 'm1')));
 
+// Упоминания: уведомление только если @имя правда есть в моём комментарии или посте
+await env.withSecurityRulesDisabled(async c => {
+  const db = c.firestore();
+  await setDoc(doc(db, 'posts', 'pmn'), { uid: 'alice', title: 'привет @bob', body: '', appId: '', score: 0, commentCount: 1, createdAt: new Date() });
+  await setDoc(doc(db, 'tcomments', 'cmn'), { postId: 'pmn', parentId: '', uid: 'alice', body: 'смотри, @bob!', score: 0, deleted: false, createdAt: new Date() });
+  await setDoc(doc(db, 'tcomments', 'cmx'), { postId: 'pmn', parentId: '', uid: 'alice', body: 'про @bobby', score: 0, deleted: false, createdAt: new Date() });
+});
+const mention = (db, id, commentId, appId, to = 'bob') => setDoc(doc(db, 'notifications', id), { to, from: 'alice', fromName: 'a', type: 'mention', appId, commentId, text: 'x', createdAt: serverTimestamp(), read: false });
+await ok('упоминание в комментарии', mention(alice, 'mention_cmn_bob', 'cmn', 'pmn'));
+await ok('упоминание в посте', mention(alice, 'mention_pmn_bob', '', 'pmn'));
+await no('@bobby — не @bob', mention(alice, 'mention_cmx_bob', 'cmx', 'pmn'));
+await no('чужой id не подходит', mention(alice, 'spam1', 'cmn', 'pmn'));
+
 // Модераторы и ограничения
 await env.withSecurityRulesDisabled(async c => {
   const db = c.firestore();

@@ -87,11 +87,25 @@ service cloud.firestore {
           ? get(/databases/$(database)/documents/posts/$(n.appId)).data.uid == n.to
           : get(/databases/$(database)/documents/tcomments/$(c.parentId)).data.uid == n.to);
     }
+    // Упоминание: в моём комментарии ветки (commentId) или в моём посте (commentId == '', appId — пост) есть @имя получателя.
+    function mentionPattern(to) {
+      return '(?s)(.*[^a-z0-9_])?@' + get(/databases/$(database)/documents/profiles/$(to)).data.username + '([^a-z0-9_].*)?';
+    }
+    function isMention(n) {
+      return n.commentId != ''
+        ? get(/databases/$(database)/documents/tcomments/$(n.commentId)).data.uid == request.auth.uid
+          && get(/databases/$(database)/documents/tcomments/$(n.commentId)).data.postId == n.appId
+          && get(/databases/$(database)/documents/tcomments/$(n.commentId)).data.body.matches(mentionPattern(n.to))
+        : get(/databases/$(database)/documents/posts/$(n.appId)).data.uid == request.auth.uid
+          && (get(/databases/$(database)/documents/posts/$(n.appId)).data.title.matches(mentionPattern(n.to))
+            || get(/databases/$(database)/documents/posts/$(n.appId)).data.body.matches(mentionPattern(n.to)));
+    }
     function isRealTarget(n) {
       return (n.type == 'dm' && isDmPartner(n.commentId, n.to))
         || (n.type == 'follow' && exists(/databases/$(database)/documents/follows/$(request.auth.uid + '_' + n.to)))
         || (n.type == 'treply' && isThreadReply(n))
         || (n.type == 'mod' && isAdmin())
+        || (n.type == 'mention' && isMention(n))
         || (n.type in ['reply', 'like'] && get(/databases/$(database)/documents/comments/$(n.commentId)).data.uid == n.to);
     }
     match /notifications/{id} {
@@ -100,7 +114,7 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['to', 'from', 'fromName', 'type', 'appId', 'commentId', 'text', 'createdAt', 'read'])
         && request.resource.data.from == request.auth.uid
         && request.resource.data.to != request.auth.uid
-        && request.resource.data.type in ['reply', 'like', 'dm', 'follow', 'treply', 'mod']
+        && request.resource.data.type in ['reply', 'like', 'dm', 'follow', 'treply', 'mod', 'mention']
         && request.resource.data.fromName is string
         && request.resource.data.fromName.size() <= 80
         && request.resource.data.appId is string
@@ -115,7 +129,10 @@ service cloud.firestore {
         && (request.resource.data.type != 'like'
           || id == 'like_' + request.resource.data.commentId + '_' + request.auth.uid)
         && (request.resource.data.type != 'follow'
-          || id == 'follow_' + request.auth.uid + '_' + request.resource.data.to);
+          || id == 'follow_' + request.auth.uid + '_' + request.resource.data.to)
+        // Одно упоминание — одно уведомление: id постоянный, повторно не создать.
+        && (request.resource.data.type != 'mention'
+          || id == 'mention_' + (request.resource.data.commentId != '' ? request.resource.data.commentId : request.resource.data.appId) + '_' + request.resource.data.to);
       allow update: if request.auth != null
         && resource.data.to == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
