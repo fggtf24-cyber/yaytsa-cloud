@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=49';
+import { EN, TERMS } from './i18n.js?v=50';
 import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=28';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -531,6 +531,8 @@ desktop?.addEventListener('message', ({ data }) => {
   if (data.type === 'apps') { installed = data.apps || {}; drawDesktop(); }
   else if (data.type === 'go' && data.href) location.hash = data.href.replace(/^#/, '');
   else if (data.type === 'error') toast(data.text);
+  // Подтверждение от Google пришло из браузера: входим им здесь.
+  else if (data.type === 'google-cred' && data.idToken) attempt(() => fb.signInWithCredential(auth, fb.GoogleAuthProvider.credential(data.idToken, data.accessToken || null)));
 });
 const download = (a, cls = 'btn') => desktop && a.id === 'yaytsa-cloud' ? '' : desktop ? desktopButton(a, cls) : `<a class="${cls} dl" data-id="${esc(a.id)}" href="${safeUrl(a.file)}" aria-label="${T('Скачать {name}', { name: esc(nm(a)) })}">${T(a.macInstall || a.linuxFile || a.androidFile ? 'Скачать для Windows' : 'Скачать')}</a>`;
 const linuxButton = (a, cls = 'btn') => `<a class="${cls} dl-linux" data-id="${esc(a.id)}" href="${safeUrl(a.linuxFile)}">${T('Скачать для Linux')}</a>`;
@@ -1808,13 +1810,13 @@ function route() {
   if (['account', 'stats', 'inbox', 'publish', 'terms'].includes(name)) return { name };
   if (name === 'admin') return { name, tab: a };
   if (name === 'report') return { name, appId: a };
-  if (name === 'timer-login') return { name, target: a, state: b };
+  if (name === 'timer-login' || name === 'app-login') return { name, target: a, state: b };
   if (name === 'edit' && FIELDS[a] && b) return { name, kind: a, id: b };
   const app = name === 'app' && apps.find(x => x.id === a);
   return app ? { name: 'app', app } : { name: 'apps' };
 }
 
-const RAIL = { 'timer-login': 'account', feed: 'feed', post: 'feed', submit: 'feed', u: 'account', uid: 'account', chat: 'inbox', inbox: 'inbox', account: 'account', stats: 'stats', report: 'report', admin: 'admin' };
+const RAIL = { 'timer-login': 'account', 'app-login': 'account', feed: 'feed', post: 'feed', submit: 'feed', u: 'account', uid: 'account', chat: 'inbox', inbox: 'inbox', account: 'account', stats: 'stats', report: 'report', admin: 'admin' };
 
 function render() {
   const r = route();
@@ -1826,6 +1828,7 @@ function render() {
   if (r.social) { social.render(r); return; } // заголовок вкладки social.js ставит сам, когда загрузит данные
   if (r.name === 'account') renderAccount();
   else if (r.name === 'timer-login') renderTimerLogin(r);
+  else if (r.name === 'app-login') renderAppLogin(r);
   else if (r.name === 'stats') renderStats();
   else if (r.name === 'inbox') renderInbox();
   else if (r.name === 'report') renderReport(r.appId);
@@ -1879,6 +1882,40 @@ function renderTimerLogin(r) {
     if (!url) return;
     view.querySelector('#timer-done').hidden = false;
     location.href = url;
+  });
+}
+
+// Вход через Google в приложении Яйца Cloud для Windows. Внутри приложения Google вход не пускает, а заново
+// входить в Google долго, поэтому приложение открывает эту страницу в обычном браузере. Здесь человек выбирает
+// аккаунт, и мы отдаём приложению подтверждение от Google: на его страницу 127.0.0.1 во #фрагменте, в сеть он не уходит.
+function renderAppLogin(r) {
+  const port = /^p(\d{2,5})$/.exec(r.target || '')?.[1];
+  const valid = port && /^[0-9a-f]{32}$/.test(r.state || '');
+  view.innerHTML = `
+    <section class="section panel">
+      <h1>${T('Вход в приложение Яйца Cloud')}</h1>
+      ${valid ? `
+        <p class="empty">${T('Выберите аккаунт Google, и приложение войдёт в него само.')}</p>
+        <div class="edit-account-actions"><button type="button" class="btn primary" id="app-google">${T('Продолжить с Google')}</button></div>
+        <p class="msg ok" id="app-done" hidden>${T('Готово. Вернитесь в приложение, эту вкладку можно закрыть.')}</p>
+        <p class="msg" id="app-err" hidden></p>`
+      : `<p class="empty">${T('Ссылка устарела. Нажмите «Продолжить с Google» в приложении ещё раз.')}</p>`}
+    </section>`;
+  view.querySelector('#app-google')?.addEventListener('click', async () => {
+    const err = view.querySelector('#app-err');
+    err.hidden = true;
+    try {
+      if (!fb) throw new Error('loading');
+      const cred = fb.GoogleAuthProvider.credentialFromResult(await fb.signInWithPopup(auth, new fb.GoogleAuthProvider()));
+      if (!cred?.idToken) throw new Error('no-token');
+      view.querySelector('#app-done').hidden = false;
+      location.href = `http://127.0.0.1:${port}/cb#${new URLSearchParams({ state: r.state, id: cred.idToken, at: cred.accessToken || '' })}`;
+    } catch (e) {
+      if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return;
+      console.error(e);
+      err.textContent = T('Не получилось. Попробуйте ещё раз.');
+      err.hidden = false;
+    }
   });
 }
 
@@ -1972,6 +2009,10 @@ view.addEventListener('click', e => {
   else if (t.id === 'photo-remove') attempt(() => saveProfile({ photo: '' }));
   else if (t.id === 'banner-remove') attempt(() => saveBanner(''));
   else if (t.id === 'logout') attempt(() => fb.signOut(auth));
+  else if (t.id === 'google' && desktop) {
+    desktop.postMessage({ type: 'google' });
+    toast(T('В браузере выберите аккаунт Google, и приложение войдёт само.'));
+  }
   else if (t.id === 'google') attempt(() => fb.signInWithPopup(auth, new fb.GoogleAuthProvider()));
   else if (t.id === 'reset') {
     const email = view.querySelector('[name=email]').value.trim();
