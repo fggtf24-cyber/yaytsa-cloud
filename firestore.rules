@@ -423,6 +423,19 @@ service cloud.firestore {
         && str(request.resource.data.get('reason', ''), 0, 300);
       allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
     }
+    // Демо, загруженное файлом в заявке. Как селфи: отдельный документ, виден после одобрения.
+    match /demos/{id} {
+      allow read: if (signedIn() && (resource.data.uid == request.auth.uid || isAdmin()))
+        || get(/databases/$(database)/documents/submissions/$(id)).data.status == 'approved';
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid', 'image'])
+        && request.resource.data.uid == request.auth.uid
+        && str(request.resource.data.image, 1, 700000)
+        && request.resource.data.image.matches('^data:image/(png|jpeg|webp|gif);base64,.+')
+        && getAfter(/databases/$(database)/documents/submissions/$(id)).data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/submissions/$(id)).data.demo == 'file';
+      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+    }
     match /selfies/{id} {
       allow read: if (signedIn() && (resource.data.uid == request.auth.uid || isAdmin()))
         || get(/databases/$(database)/documents/submissions/$(id)).data.status == 'approved';

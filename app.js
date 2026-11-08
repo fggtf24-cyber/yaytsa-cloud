@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=53';
+import { EN, TERMS } from './i18n.js?v=54';
 import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=33';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -545,6 +545,8 @@ const editLink = (kind, a) => (isAdmin ? `<a class="link" href="#edit/${kind}/${
 // Каждый раз спрашиваем аккаунт: иначе Google молча входит в последний и сменить его нельзя.
 const googleProvider = () => { const p = new fb.GoogleAuthProvider(); p.setCustomParameters({ prompt: 'select_account' }); return p; };
 const media = a => {
+  // Файл, загруженный в заявке, лежит в demos/{id}: подставим после отрисовки, каталог его не тянет.
+  if (a.demo === 'file') return `<img id="app-demo" data-app="${esc(a.id)}" alt="${T('{name} в работе', { name: esc(nm(a)) })}" hidden>`;
   // Ссылка на страницу файла в GitHub (/blob/) отдаёт HTML, а не картинку: берём сам файл (/raw/).
   const src = safeUrl(a.demo).replace(/^(https:\/\/github\.com\/[^/]+\/[^/]+)\/blob\//, '$1/raw/');
   if (!src) return '';
@@ -716,6 +718,16 @@ function renderApp(a) {
     </div>`;
   social.fillAppThreads(a.id);
   if (a.community) loadAuthorSelfie(a.id);
+  if (a.demo === 'file') loadDemo(a.id);
+}
+
+async function loadDemo(id) {
+  if (!fs) return;
+  const image = (await fs.getDoc(fs.doc(db, 'demos', id)).catch(() => null))?.data()?.image;
+  const img = document.getElementById('app-demo');
+  if (img?.dataset.app !== id || !DEMO_IMAGE.test(image || '')) return;
+  img.src = image;
+  img.hidden = false;
 }
 
 // Селфи лежит отдельным документом: каталог грузится без него, а удалённая заявка уносит и селфи.
@@ -994,7 +1006,7 @@ const field = item => ([key, label, type]) => {
     </select>`
     : t === 'area' || t === 'lines'
     ? `<textarea name="${key}" rows="${t === 'lines' ? 6 : 3}" ${required}>${esc(value)}</textarea>`
-    : `<input name="${key}" value="${esc(value)}" ${required} ${t === 'url' ? `pattern="(https://|assets/).+" title="${T('Ссылка должна начинаться с https://')}"` : ''}>`;
+    : `<input name="${key}" value="${esc(value)}" ${required} ${t === 'url' ? `pattern="(https://|assets/).+${key === 'demo' ? '|file' : ''}" title="${T('Ссылка должна начинаться с https://')}"` : ''}>`;
   return `<label class="field">${T(label)}${control}</label>`;
 };
 
@@ -1077,7 +1089,17 @@ function renderPublish() {
         ${PUBLISH_FIELDS.filter(f => !f[3]).map(field({})).join('')}
         <details class="more">
           <summary>${T('Ссылки и демо')}</summary>
-          <div class="more-body">${PUBLISH_FIELDS.filter(f => f[3]).map(field({})).join('')}</div>
+          <div class="more-body">
+            ${PUBLISH_FIELDS.filter(f => f[3]).map(field({})).join('')}
+            <div class="field">${T('Или загрузите картинку либо гифку')}
+              <div class="icon-pick">
+                <img id="demo-preview" src="assets/favicon.svg" alt="">
+                <label class="btn">${T('Загрузить файл')}<input id="demo-file" class="sr" type="file" accept="image/png,image/jpeg,image/webp,image/gif,.heic,.heif"></label>
+              </div>
+              <small class="r-hint">${T('PNG, JPG или WebP до 20 МБ: сайт сам их ужмёт. Гифка до 500 КБ. Видео загрузить нельзя, дайте ссылку на .mp4.')}</small>
+              <input type="hidden" name="demoFile">
+            </div>
+          </div>
         </details>
         <div class="field">${T('Ваше селфи (обязательно)')}
           <div class="icon-pick">
@@ -1095,12 +1117,15 @@ function renderPublish() {
   fillMySubmissions();
 }
 
+let mySubs = []; // свои заявки на странице «Добавить программу»
+
 async function fillMySubmissions() {
   const snap = await fs.getDocs(fs.query(fs.collection(db, 'submissions'), fs.where('uid', '==', user.uid)));
   const box = document.getElementById('my-subs');
   if (!box || snap.empty) return;
   const list = snap.docs.map(d => ({ id: d.id, ...d.data() }))
     .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+  mySubs = list;
   box.innerHTML = `
     <h2 class="stats-sub">${T('Мои заявки')}</h2>
     ${list.map(s => `
@@ -1141,7 +1166,8 @@ function askSelfieConsent(image) {
 }
 
 async function sendSubmission(form) {
-  const { selfie, ...data } = await readFields(form, PUBLISH_FIELDS);
+  const { selfie, demoFile, ...data } = await readFields(form, PUBLISH_FIELDS);
+  if (demoFile) data.demo = 'file';
   if (!selfie) return say(T('Добавьте своё селфи: без него заявку не принять.'));
   if (!/^https:\/\//.test(data.file)) return say(T('Ссылка должна начинаться с https://'));
   if (data.review && !youtubeId(data.review)) return say(T('Нужна ссылка на видео YouTube.'));
@@ -1151,6 +1177,7 @@ async function sendSubmission(form) {
   const batch = fs.writeBatch(db);
   batch.set(sub, { ...data, uid: user.uid, status: 'pending', selfiePublic: true, createdAt: fs.serverTimestamp() });
   batch.set(fs.doc(db, 'selfies', sub.id), { uid: user.uid, image: selfie });
+  if (demoFile) batch.set(fs.doc(db, 'demos', sub.id), { uid: user.uid, image: demoFile });
   await batch.commit();
   renderPublish();
   say(T('Заявка отправлена. Решение придёт в уведомления.'), true);
@@ -1161,6 +1188,7 @@ async function deleteSubmission(id) {
   const batch = fs.writeBatch(db);
   batch.delete(fs.doc(db, 'submissions', id));
   batch.delete(fs.doc(db, 'selfies', id));
+  if (submissions.find(s => s.id === id)?.demo === 'file' || mySubs.find(s => s.id === id)?.demo === 'file') batch.delete(fs.doc(db, 'demos', id));
   await batch.commit();
   await drawPending();
   render();
@@ -1483,6 +1511,35 @@ async function photoToDataUrl(file, size = 128, type = 'image/jpeg') {
   canvas.getContext('2d').drawImage(bitmap,
     (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, size, size);
   return canvas.toDataURL(type, 0.8);
+}
+
+// Демо из заявки. Лимит документа в базе 1 МиБ, поэтому строка не длиннее DEMO_MAX.
+const DEMO_MAX = 700000;
+const DEMO_IMAGE = /^data:image\/(png|jpeg|webp|gif);base64,/;
+const fileToDataUrl = file => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => resolve(reader.result);
+  reader.onerror = reject;
+  reader.readAsDataURL(file);
+});
+async function demoToDataUrl(file) {
+  // Гифку не трогаем: canvas оставит от анимации один кадр.
+  if (file.type === 'image/gif') {
+    if (file.size > 500 * 1024) throw new Error('big-gif');
+    return fileToDataUrl(file);
+  }
+  if (file.size > 20 * 1024 * 1024) throw new Error('big');
+  const bitmap = await readImage(file);
+  for (const [width, q] of [[1280, 0.85], [1280, 0.7], [960, 0.7], [720, 0.6]]) {
+    const scale = Math.min(1, width / bitmap.width);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const url = canvas.toDataURL('image/webp', q);
+    if (url.length <= DEMO_MAX && DEMO_IMAGE.test(url)) return url;
+  }
+  throw new Error('big');
 }
 
 /* ---------- Баги и идеи ---------- */
@@ -2107,6 +2164,18 @@ view.addEventListener('change', e => {
         say('');
       })
       .catch(() => say(T('Не получилось открыть эту картинку. Попробуйте JPG или PNG.')));
+    return;
+  }
+  if (e.target.id === 'demo-file' && file) {
+    e.target.value = '';
+    demoToDataUrl(file)
+      .then(url => {
+        view.querySelector('[name=demoFile]').value = url;
+        view.querySelector('#demo-preview').src = url;
+        say('');
+      })
+      .catch(err => say(T(err.message === 'big-gif' ? 'Гифка больше 500 КБ. Уменьшите её или дайте ссылку.'
+        : err.message === 'big' ? 'Файл слишком большой. Нужно до 20 МБ.' : 'Не получилось открыть этот файл. Попробуйте PNG, JPG или GIF.')));
     return;
   }
   if (e.target.id === 'selfie-file' && file) {
