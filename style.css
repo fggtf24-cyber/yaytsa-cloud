@@ -560,7 +560,10 @@ a.r-stat:hover b { text-decoration: underline; }
 .r-room-empty { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; }
 .r-chat-form { display: flex; align-items: flex-end; gap: 8px; margin: 0 16px 16px; padding: 6px 6px 6px 16px; border: 1px solid var(--edge); border-radius: 22px; background: var(--bg); }
 .r-chat-form:focus-within { border-color: var(--text); }
-.r-chat-form textarea { flex: 1; min-height: 32px; padding: 6px 0; border: 0; outline: 0; background: none; resize: none; font: inherit; line-height: 1.45; }
+.r-chat-form textarea { flex: 1; min-height: 36px; padding: 7px 0; border: 0; outline: 0; background: none; resize: none; font: inherit; line-height: 1.45; }
+/* Всё в строке на одной высоте с кнопкой отправки (36px): значки 32px поднимаем на 2px, поле — тоже 36px. */
+.r-chat-form > .emoji, .r-chat-form > .r-iconbtn, .r-chat-form > label.r-iconbtn { margin-bottom: 2px; }
+.r-chat-form > .emoji { display: flex; }
 .r-send { flex: none; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; }
 .r-send:hover { background: #0D66D0; }
 .r-room > .r-composer-stub { margin: 0 16px 16px; }
@@ -1116,3 +1119,18 @@ html { -webkit-tap-highlight-color: transparent; }
   /* У админа семь пунктов: только значки, как в Instagram и X; подпись остаётся для экранного диктора */
   .rail:has(.rail-admin:not([hidden])) a > span:last-child { position: absolute; width: 1px; height: 1px; padding: 0; clip-path: inset(50%); }
 }
+
+/* Свои сообщения: «Изменить» и «Удалить» появляются при наведении, рядом с пузырём. */
+.r-msg-main { position: relative; }
+.r-msg-acts { position: absolute; top: 50%; right: calc(100% + 4px); transform: translateY(-50%); display: flex; gap: 2px; opacity: 0; transition: opacity .15s; }
+.r-msg:hover .r-msg-acts, .r-msg-acts:focus-within { opacity: 1; }
+.r-msg-acts .r-iconbtn { width: 28px; height: 28px; color: var(--sub); }
+.r-msg-acts .r-iconbtn:hover { color: var(--text); }
+@media (hover: none) { .r-msg-acts { opacity: 1; position: static; transform: none; align-self: flex-end; } }
+.r-edit-bar { display: flex; align-items: center; gap: 8px; width: calc(100% - 32px); max-width: 600px; margin: 0 auto 6px; padding: 6px 6px 6px 14px; border-left: 2px solid var(--accent); color: var(--sub); font-size: 13px; }
+.r-edit-bar svg { color: var(--accent); flex: none; }
+.r-edit-bar span { flex: 1; }
+.r-edit-bar .r-iconbtn { width: 28px; height: 28px; color: var(--sub); font-size: 18px; }
+.r-pill.off { opacity: .45; cursor: not-allowed; }
+.r-group-who small a { color: inherit; }
+.r-group-who small a:hover, .r-meta a.r-user:hover { text-decoration: underline; }

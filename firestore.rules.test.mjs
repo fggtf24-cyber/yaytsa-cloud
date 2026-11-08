@@ -180,6 +180,37 @@ await ok('админ тегает всех', cast(admin, 'adm', 'b1'));
 await no('обычный не тегает всех', cast(bob, 'bob', 'b2'));
 await ok('все читают', getDocs(collection(anon, 'broadcasts')));
 
+// Приватность: кто может писать
+const say = (db, from, text = 'hi') => { const b = writeBatch(db);
+  b.set(doc(db, 'chats', 'alice_bob'), { members: ['alice', 'bob'], lastText: text, lastFrom: from, lastAt: serverTimestamp(), seen: {} }, { merge: true });
+  b.set(doc(collection(db, 'chats', 'alice_bob', 'msgs')), { from, text, createdAt: serverTimestamp() }); return b.commit(); };
+await env.withSecurityRulesDisabled(c => setDoc(doc(c.firestore(), 'usernames', 'bob'), { uid: 'bob' }));
+await no('неверное значение приватности', updateDoc(doc(bob, 'profiles', 'bob'), { dm: 'friends' }));
+await ok('bob закрыл сообщения', updateDoc(doc(bob, 'profiles', 'bob'), { dm: 'none', groups: 'mutual' }));
+await no('alice не пишет тому, кто закрыл сообщения', say(alice, 'alice'));
+await ok('bob пишет alice: у неё открыто', say(bob, 'bob'));
+await ok('bob: только взаимные', updateDoc(doc(bob, 'profiles', 'bob'), { dm: 'mutual' }));
+await no('без взаимной подписки нельзя', say(alice, 'alice'));
+await ok('alice подписалась', setDoc(doc(alice, 'follows', 'alice_bob'), { from: 'alice', to: 'bob', createdAt: serverTimestamp() }));
+await no('подписка в одну сторону — ещё нельзя', say(alice, 'alice'));
+await ok('bob подписался', setDoc(doc(bob, 'follows', 'bob_alice'), { from: 'bob', to: 'alice', createdAt: serverTimestamp() }));
+await ok('взаимные — можно', say(alice, 'alice'));
+await ok('bob открыл сообщения', updateDoc(doc(bob, 'profiles', 'bob'), { dm: 'all' }));
+
+// Правка и удаление своих сообщений
+{ const mine = doc(collection(alice, 'chats', 'alice_bob', 'msgs'));
+  await ok('сообщение для правки', (() => { const b = writeBatch(alice);
+    b.update(doc(alice, 'chats', 'alice_bob'), { lastText: 'было', lastFrom: 'alice', lastAt: serverTimestamp() });
+    b.set(mine, { from: 'alice', text: 'было', createdAt: serverTimestamp() }); return b.commit(); })());
+  await ok('автор правит текст', updateDoc(mine, { text: 'стало', edited: serverTimestamp() }));
+  await no('без отметки времени правки нельзя', updateDoc(mine, { text: 'ещё' }));
+  await no('пустой текст нельзя', updateDoc(mine, { text: '', edited: serverTimestamp() }));
+  await no('автора не подменить', updateDoc(mine, { from: 'bob', edited: serverTimestamp() }));
+  await no('собеседник не правит чужое', updateDoc(doc(bob, 'chats', 'alice_bob', 'msgs', mine.id), { text: 'хак', edited: serverTimestamp() }));
+  await no('собеседник не удаляет чужое', deleteDoc(doc(bob, 'chats', 'alice_bob', 'msgs', mine.id)));
+  await ok('автор удаляет своё', deleteDoc(mine)); }
+await ok('автор удаляет своё фото', deleteDoc(doc(alice, 'chats', 'alice_bob', 'media', 'm1')));
+
 await env.cleanup();
 assert.ok(n > 30);
 console.log(`\nвсе проверки прошли: ${n}`);

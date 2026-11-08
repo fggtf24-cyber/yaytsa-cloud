@@ -190,7 +190,7 @@ service cloud.firestore {
     match /profiles/{uid} {
       allow read: if true;
       allow create, update: if signedIn() && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['username', 'name', 'photo', 'bio', 'banner', 'links', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['username', 'name', 'photo', 'bio', 'banner', 'links', 'createdAt', 'dm', 'groups'])
         && request.resource.data.username is string
         && request.resource.data.username.matches('^[a-z0-9_]{1,20}$')
         && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == uid
@@ -200,6 +200,9 @@ service cloud.firestore {
         && str(request.resource.data.get('banner', ''), 0, 200000)
         && request.resource.data.get('links', {}) is map
         && request.resource.data.get('links', {}).size() <= 10
+        // Приватность: кто может писать (dm) и добавлять в группы (groups). Нет поля — значит «все».
+        && request.resource.data.get('dm', 'all') in ['all', 'mutual', 'none']
+        && request.resource.data.get('groups', 'all') in ['all', 'mutual', 'none']
         && (resource == null
           ? request.resource.data.createdAt == request.time
           : request.resource.data.createdAt == resource.data.createdAt);
@@ -427,6 +430,15 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/profiles/$(d.members[0]))
         && exists(/databases/$(database)/documents/profiles/$(d.members[1]));
     }
+    // Разрешает ли owner писать ему тому, кто делает запрос: по настройке dm в его профиле.
+    // «Взаимные» — оба подписаны друг на друга.
+    function allowsDm(owner) {
+      let v = get(/databases/$(database)/documents/profiles/$(owner)).data.get('dm', 'all');
+      return v == 'all' || (v == 'mutual'
+        && exists(/databases/$(database)/documents/follows/$(owner + '_' + request.auth.uid))
+        && exists(/databases/$(database)/documents/follows/$(request.auth.uid + '_' + owner)));
+    }
+    function peerOf(members) { return members[0] == request.auth.uid ? members[1] : members[0]; }
     function isNewGroup(d) {
       return d.get('group', false) == true && d.owner == request.auth.uid
         && str(d.name, 1, 60) && d.members.size() >= 2 && d.members.size() <= 50;
@@ -439,7 +451,7 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['members', 'lastText', 'lastFrom', 'lastAt', 'seen', 'group', 'name', 'owner'])
         && request.resource.data.members is list
         && request.auth.uid in request.resource.data.members
-        && (isDirectChat(request.resource.data, id) || isNewGroup(request.resource.data))
+        && ((isDirectChat(request.resource.data, id) && allowsDm(peerOf(request.resource.data.members))) || isNewGroup(request.resource.data))
         && request.resource.data.lastFrom == request.auth.uid
         && str(request.resource.data.lastText, 0, 200)
         && request.resource.data.lastAt == request.time
@@ -474,14 +486,25 @@ service cloud.firestore {
           && request.resource.data.from == request.auth.uid
           && str(request.resource.data.data, 1, 800000)
           && request.auth.uid in getAfter(/databases/$(database)/documents/chats/$(id)).data.members;
+        // resource == null: файла уже нет — удалять нечего, но и мешать удалению сообщения незачем.
         allow delete: if signedIn()
-          && get(/databases/$(database)/documents/chats/$(id)).data.get('owner', '') == request.auth.uid;
+          && (resource == null || resource.data.from == request.auth.uid
+            || get(/databases/$(database)/documents/chats/$(id)).data.get('owner', '') == request.auth.uid);
       }
       match /msgs/{mid} {
         allow read: if signedIn()
           && request.auth.uid in get(/databases/$(database)/documents/chats/$(id)).data.members;
+        // Своё сообщение удаляет автор, любое в группе — её создатель.
         allow delete: if signedIn()
-          && get(/databases/$(database)/documents/chats/$(id)).data.get('owner', '') == request.auth.uid;
+          && (resource.data.from == request.auth.uid
+            || get(/databases/$(database)/documents/chats/$(id)).data.get('owner', '') == request.auth.uid);
+        // Автор правит текст своего текстового сообщения; edited ставит сервер.
+        allow update: if signedIn() && resource.data.from == request.auth.uid
+          && request.auth.uid in get(/databases/$(database)/documents/chats/$(id)).data.members
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'edited'])
+          && resource.data.text.size() > 0
+          && str(request.resource.data.text, 1, 2000)
+          && request.resource.data.edited == request.time;
         allow create: if signedIn()
           && request.resource.data.keys().hasOnly(['from', 'text', 'sticker', 'media', 'ratio', 'secs', 'parts', 'createdAt'])
           && request.resource.data.from == request.auth.uid
@@ -495,7 +518,10 @@ service cloud.firestore {
           && request.resource.data.get('secs', 0) is number
           && request.resource.data.get('parts', 1) is number
           && request.resource.data.createdAt == request.time
-          && request.auth.uid in getAfter(/databases/$(database)/documents/chats/$(id)).data.members;
+          && request.auth.uid in getAfter(/databases/$(database)/documents/chats/$(id)).data.members
+          // В личном чате собеседник должен разрешать писать ему (настройка может поменяться посреди переписки).
+          && (getAfter(/databases/$(database)/documents/chats/$(id)).data.get('group', false) == true
+            || allowsDm(peerOf(getAfter(/databases/$(database)/documents/chats/$(id)).data.members)));
       }
     }
 

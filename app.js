@@ -1,5 +1,5 @@
-import { EN, TERMS } from './i18n.js?v=50';
-import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=29';
+import { EN, TERMS } from './i18n.js?v=51';
+import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=30';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -1387,6 +1387,7 @@ function renderAccount() {
             </div>
           </section>
           ${social.netFields()}
+          ${social.privacyFields()}
           <div class="edit-bar">
             <p id="msg" class="msg" role="alert"></p>
             <button class="btn primary">${T('Сохранить')}</button>

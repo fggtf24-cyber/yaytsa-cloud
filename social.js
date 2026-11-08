@@ -65,6 +65,7 @@ const ICON = {
   play: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>',
   pause: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>',
   edit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z" stroke-linejoin="round"/></svg>',
+  trash: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M10 7V4h4v3M6 7l1 13h10l1-13" stroke-linejoin="round"/></svg>',
 };
 
 export function setupSocial(ctx) {
@@ -93,6 +94,7 @@ export function setupSocial(ctx) {
   let chatQuery = '';          // поиск в списке чатов
   let chatPeople = [];         // люди по этому поиску, с кем ещё нет чата
   let roomMsgs = [];
+  let editingMsg = null;       // id своего сообщения, которое правим в строке ввода
   let thread = null;           // открытый пост: { post, comments, focus }
   let commentSort = 'best';
   let shownProfile = null;     // uid открытого профиля
@@ -842,7 +844,7 @@ export function setupSocial(ctx) {
         </div>
         ${p.bio ? `<p class="r-card-text">${rich(p.bio)}</p>` : ''}
         <div class="r-author-actions">
-          ${uid === me() ? `<a class="r-pill ghost wide" href="#account">${T('Изменить профиль')}</a>` : `${followBtn(uid, 'wide')}<a class="r-pill ghost wide" href="#chat/${esc(p.username)}">${ICON.chat}<span>${T('Написать')}</span></a>`}
+          ${uid === me() ? `<a class="r-pill ghost wide" href="#account">${T('Изменить профиль')}</a>` : `${followBtn(uid, 'wide')}${writeBtn(uid, p, ' wide')}`}
         </div>
         ${p.createdAt ? `<p class="r-sub">${T('На сайте с {date}', { date: day(p.createdAt) })}</p>` : ''}
       </section>`;
@@ -968,7 +970,7 @@ export function setupSocial(ctx) {
         <div class="r-phead-actions">
           ${isMe
             ? `<a class="r-pill ghost" href="#account">${T('Изменить профиль')}</a>`
-            : `${followBtn(uid)}<a class="r-pill ghost" href="#chat/${esc(p.username)}">${ICON.chat}<span>${T('Написать')}</span></a>`}
+            : `${followBtn(uid)}${writeBtn(uid, p)}`}
           <span class="r-sub">${T('Подписчики')}: <b>${fmt(ins.length)}</b> · ${T('Подписки')}: <b>${fmt(outs.length)}</b></span>
         </div>
         <nav class="r-tabs" aria-label="${T('Разделы профиля')}">
@@ -983,7 +985,7 @@ export function setupSocial(ctx) {
         <div class="r-author-actions">
           ${isMe
             ? `<a class="r-pill ghost wide" href="#account">${T('Изменить профиль')}</a>`
-            : `${followBtn(uid, 'wide')}<a class="r-pill ghost wide" href="#chat/${esc(p.username)}">${ICON.chat}<span>${T('Написать')}</span></a>`}
+            : `${followBtn(uid, 'wide')}${writeBtn(uid, p, ' wide')}`}
         </div>
         ${p.bio ? `<p class="r-card-text">${rich(p.bio)}</p>` : ''}
         <div class="r-stats">
@@ -1276,7 +1278,7 @@ export function setupSocial(ctx) {
     <header class="r-room-head">
       <a class="r-iconbtn r-room-back" href="#chat" aria-label="${T('Все чаты')}">${ICON.back}</a>
       ${groupAva(g, 36)}
-      <span class="r-group-who"><b>${esc(g.name)}</b><small>${g.members.map(userLabel).join(', ')}</small></span>
+      <span class="r-group-who"><b>${esc(g.name)}</b><small>${g.members.map(uid => `<a href="${profileHref(uid)}">${userLabel(uid)}</a>`).join(', ')}</small></span>
       <details class="r-menu">
         <summary class="r-iconbtn" aria-label="${T('Ещё')}">${ICON.dots}</summary>
         <div class="r-menu-list">
@@ -1300,6 +1302,7 @@ export function setupSocial(ctx) {
       const people = await uidsByNames(form.elements.people.value);
       const members = [...new Set([me(), ...people])];
       if (members.length < 2) return ctx.toast(T('Добавьте хотя бы одного человека.'));
+      if (!await checkGroupPeople(members)) return;
       const gRef = F().doc(col('chats'));
       await F().setDoc(gRef, {
         group: true, name, owner: me(), members, lastText: T('Группа создана'), lastFrom: me(), lastAt: F().serverTimestamp(), seen: { [me()]: F().serverTimestamp() },
@@ -1316,6 +1319,7 @@ export function setupSocial(ctx) {
     if (!text?.trim()) return;
     try {
       const uids = await uidsByNames(text);
+      if (!await checkGroupPeople(uids)) return;
       await F().updateDoc(ref('chats', roomId), { members: F().arrayUnion(...uids) });
       ctx.render();
     } catch (e) {
@@ -1398,6 +1402,7 @@ export function setupSocial(ctx) {
   }
 
   async function renderChat(name, group = '') {
+    editingMsg = null;
     if (notReady()) return;
     document.title = `${T('Чаты')} — ${T('Яйца Cloud')}`;
     if (!ctx.user) return note(`<a class="link" href="#account">${T('Войдите')}</a>${T(', чтобы писать сообщения.')}`);
@@ -1454,7 +1459,7 @@ export function setupSocial(ctx) {
               ${relation(peer)}
             </header>
             <div class="r-msgs" id="chat-msgs" aria-live="polite"></div>
-            ${chatForm()}`
+            ${allows(peer, 'dm') ? chatForm() : `<p class="r-composer-stub">${T('Этот человек не принимает сообщения от вас.')}</p>`}`
             : `<div class="r-room-empty"><p class="empty">${T('Выберите чат слева или откройте профиль человека и нажмите «Написать».')}</p></div>`}
         </section>
       </div>`;
@@ -1660,13 +1665,17 @@ export function setupSocial(ctx) {
         <div class="r-msg${grouped ? ' grouped' : ''}${m.from === me() ? ' mine' : ''}">
           ${grouped ? '<span class="r-msg-gap"></span>' : `<a href="${profileHref(m.from)}" tabindex="-1">${ava(m.from, 32)}</a>`}
           <div class="r-msg-main">
-            ${roomGroup && !grouped && m.from !== me() ? `<div class="r-meta"><b class="r-user strong">${esc(shownName(m.from))}</b></div>` : ''}
+            ${m.from === me() ? `<span class="r-msg-acts">
+              ${m.text ? `<button type="button" class="r-iconbtn" data-s-msg-edit="${esc(m.id)}" title="${T('Изменить')}" aria-label="${T('Изменить')}">${ICON.edit}</button>` : ''}
+              <button type="button" class="r-iconbtn" data-s-msg-del="${esc(m.id)}" title="${T('Удалить')}" aria-label="${T('Удалить')}">${ICON.trash}</button>
+            </span>` : ''}
+            ${roomGroup && !grouped && m.from !== me() ? `<div class="r-meta"><a class="r-user strong" href="${profileHref(m.from)}">${esc(shownName(m.from))}</a></div>` : ''}
             <div class="r-bubble${m.text || m.media === 'voice' ? '' : ' sticker'}">
               ${m.text ? `<span class="r-msg-text">${rich(m.text)}</span>` : ''}
               ${stickerTag(m.sticker)}
               ${m.media === 'image' ? `<div class="r-media" data-media="${esc(m.id)}" data-chat="${esc(roomId)}" style="aspect-ratio:${Math.min(3, Math.max(0.4, +m.ratio || 1))}"></div>` : ''}
               ${m.media === 'voice' ? voiceTag(m) : ''}
-              <span class="r-msg-info">${new Date(t).toLocaleTimeString(ctx.lang === 'en' ? 'en-GB' : 'ru-RU', { hour: '2-digit', minute: '2-digit' })}${m.from === me() ? ticks(ms(m.createdAt) && ms(m.createdAt) <= peerSeen) : ''}</span>
+              <span class="r-msg-info">${m.edited ? `${T('изменено')} ` : ''}${new Date(t).toLocaleTimeString(ctx.lang === 'en' ? 'en-GB' : 'ru-RU', { hour: '2-digit', minute: '2-digit' })}${m.from === me() ? ticks(ms(m.createdAt) && ms(m.createdAt) <= peerSeen) : ''}</span>
             </div>
           </div>
         </div>`;
@@ -1688,6 +1697,7 @@ export function setupSocial(ctx) {
 
   async function sendChat(form, { sticker = '', media = null } = {}) {
     if (needAccount() || !roomId) return;
+    if (editingMsg && !sticker && !media) return saveEdit(form);
     const input = form.elements.text;
     const extra = sticker || media;
     const text = extra ? '' : input.value.trim();
@@ -1718,6 +1728,110 @@ export function setupSocial(ctx) {
       if (!extra) input.value = text;
       fail(e);
     }
+  }
+
+  // Правка своего сообщения — в строке ввода, как в Telegram: так сохраняются переносы строк.
+  function startEdit(id) {
+    const m = roomMsgs.find(x => x.id === id);
+    const form = view.querySelector('.r-chat-form');
+    if (!m || !form) return;
+    editingMsg = id;
+    if (!view.querySelector('.r-edit-bar')) {
+      form.insertAdjacentHTML('beforebegin', `<div class="r-edit-bar">${ICON.edit}<span>${T('Изменение сообщения')}</span><button type="button" class="r-iconbtn" data-s-msg-cancel aria-label="${T('Отмена')}">×</button></div>`);
+    }
+    const input = form.elements.text;
+    input.value = m.text;
+    input.focus();
+    input.dispatchEvent(new Event('input', { bubbles: true })); // подогнать высоту поля
+  }
+
+  function stopEdit() {
+    editingMsg = null;
+    view.querySelector('.r-edit-bar')?.remove();
+    const input = view.querySelector('.r-chat-form textarea');
+    if (input) { input.value = ''; input.dispatchEvent(new Event('input', { bubbles: true })); }
+  }
+
+  // Строка в списке чатов, если правят или удаляют последнее сообщение.
+  const summary = m => (m ? m.text.slice(0, 200) || T(m.sticker ? '[стикер]' : m.media === 'voice' ? '[голосовое]' : '[фото]') : '');
+
+  async function saveEdit(form) {
+    const id = editingMsg;
+    const text = form.elements.text.value.trim();
+    const m = roomMsgs.find(x => x.id === id);
+    if (!m || !text) return;
+    if (text === m.text) return stopEdit();
+    try {
+      const batch = F().writeBatch(ctx.db);
+      batch.update(ref('chats', roomId, 'msgs', id), { text, edited: F().serverTimestamp() });
+      if (roomMsgs.at(-1)?.id === id) batch.update(ref('chats', roomId), { lastText: text.slice(0, 200) });
+      await batch.commit();
+      stopEdit();
+    } catch (e) { fail(e); }
+  }
+
+  async function deleteMsg(id) {
+    const m = roomMsgs.find(x => x.id === id);
+    if (!m || !await askDialog(T, { title: T('Удалить сообщение?'), text: T('Оно пропадёт у всех участников чата.'), ok: 'Удалить', danger: true })) return;
+    try {
+      const batch = F().writeBatch(ctx.db);
+      batch.delete(ref('chats', roomId, 'msgs', id));
+      // Фото и голосовые лежат отдельно; у длинного голосового несколько частей.
+      if (m.media) for (let i = 0; i < (m.parts || 1); i++) batch.delete(ref('chats', roomId, 'media', i ? `${id}_${i}` : id));
+      if (roomMsgs.at(-1)?.id === id) batch.update(ref('chats', roomId), { lastText: summary(roomMsgs.at(-2)) || T('Сообщение удалено') });
+      await batch.commit();
+      if (editingMsg === id) stopEdit();
+    } catch (e) { fail(e); }
+  }
+
+  /* ---------- Приватность ---------- */
+
+  const writeBtn = (uid, p, wide = '') => (allows(uid, 'dm')
+    ? `<a class="r-pill ghost${wide}" href="#chat/${esc(p.username)}">${ICON.chat}<span>${T('Написать')}</span></a>`
+    : `<span class="r-pill ghost${wide} off" title="${T('Этот человек не принимает сообщения от вас.')}" aria-disabled="true">${ICON.chat}<span>${T('Написать')}</span></span>`);
+
+  // Кто может писать мне (dm) и добавлять в группы (groups): все, только взаимные подписки или никто.
+  // Запрет писать проверяют правила базы. Список участников группы правила перебрать не умеют,
+  // поэтому запрет на группы проверяет сайт того, кто добавляет.
+  const PRIVACY = [['all', 'Все'], ['mutual', 'Только взаимные подписки'], ['none', 'Никто']];
+  const allows = (uid, field) => {
+    const v = people.get(uid)?.[field] || 'all';
+    return v === 'all' || (v === 'mutual' && isMutual(uid));
+  };
+
+  function privacyFields() {
+    if (!pub) return '';
+    const select = (field, label) => `
+      <label class="field">${T(label)}
+        <select data-s-privacy="${field}">${PRIVACY.map(([v, l]) => `<option value="${v}"${(pub[field] || 'all') === v ? ' selected' : ''}>${T(l)}</option>`).join('')}</select>
+      </label>`;
+    return `
+      <section class="edit-card">
+        <div class="edit-title"><h2>${T('Приватность')}</h2><p>${T('Сохраняется сразу.')}</p></div>
+        <div class="edit-fields">
+          ${select('dm', 'Кто может мне писать')}
+          ${select('groups', 'Кто может добавлять меня в группы')}
+        </div>
+      </section>`;
+  }
+
+  async function setPrivacy(field, value) {
+    if (!pub || !PRIVACY.some(([v]) => v === value)) return;
+    try {
+      await F().updateDoc(ref('profiles', me()), { [field]: value });
+      pub[field] = value;
+      remember(me(), pub);
+      ctx.toast(T('Настройки приватности сохранены.'));
+    } catch (e) { fail(e); }
+  }
+
+  // Перед созданием группы и добавлением людей: все ли разрешают добавлять себя.
+  async function checkGroupPeople(uids) {
+    await loadPeople(uids);
+    const banned = uids.filter(uid => uid !== me() && !allows(uid, 'groups'));
+    if (!banned.length) return true;
+    ctx.toast(T('{who}: не разрешает добавлять себя в группы.', { who: banned.map(userLabel).join(', ') }));
+    return false;
   }
 
   /* ---------- Аккаунт: @имя и «о себе» ---------- */
@@ -1916,6 +2030,9 @@ export function setupSocial(ctx) {
     else if (d.recStart !== undefined) startRecording(t.closest('form'));
     else if (d.recCancel !== undefined) finishRecording(false);
     else if (d.voice) toggleVoice(t);
+    else if (d.sMsgEdit) startEdit(d.sMsgEdit);
+    else if (d.sMsgDel) deleteMsg(d.sMsgDel);
+    else if (d.sMsgCancel !== undefined) stopEdit();
     else if (d.sGroupAdd !== undefined) addToGroup();
     else if (d.sGroupName !== undefined) renameGroup();
     else if (d.sGroupDelete !== undefined) deleteGroup();
@@ -1945,6 +2062,7 @@ export function setupSocial(ctx) {
   });
 
   view.addEventListener('change', e => {
+    if (e.target.matches('[data-s-privacy]')) setPrivacy(e.target.dataset.sPrivacy, e.target.value);
     if (e.target.matches('[data-s-sort]')) { commentSort = e.target.value; drawPost(true); }
     if (e.target.matches('[data-attach]')) attach(e.target);
     if (e.target.matches('[data-chat-photo]')) sendChatPhoto(e.target);
@@ -2026,6 +2144,7 @@ export function setupSocial(ctx) {
     fillAppThreads,
     accountFields,
     netFields,
+    privacyFields,
     accountNote,
     bannerField,
     readLinks,
