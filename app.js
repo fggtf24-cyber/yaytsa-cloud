@@ -202,6 +202,7 @@ const APPS = [
     features: [
       'Свои интервалы: по умолчанию 25/5, работа и перерыв меняются с шагом 5 минут',
       'Учёт часов: каждый заход записывается вместе с задачей, над которой вы работали',
+      'Серии: выберите число заходов и время начала, например 4 по 50 минут с 14:00, и таймер сам проведёт их подряд с перерывами',
       'Проекты: время по каждому проекту и дедлайны, название берётся из поля «Над чем работаете?»',
       'Время в программах как в Steam: сколько часов открыта программа и сколько вы в ней активно работали. Поиск по всем программам на компьютере, у каждой своя иконка',
       'Статистика: сегодня, 7 и 30 дней, столбики или карта активности из квадратиков за 3 месяца, полгода или год, цель на день, выгрузка и загрузка CSV',
@@ -225,6 +226,7 @@ const APPS = [
     featuresEn: [
       'Custom intervals: 25/5 by default, focus and break change in 5-minute steps',
       'Hour tracking: every session is saved with the task you worked on',
+      'Series: pick how many sessions and when to start, say four 50-minute sessions from 2 pm, and the timer runs them back to back with breaks',
       'Projects: time and deadlines per project, named from the "What are you working on?" field',
       'Steam-like time in your programs: hours a program was open and hours you actively used it. Search across every program on the PC, each with its own icon',
       'Stats: today, 7 and 30 days, bars or an activity heatmap for 3 months, 6 months or a year, daily goal, CSV export and import',
