@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=47';
+import { EN, TERMS } from './i18n.js?v=48';
 import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=28';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -170,6 +170,7 @@ const APPS = [
     desc: 'Переносит макеты из Figma в After Effects одной кнопкой: фигуры, текст, градиенты и эффекты остаются редактируемыми.',
     descEn: 'Moves Figma designs into After Effects with one button: shapes, text, gradients and effects stay editable.',
     file: 'https://github.com/fggtf24-cyber/fig2ae/raw/main/Fig2AE-Setup.exe',
+    silent: '/quiet', // самодельный установщик: ключ тихой установки для приложения Яйца Cloud
     macInstall: 'curl -fsSL https://raw.githubusercontent.com/fggtf24-cyber/fig2ae/main/install-mac.sh | bash',
     size: '190 КБ',
     sizeEn: '190 KB',
@@ -499,7 +500,7 @@ if (desktop) {
 let installed = {}; // id -> { state: installed | update | busy, progress, open }, присылает приложение
 const desktopButton = (a, cls = 'btn') => {
   const s = installed[a.id];
-  const [act, label] = !s ? ['install', 'Установить'] : s.state === 'update' ? ['install', 'Обновить'] : s.state === 'busy' ? ['', s.progress >= 0 ? `${Math.round(s.progress * 100)}%` : 'Подождите…'] : s.open ? ['open', 'Открыть'] : ['', 'Установлено'];
+  const [act, label] = !s ? ['install', 'Установить'] : s.state === 'update' ? ['install', 'Обновить'] : s.state === 'busy' ? ['', s.progress >= 0 ? T('Установка {n}%', { n: Math.round(s.progress * 100) }) : s.progress === -2 ? 'Удаление…' : 'Установка…'] : s.open ? ['open', 'Открыть'] : ['', 'Установлено'];
   // «Открыть» и «Обновить» синие: это главное действие для уже установленной программы.
   const blue = s && (act === 'open' || s.state === 'update') && !cls.includes('primary') ? ' primary' : '';
   return `<button type="button" class="${cls}${blue} dt" data-dt="${act}" data-dt-id="${esc(a.id)}" data-cls="${cls}"${act ? '' : ' disabled'}>${T(label)}</button>`;
@@ -514,7 +515,7 @@ function drawDesktop() {
     if (a) b.outerHTML = b.classList.contains('dt-rm') ? removeButton(a) : desktopButton(a, b.dataset.cls);
   });
 }
-const sendCatalog = () => desktop?.postMessage({ type: 'catalog', apps: apps.filter(a => safeUrl(a.file) && a.id !== 'yaytsa-cloud').map(a => ({ id: a.id, name: a.name, file: a.file })) });
+const sendCatalog = () => desktop?.postMessage({ type: 'catalog', apps: apps.filter(a => safeUrl(a.file) && a.id !== 'yaytsa-cloud').map(a => ({ id: a.id, name: a.name, file: a.file, silent: a.silent || '' })) });
 sendCatalog();
 desktop?.addEventListener('message', ({ data }) => {
   if (data.type === 'apps') { installed = data.apps || {}; drawDesktop(); }
