@@ -924,8 +924,14 @@ body, .content { transition: background-color .12s ease; }
 /* Просмотр картинки: цвета свои, потому что фон тёмный и в светлой теме */
 .c-image, .r-media-img, .attach-preview img { cursor: zoom-in; }
 /* Кнопка установки в приложении: ширина не прыгает, пока растут проценты. */
-/* В приложении: тонкая полоса прокрутки в цветах сайта. */
-html.in-app { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+/* В приложении: только полоска прокрутки, без стрелок, в цветах сайта.
+   Свойства scrollbar-width/scrollbar-color тут не годятся: с ними Chromium рисует стрелки. */
+html.in-app::-webkit-scrollbar, html.in-app *::-webkit-scrollbar { width: 10px; height: 10px; }
+html.in-app::-webkit-scrollbar-track, html.in-app *::-webkit-scrollbar-track { background: transparent; }
+html.in-app::-webkit-scrollbar-thumb, html.in-app *::-webkit-scrollbar-thumb { background: var(--line) padding-box; border: 3px solid transparent; border-radius: 10px; }
+html.in-app::-webkit-scrollbar-thumb:hover, html.in-app *::-webkit-scrollbar-thumb:hover { background-color: var(--sub); }
+html.in-app::-webkit-scrollbar-button, html.in-app *::-webkit-scrollbar-button { display: none; }
+html.in-app::-webkit-scrollbar-corner, html.in-app *::-webkit-scrollbar-corner { background: transparent; }
 .dt { min-width: 168px; font-variant-numeric: tabular-nums; }
 .platforms { display: flex; gap: 8px; margin-left: auto; flex: none; color: var(--sub); }
 .r-post[data-href] .r-media-img { cursor: pointer; }
