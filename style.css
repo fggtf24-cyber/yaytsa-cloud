@@ -1004,8 +1004,14 @@ body, .content { transition: background-color .12s ease; }
   .r-profile .r-phead { flex-wrap: wrap; gap: 8px 14px; margin-top: -40px; padding: 0 8px; }
   .r-pava .r-ava { --s: 92px !important; font-size: 40px; }
   .r-online { right: 5px; bottom: 5px; width: 16px; height: 16px; }
-  .r-profile .r-phead-text { min-width: 0; flex-basis: calc(100% - 110px); padding-bottom: 2px; }
-  .r-nets { flex-basis: 100%; max-width: none; justify-content: flex-start; padding-bottom: 0; }
+  .r-profile .r-phead { flex-wrap: nowrap; }
+  .r-profile .r-phead-text { min-width: 0; flex: 1 1 0; padding-bottom: 2px; }
+  /* Соцсети в строке с аватаркой справа от имени, много значков переносится внутри своего блока */
+  .r-nets { max-width: 40%; gap: 4px; padding-bottom: 4px; }
+  .r-net { width: 30px; height: 30px; }
+  /* Больше трёх значков не влезает рядом с именем: отдельной строкой под именем */
+  .r-profile .r-phead:has(.r-nets > :nth-child(4)) { flex-wrap: wrap; }
+  .r-nets:has(> :nth-child(4)) { flex-basis: 100%; max-width: none; justify-content: flex-start; padding: 0 0 0 106px; }
 }
 
 /* Переписка: список слева, сама переписка отдельным окном */
