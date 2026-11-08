@@ -593,12 +593,15 @@ const projectCard = p => `
 // Промо-плитка заодно карточка приложения Яйца Cloud: отдельной карточки в общей сетке у него нет.
 const promo = () => {
   const a = apps.find(x => x.id === 'yaytsa-cloud');
+  const app = a && !desktop && /Windows/.test(navigator.userAgent);
   return `
   <article class="card promo">
-    <svg width="28" height="28" aria-hidden="true"><use href="#logo"/></svg>
-    <p>${T('Все программы бесплатные. Без подписки.')}</p>
-    ${a && !desktop && /Windows/.test(navigator.userAgent) ? `
-      <p class="promo-sub">${T('Ставьте и обновляйте их в один клик в приложении для Windows.')}</p>
+    <div class="card-head">
+      <svg width="30" height="30" aria-hidden="true"><use href="#logo"/></svg>
+      <h2>${app ? `<a href="#app/${esc(a.id)}">${esc(nm(a))}</a>` : 'Яйца Cloud'}</h2>
+    </div>
+    <p>${T('Все программы бесплатные. Без подписки.')}${app ? ' ' + T('Ставьте и обновляйте их в один клик в приложении для Windows.') : ''}</p>
+    ${app ? `
       <div class="card-foot">
         <a class="link" href="#app/${esc(a.id)}">${T('Подробнее')}</a>
         ${editLink('apps', a)}
