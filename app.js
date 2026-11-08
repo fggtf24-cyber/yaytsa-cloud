@@ -542,6 +542,8 @@ const androidButton = (a, cls = 'btn') => `<a class="${cls} dl-android" data-id=
 const macButton = (a, cls = 'btn') => `<button type="button" class="${cls} dl-mac" data-id="${esc(a.id)}">${T('Скачать для Mac')}</button>`;
 const siteLink = a => (safeUrl(a.site) ? `<a class="link" href="${safeUrl(a.site)}" target="_blank" rel="noopener">${T('Сайт')}</a>` : '');
 const editLink = (kind, a) => (isAdmin ? `<a class="link" href="#edit/${kind}/${esc(a.id)}" aria-label="${T('Изменить {name}', { name: esc(nm(a)) })}">${T('Изменить')}</a>` : '');
+// Каждый раз спрашиваем аккаунт: иначе Google молча входит в последний и сменить его нельзя.
+const googleProvider = () => { const p = new fb.GoogleAuthProvider(); p.setCustomParameters({ prompt: 'select_account' }); return p; };
 const media = a => {
   const src = safeUrl(a.demo);
   if (!src) return '';
@@ -684,9 +686,9 @@ function renderApp(a) {
           ${authorText(a) ? `<li><i>@</i><span>${authorText(a)}</span></li>` : ''}
           ${a.community ? `<li><i>!</i>${T('Программу добавил участник. Админ проверил заявку, но файл вы скачиваете на свой риск.')}</li>` : ''}
         </ul>
-        ${a.community ? `<figure id="author-selfie" class="author-selfie" data-app="${esc(a.id)}" hidden></figure>` : ''}
         ${a.androidFile ? (isAndroid ? androidButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + androidButton(a)) : a.linuxFile ? (isLinux ? linuxButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + linuxButton(a)) : !a.macInstall ? download(a, 'btn primary') : isMac ? macButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + macButton(a)}
         ${desktop ? removeButton(a) : ''}
+        ${a.community ? `<figure id="author-selfie" class="author-selfie" data-app="${esc(a.id)}" hidden></figure>` : ''}
         ${authorName(a) ? `<a class="btn report-link" href="#report/${esc(a.id)}">${T('Сообщить о баге или идее')}</a>` : ''}
         <div class="app-links">
           ${siteLink(a)}
@@ -1923,7 +1925,7 @@ function renderAppLogin(r) {
     err.hidden = true;
     try {
       if (!fb) throw new Error('loading');
-      const cred = fb.GoogleAuthProvider.credentialFromResult(await fb.signInWithPopup(auth, new fb.GoogleAuthProvider()));
+      const cred = fb.GoogleAuthProvider.credentialFromResult(await fb.signInWithPopup(auth, googleProvider()));
       if (!cred?.idToken) throw new Error('no-token');
       view.querySelector('#app-done').hidden = false;
       location.href = `http://127.0.0.1:${port}/cb#${new URLSearchParams({ state: r.state, id: cred.idToken, at: cred.accessToken || '' })}`;
@@ -2031,7 +2033,7 @@ view.addEventListener('click', e => {
     desktop.postMessage({ type: 'google' });
     toast(T('В браузере выберите аккаунт Google, и приложение войдёт само.'));
   }
-  else if (t.id === 'google') attempt(() => fb.signInWithPopup(auth, new fb.GoogleAuthProvider()));
+  else if (t.id === 'google') attempt(() => fb.signInWithPopup(auth, googleProvider()));
   else if (t.id === 'reset') {
     const email = view.querySelector('[name=email]').value.trim();
     if (!email) return say(T('Введите почту, и мы пришлём ссылку для сброса пароля.'));
