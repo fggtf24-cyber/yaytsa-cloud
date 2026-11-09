@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=58';
+import { EN, TERMS } from './i18n.js?v=59';
 import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=37';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -428,6 +428,7 @@ function setLang(next) {
 
 const PROJECTS_TAB = 'projects';
 const COMMUNITY_TAB = 'community';
+const AUTHORS_TAB = 'authors';
 let cat = 'all';
 let authMode = 'login';
 let fb = null;          // модуль firebase-auth
@@ -698,11 +699,12 @@ function renderApps() {
   const found = a => !q || `${a.name} ${nm(a)} ${authorName(a)} ${tr(a, 'desc')}`.toLowerCase().includes(q);
   const onProjects = cat === PROJECTS_TAB;
   const onCommunity = cat === COMMUNITY_TAB;
+  const onAuthors = cat === AUTHORS_TAB;
   const list = (onProjects ? projects : apps.filter(a => !!a.community === onCommunity)).filter(found);
-  const tabs = [['all', T('Все приложения')], [COMMUNITY_TAB, T('Сообщество')], [PROJECTS_TAB, T('Другие проекты')]];
+  const tabs = [['all', T('Все приложения')], [COMMUNITY_TAB, T('Сообщество')], [AUTHORS_TAB, T('Топ авторов')], [PROJECTS_TAB, T('Другие проекты')]];
   // В «Сообществе» программу предлагает любой, в остальных вкладках запись сразу добавляет админ.
   const add = onCommunity ? `<a class="btn tabs-add" href="#publish">${T('Добавить программу')}</a>`
-    : !isAdmin ? ''
+    : !isAdmin || onAuthors ? ''
     : `<a class="btn tabs-add" href="#edit/${onProjects ? 'projects' : 'apps'}/new">${T(onProjects ? 'Добавить проект' : 'Добавить программу')}</a>`;
 
   view.innerHTML = `
@@ -711,9 +713,9 @@ function renderApps() {
       ${add}
     </div>
     <section class="section">
-      <h1>${T(onProjects ? 'Другие наши проекты' : onCommunity ? 'Программы сообщества' : 'Программы с яйцами')}</h1>
-      ${onCommunity && !q ? topAuthorsBlock() : ''}
-      ${list.length
+      <h1>${T(onProjects ? 'Другие наши проекты' : onCommunity ? 'Программы сообщества' : onAuthors ? 'Топ авторов' : 'Программы с яйцами')}</h1>
+      ${onAuthors ? `<p class="empty top-note">${T('По скачиваниям всех программ автора. Соавторам скачивания тоже засчитываются.')}</p>${authorsList(q)}`
+      : list.length
         ? `<div class="grid">${cat === 'all' && !q ? promo() + list.filter(a => a.id !== 'yaytsa-cloud').map(card).join('') : list.map(onProjects ? projectCard : card).join('')}</div>`
         : `<p class="empty">${T(onCommunity && !q ? 'Здесь появятся программы участников. Предложите свою первым!' : 'Ничего не нашлось.')}</p>`}
     </section>`;
@@ -1423,7 +1425,7 @@ async function loadDownloads() {
 }
 
 // Авторы по сумме скачиваний их программ (соавторам тоже засчитывается).
-function topAuthors(limit = 5) {
+function topAuthors() {
   const by = new Map();
   apps.forEach(a => authorUids(a).forEach(uid => {
     const x = by.get(uid) || { uid, n: 0, apps: 0 };
@@ -1431,24 +1433,23 @@ function topAuthors(limit = 5) {
     x.apps++;
     by.set(uid, x);
   }));
-  return [...by.values()].filter(x => x.n > 0 && social.nameOf(x.uid)).sort((a, b) => b.n - a.n).slice(0, limit);
+  return [...by.values()].filter(x => social.nameOf(x.uid)).sort((a, b) => b.n - a.n || b.apps - a.apps);
 }
 const plural = (n, one, few, many) => (lang === 'en' ? (n === 1 ? one : many)
   : n % 10 === 1 && n % 100 !== 11 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many);
 const dlText = n => `${n.toLocaleString(lang === 'en' ? 'en' : 'ru')} ${T(plural(n, 'скачивание', 'скачивания', 'скачиваний'))}`;
-const topAuthorsBlock = () => {
-  const top = topAuthors();
-  if (!top.length) return '';
+const authorsList = q => {
+  const top = topAuthors().map((x, i) => ({ ...x, rank: i + 1 }))
+    .filter(x => !q || `${social.nameOf(x.uid)} ${social.handleOf(x.uid)}`.toLowerCase().includes(q));
+  if (!top.length) return `<p class="empty">${T(q ? 'Ничего не нашлось.' : 'Авторов пока нет.')}</p>`;
   return `
-    <section class="top-authors" aria-labelledby="top-authors-h">
-      <h2 id="top-authors-h">${T('Топ авторов')}</h2>
-      <ol>${top.map((x, i) => `
-        <li><a href="${social.profileHref(x.uid)}">
-          <span class="top-rank">${i + 1}</span>${social.ava(x.uid, 36)}
-          <span class="top-who"><b>${esc(social.nameOf(x.uid))}</b><small>${dlText(x.n)}</small></span>
-        </a></li>`).join('')}
-      </ol>
-    </section>`;
+    <ol class="top-authors">${top.map(x => `
+      <li><a href="${social.profileHref(x.uid)}">
+        <span class="top-rank">${x.rank}</span>${social.ava(x.uid, 40)}
+        <span class="top-who"><b>${esc(social.nameOf(x.uid))}</b>${social.handleOf(x.uid) ? `<small>@${esc(social.handleOf(x.uid))}</small>` : ''}</span>
+        <span class="top-num"><b>${dlText(x.n)}</b><small>${x.apps} ${T(plural(x.apps, 'программа', 'программы', 'программ'))}</small></span>
+      </a></li>`).join('')}
+    </ol>`;
 };
 
 // Программы автора для его профиля.
