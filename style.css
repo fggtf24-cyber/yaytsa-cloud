@@ -824,6 +824,11 @@ a, button, summary, input, textarea, select, .card, .comment, .rail-ico, .r-post
 .edit-account { gap: 16px; }
 .edit-account-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .edit-account-actions .btn { padding: 8px 22px; cursor: pointer; }
+.root-row { display: flex; gap: 8px; }
+.root-row input { flex: 1; min-width: 0; }
+.root-row .btn { flex: none; cursor: pointer; }
+.root-bar { display: flex; justify-content: flex-end; }
+.root-bar .btn { padding: 10px 26px; cursor: pointer; }
 @media (max-width: 640px) {
   .panel.edit { padding-top: 20px; gap: 16px; }
   .edit-profile, .edit-card { border-radius: 16px; }

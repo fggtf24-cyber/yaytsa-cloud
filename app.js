@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=56';
+import { EN, TERMS } from './i18n.js?v=57';
 import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=36';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -507,6 +507,7 @@ function sendTheme() {
 }
 if (desktop) {
   document.documentElement.classList.add('in-app');
+  document.getElementById('rail-settings').hidden = false;
   sendTheme();
 }
 let installed = {}; // id -> { state: installed | update | busy, progress, open }, присылает приложение
@@ -529,8 +530,66 @@ function drawDesktop() {
 }
 const sendCatalog = () => desktop?.postMessage({ type: 'catalog', apps: apps.filter(a => safeUrl(a.file) && a.id !== 'yaytsa-cloud').map(a => ({ id: a.id, name: a.name, file: a.file, silent: a.silent || '' })) });
 sendCatalog();
+// Папка для программ: вкладка «Настройки» (есть только в приложении) и окно при первой установке.
+// Путь можно вставить руками или выбрать кнопкой «Обзор…»; проверяет и сохраняет его приложение.
+let appRoot = '';
+const rootField = () => `
+  <label class="field wide">${T('Папка для программ')}
+    <span class="root-row">
+      <input name="root" data-root required autocomplete="off" spellcheck="false" placeholder="D:\Programs" value="${esc(appRoot)}">
+      <button type="button" class="btn" data-pick-root>${T('Обзор…')}</button>
+    </span>
+  </label>
+  <p class="msg wide" role="alert" data-root-msg></p>`;
+function renderSettings() {
+  if (!desktop) { location.replace('#'); return; }
+  document.title = `${T('Настройки')} — ${T('Яйца Cloud')}`;
+  view.innerHTML = `
+    <section class="section panel edit">
+      <header class="edit-top"><h1>${T('Настройки')}</h1></header>
+      <form id="root-form" class="edit-card">
+        <div class="edit-title"><h2>${T('Установка программ')}</h2><p>${T('Новые программы ставятся сюда. Уже установленные останутся на месте.')}</p></div>
+        <div class="edit-fields">${rootField()}</div>
+        <div class="root-bar"><button class="btn primary">${T('Сохранить')}</button></div>
+      </form>
+    </section>`;
+  desktop.postMessage({ type: 'settings' });
+}
+// Первая установка: приложение спрашивает папку, после выбора ставим программу.
+function askRoot(id) {
+  const dlg = document.createElement('dialog');
+  dlg.className = 'r-crop r-ask';
+  dlg.innerHTML = `
+    <form class="r-crop-box" id="root-ask">
+      <h2>${T('Куда ставить программы?')}</h2>
+      <p class="empty">${T('Вставьте путь или выберите папку. Поменять можно в настройках.')}</p>
+      ${rootField()}
+      <div class="r-crop-bar">
+        <button type="button" class="btn" data-ask-cancel>${T('Отмена')}</button>
+        <button class="btn primary">${T('Установить')}</button>
+      </div>
+    </form>`;
+  dlg.dataset.install = id;
+  dlg.querySelector('[data-ask-cancel]').addEventListener('click', () => dlg.close());
+  dlg.addEventListener('close', () => dlg.remove());
+  view.append(dlg);
+  dlg.showModal();
+  desktop.postMessage({ type: 'settings' });
+}
 desktop?.addEventListener('message', ({ data }) => {
   if (data.type === 'apps') { installed = data.apps || {}; drawDesktop(); }
+  else if (data.type === 'settings') {
+    appRoot = data.root || '';
+    if (!data.error) view.querySelectorAll('[data-root]').forEach(i => { if (!i.dataset.dirty || data.saved) { i.value = appRoot; delete i.dataset.dirty; } });
+    const dlg = view.querySelector('dialog[data-install]');
+    if (data.saved && dlg) { desktop.postMessage({ type: 'install', id: dlg.dataset.install }); dlg.close(); }
+    view.querySelectorAll('[data-root-msg]').forEach(m => {
+      m.className = data.saved ? 'msg ok' : 'msg';
+      m.textContent = data.error || (data.saved ? T('Сохранено.') : '');
+    });
+  }
+  else if (data.type === 'picked') view.querySelectorAll('[data-root]').forEach(i => { i.value = data.path; i.dataset.dirty = '1'; });
+  else if (data.type === 'need-root') askRoot(data.id);
   else if (data.type === 'go' && data.href) location.hash = data.href.replace(/^#/, '');
   else if (data.type === 'error') toast(data.text);
   // Подтверждение от Google пришло из браузера: входим им здесь.
@@ -1884,7 +1943,7 @@ function route() {
   const s = social.route(parts);
   if (s) return s;
   const [name, a, b] = parts;
-  if (['account', 'stats', 'inbox', 'publish', 'terms'].includes(name)) return { name };
+  if (['account', 'stats', 'inbox', 'publish', 'terms', 'settings'].includes(name)) return { name };
   if (name === 'admin') return { name, tab: a };
   if (name === 'report') return { name, appId: a };
   if (name === 'timer-login' || name === 'app-login') return { name, target: a, state: b };
@@ -1893,7 +1952,7 @@ function route() {
   return app ? { name: 'app', app } : { name: 'apps' };
 }
 
-const RAIL = { 'timer-login': 'account', 'app-login': 'account', feed: 'feed', post: 'feed', submit: 'feed', u: 'account', uid: 'account', chat: 'inbox', inbox: 'inbox', account: 'account', stats: 'stats', report: 'report', admin: 'admin' };
+const RAIL = { 'timer-login': 'account', 'app-login': 'account', feed: 'feed', post: 'feed', submit: 'feed', u: 'account', uid: 'account', chat: 'inbox', inbox: 'inbox', account: 'account', stats: 'stats', report: 'report', admin: 'admin', settings: 'settings' };
 
 function render() {
   const r = route();
@@ -1912,6 +1971,7 @@ function render() {
   else if (r.name === 'publish') renderPublish();
   else if (r.name === 'admin') renderAdmin(r.tab);
   else if (r.name === 'terms') renderTerms();
+  else if (r.name === 'settings') renderSettings();
   else if (r.name === 'edit') renderEditor(r.kind, r.id);
   else if (r.name === 'app') renderApp(r.app);
   else renderApps();
@@ -2087,6 +2147,7 @@ view.addEventListener('click', e => {
   else if (t.id === 'photo-remove') attempt(() => saveProfile({ photo: '' }));
   else if (t.id === 'banner-remove') attempt(() => saveBanner(''));
   else if (t.id === 'logout') attempt(() => fb.signOut(auth));
+  else if (t.matches('[data-pick-root]')) desktop?.postMessage({ type: 'pick-root', path: t.closest('form').querySelector('[data-root]').value });
   else if (t.id === 'google' && desktop) {
     desktop.postMessage({ type: 'google' });
     toast(T('В браузере выберите аккаунт Google, и приложение войдёт само.'));
@@ -2105,6 +2166,7 @@ view.addEventListener('click', e => {
 view.addEventListener('submit', e => {
   if (e.target.method === 'dialog') return; // окно вопроса закрывается само
   e.preventDefault();
+  if (e.target.id === 'root-form' || e.target.id === 'root-ask') return desktop?.postMessage({ type: 'set-root', path: e.target.querySelector('[data-root]').value });
   if (e.target.id === 'edit-form') return attempt(() => saveItem(e.target));
   if (e.target.id === 'report-form') return attempt(() => sendReport(e.target));
   if (e.target.id === 'publish-form') return attempt(() => sendSubmission(e.target));
