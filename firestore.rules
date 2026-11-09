@@ -201,6 +201,18 @@ service cloud.firestore {
       allow update: if request.resource.data.keys().hasOnly(['n'])
         && request.resource.data.n == resource.data.n + 1;
     }
+    // Скачивания программы за всё время: читают все (топ авторов, профиль). Любой прибавляет ровно 1,
+    // админ может выставить число (перенос из stats).
+    match /downloads/{id} {
+      allow read: if true;
+      allow create: if id.matches('^[A-Za-z0-9-]+$')
+        && request.resource.data.keys().hasOnly(['n'])
+        && request.resource.data.n is int
+        && (request.resource.data.n == 1 || isAdmin());
+      allow update: if request.resource.data.keys().hasOnly(['n'])
+        && request.resource.data.n is int
+        && (request.resource.data.n == resource.data.n + 1 || isAdmin());
+    }
     // Профиль: имя и аватарка (сжатая картинка строкой). Видит и меняет только владелец.
     match /users/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;

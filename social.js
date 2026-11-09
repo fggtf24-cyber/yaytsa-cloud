@@ -997,7 +997,8 @@ export function setupSocial(ctx) {
           <div class="r-stat"><b>${fmt(posts.length)}</b><span>${T('Посты')}</span></div>
           <div class="r-stat"><b>${esc(day(p.createdAt) || '—')}</b><span>${T('На сайте с')}</span></div>
         </div>
-      </section>`;
+      </section>
+      ${ctx.authorApps(uid)}`;
     view.innerHTML = page(main, aside);
   }
 
@@ -2373,6 +2374,8 @@ export function setupSocial(ctx) {
     uidsByNames,
     handleOf: handle,
     nameOf: uid => (people.get(uid) ? shownName(uid) : ''),
+    profileHref,
+    ava,
     unreadChats: () => chats.filter(unread).length,
     // Самый свежий непрочитанный чат: от кого и что, для уведомления в приложении для Windows.
     lastUnread: () => {

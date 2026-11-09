@@ -1,5 +1,5 @@
-import { EN, TERMS } from './i18n.js?v=57';
-import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=36';
+import { EN, TERMS } from './i18n.js?v=58';
+import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=37';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -470,6 +470,7 @@ const social = setupSocial({
   get lang() { return lang; },
   get apps() { return apps; },
   get authState() { return authState; },
+  authorApps: uid => authorApps(uid),
   route: () => route(),
   render: () => render(),
   toast: text => toast(text),
@@ -711,6 +712,7 @@ function renderApps() {
     </div>
     <section class="section">
       <h1>${T(onProjects ? 'Другие наши проекты' : onCommunity ? 'Программы сообщества' : 'Программы с яйцами')}</h1>
+      ${onCommunity && !q ? topAuthorsBlock() : ''}
       ${list.length
         ? `<div class="grid">${cat === 'all' && !q ? promo() + list.filter(a => a.id !== 'yaytsa-cloud').map(card).join('') : list.map(onProjects ? projectCard : card).join('')}</div>`
         : `<p class="empty">${T(onCommunity && !q ? 'Здесь появятся программы участников. Предложите свою первым!' : 'Ничего не нашлось.')}</p>`}
@@ -1408,8 +1410,58 @@ async function loadContent() {
   sendCatalog();
   projects = merge(PROJECTS, p);
   people.forEach(d => { authors[d.id] = d.data(); });
-  await social.loadPeople(apps.flatMap(authorUids));
+  await Promise.all([social.loadPeople(apps.flatMap(authorUids)), loadDownloads()]);
   contentState = 'ready';
+}
+
+// Скачивания по программам, открыты всем: из них топ авторов и цифры в профиле.
+// Подробная статистика по дням (stats) по-прежнему только для админов.
+let downloads = {}; // id программы -> сколько раз скачали
+async function loadDownloads() {
+  try { (await fs.getDocs(fs.collection(db, 'downloads'))).forEach(d => { downloads[d.id] = d.data().n || 0; }); }
+  catch (e) { console.error(e); } // правила ещё не опубликованы: топ просто не покажем
+}
+
+// Авторы по сумме скачиваний их программ (соавторам тоже засчитывается).
+function topAuthors(limit = 5) {
+  const by = new Map();
+  apps.forEach(a => authorUids(a).forEach(uid => {
+    const x = by.get(uid) || { uid, n: 0, apps: 0 };
+    x.n += downloads[a.id] || 0;
+    x.apps++;
+    by.set(uid, x);
+  }));
+  return [...by.values()].filter(x => x.n > 0 && social.nameOf(x.uid)).sort((a, b) => b.n - a.n).slice(0, limit);
+}
+const plural = (n, one, few, many) => (lang === 'en' ? (n === 1 ? one : many)
+  : n % 10 === 1 && n % 100 !== 11 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many);
+const dlText = n => `${n.toLocaleString(lang === 'en' ? 'en' : 'ru')} ${T(plural(n, 'скачивание', 'скачивания', 'скачиваний'))}`;
+const topAuthorsBlock = () => {
+  const top = topAuthors();
+  if (!top.length) return '';
+  return `
+    <section class="top-authors" aria-labelledby="top-authors-h">
+      <h2 id="top-authors-h">${T('Топ авторов')}</h2>
+      <ol>${top.map((x, i) => `
+        <li><a href="${social.profileHref(x.uid)}">
+          <span class="top-rank">${i + 1}</span>${social.ava(x.uid, 36)}
+          <span class="top-who"><b>${esc(social.nameOf(x.uid))}</b><small>${dlText(x.n)}</small></span>
+        </a></li>`).join('')}
+      </ol>
+    </section>`;
+};
+
+// Программы автора для его профиля.
+function authorApps(uid) {
+  const list = apps.filter(a => authorUids(a).includes(uid));
+  if (!list.length) return '';
+  return `
+    <section class="r-card">
+      <h3 class="r-card-title small">${T('Программы')}</h3>
+      <ul class="author-apps">${list.map(a => `
+        <li><a href="#app/${esc(a.id)}"><img src="${icon(a)}" alt="" width="32" height="32"><span><b>${esc(nm(a))}</b>${downloads[a.id] ? `<small>${dlText(downloads[a.id])}</small>` : ''}</span></a></li>`).join('')}
+      </ul>
+    </section>`;
 }
 
 // Админ сам появляется в списке авторов при входе, а смена имени в профиле меняет подпись на всех его программах.
@@ -1814,6 +1866,11 @@ const today = () => new Date().toISOString().slice(0, 10);
 function count(key) {
   fs?.setDoc(fs.doc(db, 'stats', `${key}_${today()}`), { n: fs.increment(1) }, { merge: true })
     .catch(console.error);
+  if (key.startsWith('dl_')) {
+    const id = key.slice(3);
+    downloads[id] = (downloads[id] || 0) + 1;
+    fs?.setDoc(fs.doc(db, 'downloads', id), { n: fs.increment(1) }, { merge: true }).catch(console.error);
+  }
 }
 
 function countVisit() {
@@ -1850,6 +1907,14 @@ async function renderStats() {
   const periods = [[T('Сегодня'), today()], [T('7 дней'), since(7)], [T('30 дней'), since(30)], [T('Всё время'), '']];
   const line = (name, test) => `<tr><th scope="row">${esc(name)}</th>${periods.map(([, from]) => `<td>${sum(test, from)}</td>`).join('')}</tr>`;
   const ids = [...new Set([...apps.map(a => a.id), ...rows.filter(isDownload).map(r => r.app)])];
+  // Открытые счётчики появились позже статистики: догоняем их до суммы за всё время.
+  ids.forEach(id => {
+    const total = sum(r => r.app === id);
+    if (total > (downloads[id] || 0)) {
+      downloads[id] = total;
+      fs.setDoc(fs.doc(db, 'downloads', id), { n: total }).catch(console.error);
+    }
+  });
   const appName = id => { const a = apps.find(x => x.id === id); return a ? nm(a) : id; };
   const days = [...Array(14)].map((_, i) => since(i + 1));
 
