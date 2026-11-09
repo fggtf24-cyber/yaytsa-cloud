@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=59';
+import { EN, TERMS } from './i18n.js?v=60';
 import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=37';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -1308,11 +1308,12 @@ async function renderAdmin(tab) {
       <section class="section panel admin">
         <header class="admin-head">
           <h1>${T('Админка')}</h1>
-          <p class="empty">${T(tab === 'users' ? 'Все, кто заходил на сайт под своим аккаунтом.' : 'Программы от пользователей. Одобренные появятся во вкладке «Сообщество».')}</p>
+          <p class="empty">${T(tab === 'users' ? 'Все, кто заходил на сайт под своим аккаунтом.' : tab === 'deleted' ? 'Программы и проекты, удалённые с сайта. Их можно вернуть как были.' : 'Программы от пользователей. Одобренные появятся во вкладке «Сообщество».')}</p>
         </header>
         <div class="tabs" role="group" aria-label="${T('Разделы')}">
-          <a class="tab" href="#admin" aria-current="${tab !== 'users'}">${T('Программы на проверку')}</a>
+          <a class="tab" href="#admin" aria-current="${!['users', 'deleted'].includes(tab)}">${T('Программы на проверку')}</a>
           <a class="tab" href="#admin/users" aria-current="${tab === 'users'}">${T('Пользователи')}</a>
+          <a class="tab" href="#admin/deleted" aria-current="${tab === 'deleted'}">${T('Удалённые')}</a>
         </div>
         ${html}
         <p id="msg" class="msg" role="alert"></p>
@@ -1323,6 +1324,23 @@ async function renderAdmin(tab) {
   if (!isAdmin) return empty(T('Этот раздел видят только админы, вошедшие через Google.'));
   empty(T('Загрузка…'));
   try {
+    if (tab === 'deleted') {
+      // Удаление на сайте только ставит пометку deleted: запись и всё в ней остаётся, поэтому вернуть можно целиком.
+      const kinds = [['apps', APPS, 'Программа'], ['projects', PROJECTS, 'Проект']];
+      const snaps = await Promise.all(kinds.map(([k]) => fs.getDocs(fs.collection(db, k))));
+      if (route().tab !== 'deleted') return;
+      const list = kinds.flatMap(([kind, base, label], i) => snaps[i].docs.filter(d => d.data().deleted)
+        .map(d => ({ ...base.find(x => x.id === d.id), ...d.data(), id: d.id, kind, label })));
+      if (!list.length) return empty(T('Удалённых нет.'));
+      return shell(`
+        <ul class="deleted-list">${list.map(a => `
+          <li class="edit-card">
+            <img src="${icon(a)}" alt="" width="36" height="36">
+            <span><b>${esc(nm(a) || a.id)}</b><small>${T(a.label)} · ${esc(a.id)}</small></span>
+            <button type="button" class="btn" data-restore="${esc(a.kind)}/${esc(a.id)}">${T('Вернуть')}</button>
+          </li>`).join('')}
+        </ul>`);
+    }
     if (tab === 'users') {
       const snap = await fs.getDocs(fs.collection(db, 'accounts'));
       const list = snap.docs.map(d => ({ id: d.id, ...d.data() }))
@@ -2198,6 +2216,15 @@ view.addEventListener('click', e => {
   else if (t.dataset.delMessage) {
     attempt(async () => {
       if (await askDialog(T, { title: T('Удалить сообщение?'), ok: 'Удалить', danger: true })) await fs.deleteDoc(fs.doc(db, 'messages', t.dataset.delMessage));
+    });
+  }
+  else if (t.dataset.restore) {
+    const [kind, id] = t.dataset.restore.split('/');
+    attempt(async () => {
+      await fs.setDoc(fs.doc(db, kind, id), { deleted: fs.deleteField() }, { merge: true });
+      await loadContent();
+      toast(T('Вернули на сайт.'));
+      renderAdmin('deleted');
     });
   }
   else if (t.id === 'delete') {

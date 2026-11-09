@@ -842,6 +842,14 @@ a, button, summary, input, textarea, select, .card, .comment, .rail-ico, .r-post
 .top-who b, .top-who small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .top-who small, .top-num small { color: var(--muted); font-size: 12px; }
 
+/* Админка: удалённые программы */
+.deleted-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.deleted-list li { display: flex; align-items: center; gap: 12px; }
+.deleted-list img { width: 36px; height: 36px; border-radius: 8px; flex: none; }
+.deleted-list span { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.deleted-list small { color: var(--muted); font-size: 12px; }
+.deleted-list .btn { flex: none; cursor: pointer; }
+
 /* Программы автора в профиле */
 .author-apps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .author-apps a { display: flex; align-items: center; gap: 10px; padding: 6px; border-radius: 6px; color: inherit; text-decoration: none; transition: background-color .15s; }
