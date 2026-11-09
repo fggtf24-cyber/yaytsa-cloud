@@ -244,8 +244,7 @@ export function setupSocial(ctx) {
     box.querySelector('.attach-preview').hidden = true;
   }
 
-  async function attach(input) {
-    const file = input.files[0];
+  async function attach(input, file = input.files[0]) {
     input.value = ''; // чтобы тот же файл можно было выбрать снова
     if (!file) return;
     const box = input.closest('.attach');
@@ -2267,6 +2266,15 @@ export function setupSocial(ctx) {
     if (e.target.matches('[data-attach]')) attach(e.target);
     if (e.target.matches('[data-chat-photo]')) sendChatPhoto(e.target);
     if (e.target.id === 'group-photo') setGroupPhoto(e.target);
+  });
+
+  // Ctrl+V скриншота в форме с кнопкой картинки (пост, комментарий) — как выбор файла.
+  view.addEventListener('paste', e => {
+    const input = e.target.closest?.('form')?.querySelector('[data-attach]');
+    const file = input && [...(e.clipboardData?.files || [])].find(f => f.type.startsWith('image/'));
+    if (!file) return;
+    e.preventDefault();
+    attach(input, file);
   });
 
   view.addEventListener('input', e => {
