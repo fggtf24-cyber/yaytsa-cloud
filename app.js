@@ -9,7 +9,7 @@ const APPS = [
     id: 'yaytsa-cloud',
     name: 'Яйца Cloud',
     nameEn: 'Yaytsa Cloud',
-    icon: 'assets/yaytsa-cloud.png',
+    icon: 'assets/yaytsa-cloud.png?v=3',
     desc: 'Приложение Яйца Cloud для Windows: ставит и обновляет все программы с сайта в один клик, а сообщения и ответы приходят уведомлениями.',
     descEn: 'The Yaytsa Cloud app for Windows: installs and updates every program from the site in one click, with messages and replies as notifications.',
     file: 'https://github.com/fggtf24-cyber/yaytsa-cloud-desktop/releases/latest/download/YaytsaCloud.exe',
