@@ -2269,8 +2269,12 @@ export function setupSocial(ctx) {
   });
 
   // Ctrl+V скриншота в форме с кнопкой картинки (пост, комментарий) — как выбор файла.
-  view.addEventListener('paste', e => {
-    const input = e.target.closest?.('form')?.querySelector('[data-attach]');
+  // Курсор не в поле — картинка уходит в первую такую форму на странице (новый пост, комментарий к посту).
+  document.addEventListener('paste', e => {
+    const t = e.target instanceof Element ? e.target : null;
+    const form = t?.closest('form');
+    const input = form ? form.querySelector('[data-attach]')
+      : t?.closest('input, textarea, [contenteditable]') ? null : view.querySelector('form [data-attach]');
     const file = input && [...(e.clipboardData?.files || [])].find(f => f.type.startsWith('image/'));
     if (!file) return;
     e.preventDefault();
