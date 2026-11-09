@@ -563,13 +563,14 @@ export function setupSocial(ctx) {
     try {
       const [p, c] = await Promise.all([
         F().getDoc(ref('posts', id)),
-        F().getDocs(F().query(col('tcomments'), F().where('postId', '==', id))),
+        watchComments(id),
       ]);
-      if (!p.exists()) { if (my === seq) note(T('Пост не найден или удалён.')); return; }
+      if (!p.exists()) { stopComments(); if (my === seq) note(T('Пост не найден или удалён.')); return; }
       post = { id: p.id, ...p.data() };
-      comments = rows(c);
+      comments = c;
     } catch (e) {
       console.error(e);
+      stopComments();
       if (my === seq) note(T('Пост сейчас недоступен.'));
       return;
     }
@@ -580,8 +581,49 @@ export function setupSocial(ctx) {
     drawPost();
   }
 
-  function drawPost(keepScroll = false) {
+  // Комментарии открытого поста — подпиской: первый снимок отдаёт текущие, дальше новые приходят сами.
+  let stopThread = null;
+  const stopComments = () => { stopThread?.(); stopThread = null; };
+
+  function watchComments(id) {
+    stopComments();
+    return new Promise((resolve, reject) => {
+      let first = true;
+      stopThread = F().onSnapshot(F().query(col('tcomments'), F().where('postId', '==', id)), snap => {
+        if (first) { first = false; resolve(rows(snap)); }
+        else if (!snap.metadata.hasPendingWrites && thread?.post.id === id) liveComments(rows(snap));
+      }, e => { if (first) reject(e); else console.error(e); });
+    });
+  }
+
+  async function liveComments(comments) {
+    const t = thread;
+    const known = new Set(t.comments.map(c => c.id));
+    await loadPeople(comments.map(c => c.uid));
+    if (thread !== t) return;
+    t.comments = comments;
+    t.post.commentCount = Math.max(t.post.commentCount || 0, comments.length);
+    const pill = view.querySelector('[data-s-jump]');
+    if (pill) {
+      pill.lastElementChild.textContent = fmt(t.post.commentCount);
+      pill.setAttribute('aria-label', T('Комментарии: {n}', { n: t.post.commentCount }));
+    }
+    const box = view.querySelector('.r-tree');
+    // Открыт ответ, правка или меню — не сбиваем; данные уже свежие, покажем при следующей отрисовке.
+    if (!box || box.querySelector('form, details[open]')) return;
+    const shut = [...box.querySelectorAll('.r-c.collapsed')].map(el => el.id);
+    box.innerHTML = treeHtml();
+    shut.forEach(id => document.getElementById(id)?.classList.add('collapsed'));
+    comments.forEach(c => known.has(c.id) || document.getElementById(`tc-${c.id}`)?.classList.add('flash'));
+  }
+
+  function treeHtml() {
     const { post, comments, focus } = thread;
+    return tree(comments, post, focus) || (comments.some(c => !c.deleted) ? '' : `<p class="empty r-note">${T('Комментариев пока нет. Начните обсуждение!')}</p>`);
+  }
+
+  function drawPost(keepScroll = false) {
+    const { post, focus } = thread;
     const y = scrollY;
     document.title = `${post.title} — ${T('Яйца Cloud')}`;
     const mine = post.uid === me();
@@ -593,7 +635,6 @@ export function setupSocial(ctx) {
           <button type="button" data-s-del-post>${T('Удалить')}</button>
         </div>
       </details>` : '';
-    const live = comments.filter(c => !c.deleted).length;
     const sub = handle(post.uid) ? `@${esc(handle(post.uid))}` : '';
     const main = `
       <article class="r-full">
@@ -625,7 +666,7 @@ export function setupSocial(ctx) {
         </label>
       </div>
       ${focus ? `<div class="r-single">${T('Вы смотрите одну ветку.')} <a class="link" href="#post/${esc(post.id)}">${T('Показать все комментарии')}</a></div>` : ''}
-      <div class="r-tree">${tree(comments, post, focus) || (live ? '' : `<p class="empty r-note">${T('Комментариев пока нет. Начните обсуждение!')}</p>`)}</div>`;
+      <div class="r-tree">${treeHtml()}</div>`;
     view.innerHTML = page(main, authorCard(post.uid));
     if (keepScroll) scrollTo(0, y);
     const target = focus && document.getElementById(`tc-${focus}`);
@@ -2179,7 +2220,7 @@ export function setupSocial(ctx) {
     finishRecording(false);
     playing?.audio.pause();
     playing = null;
-    if (r.name !== 'post') thread = null;
+    if (r.name !== 'post') { thread = null; stopComments(); }
     if (r.name === 'feed') renderFeed(r.sort);
     else if (r.name === 'post') renderPost(r.id, r.focus);
     else if (r.name === 'u') renderProfile(r.handle, r.tab);
