@@ -677,7 +677,7 @@ const promo = () => {
   return `
   <article class="card promo">
     <div class="card-head">
-      <svg width="30" height="30" aria-hidden="true"><use href="#logo"/></svg>
+      <img src="assets/yaytsa-cloud.png?v=3" width="30" height="30" alt="">
       <h2>${app ? `<a href="#app/${esc(a.id)}">${esc(nm(a))}</a>` : 'Яйца Cloud'}</h2>
     </div>
     <p>${T('Все программы бесплатные. Без подписки.')}${app ? ' ' + T('Ставьте и обновляйте их в один клик в приложении для Windows.') : ''}</p>
