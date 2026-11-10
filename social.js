@@ -1166,6 +1166,7 @@ export function setupSocial(ctx) {
   function drawSuggest() {
     suggest.box.innerHTML = suggest.items.map((item, i) => `
       <button type="button" class="s-item" role="option" tabindex="-1" data-i="${i}" aria-selected="${i === suggest.active}">${item.html}</button>`).join('');
+    if (suggest.active) suggest.box.children[suggest.active]?.scrollIntoView({ block: 'nearest' });
   }
 
   // Ищем слово с # или @ прямо перед курсором.
@@ -1180,7 +1181,7 @@ export function setupSocial(ctx) {
     let items;
     if (sign === '#') {
       items = ctx.apps.filter(a => `${a.name} ${a.nameEn || ''}`.toLowerCase().includes(low) || appTag(`${a.name} ${a.nameEn || ''}`).toLowerCase().includes(low))
-        .slice(0, 6)
+        .slice(0, whole ? Infinity : 6) // в поле «Программа» — все, со скроллом: иначе седьмую и дальше не выбрать
         .map(a => ({ insert: appTag(ctx.nm(a)), html: `<img src="${ctx.icon(a)}" alt=""><span><b>${esc(ctx.nm(a))}</b><small>#${esc(appTag(ctx.nm(a)))}</small></span>` }));
     } else {
       const found = await findPeople(low).catch(e => { console.error(e); return []; });
