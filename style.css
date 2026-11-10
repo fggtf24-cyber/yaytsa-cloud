@@ -195,6 +195,7 @@ h1, h2, p, ul { margin: 0; }
   flex: none; width: 18px; height: 18px; border: 1.5px solid var(--faint); border-radius: 50%;
   display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 11px; font-weight: 700;
 }
+.app-meta i svg { width: 12px; height: 12px; }
 .app-meta i.ok { border-color: #3DBE6C; color: #3DBE6C; }
 .app-side .btn { text-align: center; }
 .app-side .btn.primary { padding: 10px 26px; font-size: 15px; }

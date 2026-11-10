@@ -734,6 +734,15 @@ function renderApps() {
     </section>`;
 }
 
+// Значки списка на странице программы. SVG, а не символы ✓ ↓ @ !: у символов шрифта свои отступы, и в кружке они съезжают.
+const META_ICONS = {
+  ok: '<path d="M6.5 12.5l3.5 3.5 7.5-8"/>',
+  down: '<path d="M12 6v12M7 13l5 5 5-5"/>',
+  at: '<circle cx="12" cy="12" r="3.5"/><path d="M15.5 9v4.5a2.5 2.5 0 0 0 5 0V12a8.5 8.5 0 1 0-3.4 6.8"/>',
+  warn: '<path d="M12 6.5v7"/><path d="M12 17.5v.01"/>',
+};
+const metaIcon = name => `<i${name === 'ok' ? ' class="ok"' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${META_ICONS[name]}</svg></i>`;
+
 function renderApp(a) {
   const list = items => `<ul>${items.map(i => `<li>${esc(i)}</li>`).join('')}</ul>`;
   const demo = media(a);
@@ -760,10 +769,10 @@ function renderApp(a) {
         </div>
         <p class="app-desc">${esc(tr(a, 'desc'))}</p>
         <ul class="app-meta">
-          <li>${isWindows || (isMac && a.macInstall) || (isLinux && a.linuxFile) || (isAndroid && a.androidFile) ? `<i class="ok">✓</i>${T('Работает на этом устройстве')}` : `<i>!</i>${T(a.macInstall ? 'Только для Windows и Mac' : a.linuxFile ? 'Только для Windows и Linux' : a.androidFile ? 'Только для Windows и Android' : 'Только для Windows')}`}</li>
-          ${size ? `<li><i>↓</i>${T(a.portable ? '{size}, установка не нужна' : '{size} после установки', { size: esc(size) })}</li>` : ''}
-          ${authorText(a) ? `<li><i>@</i><span>${authorText(a)}</span></li>` : ''}
-          ${a.community ? `<li><i>!</i>${T('Программу добавил участник. Админ проверил заявку, но файл вы скачиваете на свой риск.')}</li>` : ''}
+          <li>${isWindows || (isMac && a.macInstall) || (isLinux && a.linuxFile) || (isAndroid && a.androidFile) ? `${metaIcon('ok')}${T('Работает на этом устройстве')}` : `${metaIcon('warn')}${T(a.macInstall ? 'Только для Windows и Mac' : a.linuxFile ? 'Только для Windows и Linux' : a.androidFile ? 'Только для Windows и Android' : 'Только для Windows')}`}</li>
+          ${size ? `<li>${metaIcon('down')}${T(a.portable ? '{size}, установка не нужна' : '{size} после установки', { size: esc(size) })}</li>` : ''}
+          ${authorText(a) ? `<li>${metaIcon('at')}<span>${authorText(a)}</span></li>` : ''}
+          ${a.community ? `<li>${metaIcon('warn')}${T('Программу добавил участник. Админ проверил заявку, но файл вы скачиваете на свой риск.')}</li>` : ''}
         </ul>
         ${a.androidFile ? (isAndroid ? androidButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + androidButton(a)) : a.linuxFile ? (isLinux ? linuxButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + linuxButton(a)) : !a.macInstall ? download(a, 'btn primary') : isMac ? macButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + macButton(a)}
         ${desktop ? removeButton(a) : ''}
