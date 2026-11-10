@@ -506,7 +506,7 @@ export function setupSocial(ctx) {
     const my = ++seq;
     document.title = `${T('Лента')} — ${T('Яйца Cloud')}`;
     // При смене сортировки старый список стоит на месте, пока не придёт новый: страница не прыгает.
-    const bar = view.querySelector('.r-sorts');
+    const bar = view.querySelector('.r-feedbar .r-sorts'); // только лента: такие же кнопки есть в «Сообществе»
     if (bar) bar.querySelectorAll('.r-sort').forEach(a => a.setAttribute('aria-current', a.getAttribute('href').replace(/^#feed\/?/, '') === (sort === 'hot' ? '' : sort) ? 'page' : 'false'));
     else view.innerHTML = feedShell(sort, `<p class="empty r-note">${T('Загрузка…')}</p>`, '');
     let list;
