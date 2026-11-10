@@ -149,6 +149,7 @@ export const EN = {
   'Открыть {name}': 'Open {name}',
   'Все программы бесплатные. Без подписки.': 'All programs are free. No subscription.',
   'Ставьте и обновляйте их в один клик в приложении для Windows.': 'Install and update them in one click with the Windows app.',
+  'Лента, чаты и уведомления в приложении для Android.': 'Feed, chats and notifications in the Android app.',
   'Все приложения': 'All apps',
   'Другие проекты': 'Other projects',
   'Другие наши проекты': 'Our other projects',

@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=63';
+import { EN, TERMS } from './i18n.js?v=64';
 import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=44';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -690,6 +690,8 @@ const projectCard = p => `
 const promo = () => {
   const a = apps.find(x => x.id === 'yaytsa-cloud');
   const app = a && !desktop && /Windows/.test(navigator.userAgent);
+  // С телефона на Android (не из самого приложения) предлагаем APK.
+  const phone = a && a.androidFile && isAndroid && !android;
   return `
   <article class="card promo">
     <div class="card-head">
@@ -702,6 +704,11 @@ const promo = () => {
         <a class="link" href="#app/${esc(a.id)}">${T('Подробнее')}</a>
         ${editLink('apps', a)}
         ${download(a)}
+      </div>` : phone ? `
+      <p>${T('Лента, чаты и уведомления в приложении для Android.')}</p>
+      <div class="card-foot">
+        <a class="link" href="#app/${esc(a.id)}">${T('Подробнее')}</a>
+        ${androidButton(a)}
       </div>` : ''}
     <div class="eggs" aria-hidden="true">
       ${['#6FA8FF', '#FFB347', '#A58BFF', '#FF6F91', '#FFFFFF', '#6BE3B4', '#5ED0F0', '#FF8A5B', '#FFC531']
