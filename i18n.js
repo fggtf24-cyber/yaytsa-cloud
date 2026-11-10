@@ -481,6 +481,7 @@ export const EN = {
   'Сортировка:': 'Sort by:',
   'Лучшие': 'Best',
   'Новые': 'New',
+  'Популярные': 'Popular',
   'Старые': 'Old',
   'Вы смотрите одну ветку.': 'You are viewing a single thread.',
   'Показать все комментарии': 'View all comments',

@@ -295,7 +295,7 @@ export function setupSocial(ctx) {
       <div class="r-vote${v > 0 ? ' up' : v < 0 ? ' down' : ''}" data-vote-box="${esc(key)}" data-base="${(score || 0) - v}">
         <button type="button" class="r-arrow" data-vote="${kind}" data-id="${esc(id)}" data-dir="1" aria-pressed="${v > 0}" aria-label="${T('Голос за')}">${ICON.up}</button>
         <span class="r-score">${fmt(score || 0)}</span>
-        <button type="button" class="r-arrow" data-vote="${kind}" data-id="${esc(id)}" data-dir="-1" aria-pressed="${v < 0}" aria-label="${T('Голос против')}">${ICON.down}</button>
+        ${kind === 'a' ? '' : `<button type="button" class="r-arrow" data-vote="${kind}" data-id="${esc(id)}" data-dir="-1" aria-pressed="${v < 0}" aria-label="${T('Голос против')}">${ICON.down}</button>`}
       </div>`;
   }
 
@@ -321,8 +321,11 @@ export function setupSocial(ctx) {
     try {
       const batch = F().writeBatch(ctx.db);
       batch.set(ref('votes', `${key}_${me()}`), { uid: me(), kind, target: id, v: after });
-      batch.update(ref(kind === 'p' ? 'posts' : 'tcomments', id), { score: F().increment(after - before) });
+      // У программы (a) только лайк, а счёт лежит отдельно: каталог правит один админ.
+      if (kind === 'a') batch.set(ref('applikes', id), { n: F().increment(after - before) }, { merge: true });
+      else batch.update(ref(kind === 'p' ? 'posts' : 'tcomments', id), { score: F().increment(after - before) });
       await batch.commit();
+      if (kind === 'a') ctx.onAppLike?.(id, after - before);
       const item = kind === 'p' ? thread?.post?.id === id && thread.post : thread?.comments.find(c => c.id === id);
       if (item) item.score = (item.score || 0) + after - before;
     } catch (e) {
@@ -2413,6 +2416,7 @@ export function setupSocial(ctx) {
     updatePublic,
     isImage: url => DATA_IMAGE.test(url || ''),
     loadPeople,
+    likeBox: (appId, n) => voteBox('a', appId, n),
     uidsByNames,
     handleOf: handle,
     nameOf: uid => (people.get(uid) ? shownName(uid) : ''),

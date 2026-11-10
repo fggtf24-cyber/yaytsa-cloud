@@ -255,6 +255,21 @@ await ok('админ банит модератора', ban(admin, 'alice'));
 await ok('админ снимает модератора', deleteDoc(doc(admin, 'mods', 'bob')));
 await no('бывший модератор больше не банит', ban(bob, 'carol'));
 
+// Лайки программ: свой голос a_<программа>_<uid> и счётчик applikes/<программа> меняются вместе.
+await env.withSecurityRulesDisabled(c => setDoc(doc(c.firestore(), 'apps', 'va'), { name: 'V', community: true }));
+const like = (db, uid, v, d, app = 'va') => { const b = writeBatch(db);
+  b.set(doc(db, 'votes', `a_${app}_${uid}`), { uid, kind: 'a', target: app, v });
+  b.set(doc(db, 'applikes', app), { n: increment(d) }, { merge: true }); return b.commit(); };
+await ok('лайк программы', like(alice, 'alice', 1, 1));
+await no('лайк дважды накручивает', like(alice, 'alice', 1, 1));
+await no('дизлайк программы', like(bob, 'bob', -1, -1));
+await no('счётчик без голоса', setDoc(doc(bob, 'applikes', 'va'), { n: 5 }));
+await no('лайк несуществующей программы', like(bob, 'bob', 1, 1, 'nope'));
+await ok('второй лайк', like(bob, 'bob', 1, 1));
+await ok('снять лайк', like(alice, 'alice', 0, -1));
+await ok('счётчик читают все', getDoc(doc(anon, 'applikes', 'va')));
+await env.withSecurityRulesDisabled(async c => assert.equal((await getDoc(doc(c.firestore(), 'applikes', 'va'))).data().n, 1));
+
 await env.cleanup();
 assert.ok(n > 30);
 console.log(`\nвсе проверки прошли: ${n}`);

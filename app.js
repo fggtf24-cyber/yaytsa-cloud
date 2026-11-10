@@ -1,5 +1,5 @@
-import { EN, TERMS } from './i18n.js?v=60';
-import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=39';
+import { EN, TERMS } from './i18n.js?v=61';
+import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=40';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -480,6 +480,7 @@ const social = setupSocial({
   notify: (...args) => notify(...args),
   drawInboxCount: () => drawInboxCount(),
   drawRail: () => drawRail(),
+  onAppLike: (id, d) => { likes[id] = (likes[id] || 0) + d; },
 });
 
 /* ---------- Приложения ---------- */
@@ -641,6 +642,7 @@ const card = a => `
     ${authorLine(a)}
     <p>${esc(tr(a, 'desc'))}</p>
     <div class="card-foot">
+      ${a.community ? social.likeBox(a.id, likes[a.id]) : ''}
       <a class="link" href="#app/${esc(a.id)}" aria-label="${T('Подробнее о {name}', { name: esc(nm(a)) })}">${T('Подробнее')}</a>
       ${siteLink(a)}
       ${editLink('apps', a)}
@@ -703,6 +705,14 @@ function renderApps() {
   const onCommunity = cat === COMMUNITY_TAB;
   const onAuthors = cat === AUTHORS_TAB;
   const list = (onProjects ? projects : apps.filter(a => !!a.community === onCommunity)).filter(found);
+  if (onCommunity) {
+    list.sort(communitySort === 'top' ? (a, b) => (likes[b.id] || 0) - (likes[a.id] || 0) || addedAt(b) - addedAt(a) : (a, b) => addedAt(b) - addedAt(a));
+    if (realAdmin) fillAddedAt();
+  }
+  const sorts = onCommunity && list.length ? `
+      <div class="r-sorts app-sorts" role="group" aria-label="${T('Сортировка')}">
+        ${[['new', 'Новые'], ['top', 'Популярные']].map(([id, label]) => `<button type="button" class="r-sort" data-csort="${id}" aria-current="${id === communitySort ? 'page' : 'false'}">${T(label)}</button>`).join('')}
+      </div>` : '';
   const tabs = [['all', T('Все приложения')], [COMMUNITY_TAB, T('Сообщество')], [AUTHORS_TAB, T('Топ авторов')], [PROJECTS_TAB, T('Другие проекты')]];
   // В «Сообществе» программу предлагает любой, в остальных вкладках запись сразу добавляет админ.
   const add = onCommunity ? `<a class="btn tabs-add" href="#publish">${T('Добавить программу')}</a>`
@@ -716,6 +726,7 @@ function renderApps() {
     </div>
     <section class="section">
       <h1>${T(onProjects ? 'Другие наши проекты' : onCommunity ? 'Программы сообщества' : onAuthors ? 'Топ авторов' : 'Программы с яйцами')}</h1>
+      ${sorts}
       ${onAuthors ? `<p class="empty top-note">${T('По скачиваниям всех программ автора. Соавторам скачивания тоже засчитываются.')}</p>${authorsList(q)}`
       : list.length
         ? `<div class="grid">${cat === 'all' && !q ? promo() + list.filter(a => a.id !== 'yaytsa-cloud').map(card).join('') : list.map(onProjects ? projectCard : card).join('')}</div>`
@@ -1394,7 +1405,7 @@ async function decide(id, approve) {
   if (!s || reason === null) return;
   const { id: _id, selfie: _selfie, selfiePublic: _public, uid, status: _status, createdAt: _createdAt, reason: _reason, ...fields } = s;
   const batch = fs.writeBatch(db);
-  if (approve) batch.set(fs.doc(db, 'apps', id), { ...fields, authorUid: uid, community: true });
+  if (approve) batch.set(fs.doc(db, 'apps', id), { ...fields, authorUid: uid, community: true, addedAt: fs.serverTimestamp() });
   batch.update(fs.doc(db, 'submissions', id), { status: approve ? 'approved' : 'rejected', reason: reason.trim().slice(0, 300) });
   await batch.commit();
   notify('mod', id, uid, approve ? id : '', reason.trim() ? `${s.name}: ${reason.trim()}` : s.name);
@@ -1432,8 +1443,32 @@ async function loadContent() {
   sendCatalog();
   projects = merge(PROJECTS, p);
   people.forEach(d => { authors[d.id] = d.data(); });
-  await Promise.all([social.loadPeople(apps.flatMap(authorUids)), loadDownloads()]);
+  await Promise.all([social.loadPeople(apps.flatMap(authorUids)), loadDownloads(), loadLikes()]);
   contentState = 'ready';
+}
+
+// Лайки программ сообщества: applikes/<id программы> = { n }. Свой лайк — votes/a_<id>_<uid>, как у постов.
+let likes = {};
+let communitySort = 'new'; // new — по дате выхода, top — по лайкам
+async function loadLikes() {
+  try { (await fs.getDocs(fs.collection(db, 'applikes'))).forEach(d => { likes[d.id] = d.data().n || 0; }); }
+  catch (e) { console.error(e); } // правила ещё не опубликованы: лайков просто не видно
+}
+
+// Дата выхода — когда программу одобрили. У одобренных раньше её нет: браузер админа берёт время заявки.
+const addedAt = a => a.addedAt?.toMillis?.() || 0;
+let addedFilled = false;
+async function fillAddedAt() {
+  if (addedFilled) return;
+  addedFilled = true;
+  for (const a of apps.filter(x => x.community && !x.addedAt)) {
+    try {
+      const s = await fs.getDoc(fs.doc(db, 'submissions', a.id));
+      const at = s.data()?.createdAt || fs.Timestamp.now();
+      await fs.updateDoc(fs.doc(db, 'apps', a.id), { addedAt: at });
+      a.addedAt = at;
+    } catch (e) { console.error(e); }
+  }
 }
 
 // Скачивания по программам, открыты всем: из них топ авторов и цифры в профиле.
@@ -2187,6 +2222,7 @@ view.addEventListener('click', e => {
   const t = e.target.closest('button, a');
   if (!t) return;
   if (t.dataset.cat) { cat = t.dataset.cat; renderApps(); }
+  if (t.dataset.csort) { communitySort = t.dataset.csort; renderApps(); }
   else if (t.dataset.mode) { authMode = t.dataset.mode; renderAccount(); }
   else if (t.dataset.dt) {
     const id = t.dataset.dtId;

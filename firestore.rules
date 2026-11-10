@@ -291,7 +291,14 @@ service cloud.firestore {
             == get(/databases/$(database)/documents/posts/$(target)).data.score + after - before)
         || (kind == 'c'
           && getAfter(/databases/$(database)/documents/tcomments/$(target)).data.score
-            == get(/databases/$(database)/documents/tcomments/$(target)).data.score + after - before);
+            == get(/databases/$(database)/documents/tcomments/$(target)).data.score + after - before)
+        || (kind == 'a'
+          && getAfter(/databases/$(database)/documents/applikes/$(target)).data.n
+            == likesOf(target) + after - before);
+    }
+    function likesOf(appId) {
+      let path = /databases/$(database)/documents/applikes/$(appId);
+      return exists(path) ? get(path).data.n : 0;
     }
     // Свой первый голос: пост или комментарий создаётся в этой же пачке записей со счётом 1.
     function isNewOwnItem(kind, target) {
@@ -302,19 +309,30 @@ service cloud.firestore {
       return getAfter(/databases/$(database)/documents/votes/$(kind + '_' + target + '_' + request.auth.uid)).data.v == 1;
     }
     // Голос: один на человека, -1, 0 или 1. Меняется только вместе со счётом поста или комментария.
+    // За программу (a) — только лайк, 0 или 1, и только за ту, что есть в каталоге.
     match /votes/{id} {
       allow read: if signedIn() && resource.data.uid == request.auth.uid;
       allow create, update: if signedIn() && !restricted()
         && request.resource.data.keys().hasOnly(['uid', 'kind', 'target', 'v'])
         && request.resource.data.uid == request.auth.uid
-        && request.resource.data.kind in ['p', 'c']
+        && request.resource.data.kind in ['p', 'c', 'a']
         && request.resource.data.target is string
-        && request.resource.data.v in [-1, 0, 1]
+        && request.resource.data.v in (request.resource.data.kind == 'a' ? [0, 1] : [-1, 0, 1])
+        && (request.resource.data.kind != 'a' || exists(/databases/$(database)/documents/apps/$(request.resource.data.target)))
         && id == request.resource.data.kind + '_' + request.resource.data.target + '_' + request.auth.uid
-        && ((resource == null && request.resource.data.v == 1
+        && ((resource == null && request.resource.data.v == 1 && request.resource.data.kind != 'a'
             && isNewOwnItem(request.resource.data.kind, request.resource.data.target))
           || scoreFollows(request.resource.data.kind, request.resource.data.target,
             resource == null ? 0 : resource.data.v, request.resource.data.v));
+    }
+
+    // Сколько лайков у программы. Меняется только на сдвиг своего голоса a_<программа>_<uid> в той же пачке.
+    match /applikes/{id} {
+      allow read: if true;
+      allow create, update: if signedIn() && !restricted()
+        && request.resource.data.keys().hasOnly(['n'])
+        && request.resource.data.n is int
+        && request.resource.data.n == likesOf(id) + voteDelta('a', id);
     }
 
     // Пост на странице автора. appId — необязательная привязка к программе.
