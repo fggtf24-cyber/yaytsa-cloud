@@ -1,5 +1,5 @@
-import { EN, TERMS } from './i18n.js?v=65';
-import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=44';
+import { EN, TERMS } from './i18n.js?v=66';
+import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=45';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -475,6 +475,7 @@ const social = setupSocial({
   get lang() { return lang; },
   get apps() { return apps; },
   get authState() { return authState; },
+  get birthday() { return profile.birthday || ''; },
   authorApps: uid => authorApps(uid),
   route: () => route(),
   render: () => render(),
@@ -2376,6 +2377,7 @@ view.addEventListener('submit', e => {
     const name = f.name.value.trim();
     return attempt(async () => {
       await social.saveIdentity({ username: f.username.value, bio: f.bio.value, name: name || myName(), photo: myPhoto(), links: social.readLinks(e.target) });
+      await social.syncBirthday(f.birthday.value);
       await saveProfile({ name, birthday: f.birthday.value });
     });
   }

@@ -280,6 +280,13 @@ await no('кривая дата',setDoc(doc(alice, 'users', 'alice'), { birthday
 await no('чужой день рождения не прочитать', getDoc(doc(bob, 'users', 'alice')));
 await no('чужой день рождения не записать', setDoc(doc(bob, 'users', 'alice'), { birthday: '2001-01-01' }, { merge: true }));
 
+// Открытый день рождения в публичном профиле: только ММ-ДД.
+await ok('открыть день рождения', updateDoc(doc(alice, 'profiles', 'alice'), { birthday: '11-10' }));
+await ok('публичный день рождения видят все', getDoc(doc(anon, 'profiles', 'alice')));
+await no('год в публичном профиле', updateDoc(doc(alice, 'profiles', 'alice'), { birthday: '2001-11-10' }));
+await ok('скрыть день рождения', updateDoc(doc(alice, 'profiles', 'alice'), { birthday: deleteField() }));
+await no('чужой публичный день рождения', updateDoc(doc(bob, 'profiles', 'alice'), { birthday: '01-01' }));
+
 // Лайки программ: свой голос a_<программа>_<uid> и счётчик applikes/<программа> меняются вместе.
 await env.withSecurityRulesDisabled(c => setDoc(doc(c.firestore(), 'apps', 'va'), { name: 'V', community: true }));
 const like = (db, uid, v, d, app = 'va') => { const b = writeBatch(db);

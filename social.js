@@ -929,6 +929,7 @@ export function setupSocial(ctx) {
           </div>
         </div>
         ${p.bio ? `<p class="r-card-text">${rich(p.bio)}</p>` : ''}
+        ${birthdayLine(p)}
         <div class="r-author-actions">
           ${uid === me() ? `<a class="r-pill ghost wide" href="#account">${T('Изменить профиль')}</a>` : `${followBtn(uid, 'wide')}${writeBtn(uid, p, ' wide')}`}
         </div>
@@ -1076,6 +1077,7 @@ export function setupSocial(ctx) {
         </div>
         ${!isMe && modMenu(uid) ? `<div class="r-pcard-mod">${modMenu(uid)}</div>` : ''}
         ${p.bio ? `<p class="r-card-text">${rich(p.bio)}</p>` : ''}
+        ${birthdayLine(p)}
         <div class="r-stats">
           ${stat(ins.length, 'Подписчики', `${base}/followers`)}
           ${stat(outs.length, 'Подписки', `${base}/following`)}
@@ -2096,6 +2098,13 @@ export function setupSocial(ctx) {
         <div class="edit-fields">
           ${select('dm', 'Кто может мне писать')}
           ${select('groups', 'Кто может добавлять меня в группы')}
+          <label class="field">${T('Кто видит мой день рождения')}
+            <select data-s-bday>
+              <option value="all"${pub.birthday ? ' selected' : ''}>${T('Все')}</option>
+              <option value="none"${pub.birthday ? '' : ' selected'}>${T('Только я')}</option>
+            </select>
+            <small class="r-hint">${T('Другим видно только число и месяц, без года.')}</small>
+          </label>
         </div>
       </section>`;
   }
@@ -2108,6 +2117,47 @@ export function setupSocial(ctx) {
       remember(me(), pub);
       ctx.toast(T('Настройки приватности сохранены.'));
     } catch (e) { fail(e); }
+  }
+
+  // День рождения открыт всем — в публичном профиле лежит ММ-ДД (без года). Скрыт — поля там нет.
+  // Сама дата живёт в приватном users/<uid>, её даёт app.js (ctx.birthday).
+  const monthDay = d => /(\d{2}-\d{2})$/.exec(d || '')?.[1] || '';
+
+  async function setBirthdayPublic(select) {
+    if (!pub) return;
+    const md = monthDay(ctx.birthday);
+    if (select.value === 'all' && !md) {
+      select.value = 'none';
+      ctx.toast(T('Сначала укажите день рождения в «Основном» и сохраните.'));
+      return;
+    }
+    try {
+      await F().updateDoc(ref('profiles', me()), { birthday: select.value === 'all' ? md : F().deleteField() });
+      if (select.value === 'all') pub.birthday = md;
+      else delete pub.birthday;
+      remember(me(), pub);
+      ctx.toast(T('Настройки приватности сохранены.'));
+    } catch (e) { fail(e); }
+  }
+
+  // Поменяли дату в профиле: если она открыта всем, обновляем и публичную копию.
+  async function syncBirthday(date) {
+    if (!pub?.birthday) return;
+    const md = monthDay(date);
+    await F().updateDoc(ref('profiles', me()), { birthday: md || F().deleteField() });
+    if (md) pub.birthday = md;
+    else delete pub.birthday;
+    remember(me(), pub);
+  }
+
+  // Строка в профиле: «🎂 10 ноября» или «Сегодня день рождения!».
+  function birthdayLine(p) {
+    const m = /^(\d{2})-(\d{2})$/.exec(p?.birthday || '');
+    if (!m) return '';
+    const now = new Date();
+    const today = now.getMonth() + 1 === +m[1] && now.getDate() === +m[2];
+    const date = new Date(2000, +m[1] - 1, +m[2]).toLocaleDateString(ctx.lang === 'en' ? 'en-US' : 'ru-RU', { day: 'numeric', month: 'long' });
+    return `<p class="r-sub r-bday">🎂 ${today ? T('Сегодня день рождения!') : T('День рождения: {date}', { date })}</p>`;
   }
 
   // Перед созданием группы и добавлением людей: все ли разрешают добавлять себя.
@@ -2359,6 +2409,7 @@ export function setupSocial(ctx) {
 
   view.addEventListener('change', e => {
     if (e.target.matches('[data-s-privacy]')) setPrivacy(e.target.dataset.sPrivacy, e.target.value);
+    if (e.target.matches('[data-s-bday]')) setBirthdayPublic(e.target);
     if (e.target.matches('[data-s-sort]')) { commentSort = e.target.value; drawPost(true); }
     if (e.target.matches('[data-attach]')) attach(e.target);
     if (e.target.matches('[data-chat-photo]')) sendChatPhoto(e.target);
@@ -2454,6 +2505,7 @@ export function setupSocial(ctx) {
     accountFields,
     netFields,
     privacyFields,
+    syncBirthday,
     loadRoles,
     roleTags,
     banOf,

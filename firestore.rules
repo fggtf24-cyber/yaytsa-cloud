@@ -236,7 +236,9 @@ service cloud.firestore {
     match /profiles/{uid} {
       allow read: if true;
       allow create, update: if signedIn() && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['username', 'name', 'photo', 'bio', 'banner', 'links', 'createdAt', 'dm', 'groups'])
+        && request.resource.data.keys().hasOnly(['username', 'name', 'photo', 'bio', 'banner', 'links', 'createdAt', 'dm', 'groups', 'birthday'])
+        // День рождения, открытый всем: только ММ-ДД, без года. Скрытый — поля нет.
+        && request.resource.data.get('birthday', '01-01').matches('^[0-9]{2}-[0-9]{2}$')
         && request.resource.data.username is string
         && request.resource.data.username.matches('^[a-z0-9_]{1,20}$')
         && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == uid
