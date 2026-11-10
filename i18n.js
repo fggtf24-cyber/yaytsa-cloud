@@ -370,6 +370,8 @@ export const EN = {
   'Светлая тема': 'Light theme',
   'Тёмная тема': 'Dark theme',
   'Гифка слишком большая: можно до 580 КБ.': 'The GIF is too large: the limit is 580 KB.',
+  'Не получилось загрузить фото поста, можно изменить только текст.': 'Could not load the post photos, only the text can be edited.',
+  'Фото ещё загружаются, подождите секунду.': 'Photos are still loading, wait a second.',
   '[картинка]': '[image]',
 
   // Профиль

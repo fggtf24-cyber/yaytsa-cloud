@@ -1010,10 +1010,10 @@ html.in-app::-webkit-scrollbar-corner, html.in-app *::-webkit-scrollbar-corner {
 .r-field-body .attach-preview img { width: 36px; height: 36px; }
 
 /* Стикеры */
-.sticker-panel { width: 312px; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.sticker-panel { width: 360px; grid-template-columns: repeat(4, 1fr); gap: 4px; }
 .sticker-panel button { padding: 4px; }
 .sticker-panel img { display: block; width: 100%; height: 100%; }
-.c-sticker { display: block; width: 128px; height: 128px; margin: 2px 0; }
+.c-sticker { display: block; width: 160px; height: 160px; margin: 2px 0; }
 
 /* В сети и галочки */
 .r-msg-line { display: flex; align-items: flex-end; gap: 6px; }
@@ -1056,7 +1056,12 @@ html.in-app::-webkit-scrollbar-corner, html.in-app *::-webkit-scrollbar-corner {
 .r-msg-gap { width: 28px; }
 .r-msg .r-ava { --s: 28px !important; }
 .r-msg .r-meta { font-size: 12px; }
-.r-msg .c-sticker { width: 104px; height: 104px; }
+.r-msg .c-sticker { width: 168px; height: 168px; }
+/* Сообщение из 1–3 эмодзи — крупно и без пузыря, как в Телеграме */
+.r-bubble.emoji .r-msg-text { display: block; padding: 0; line-height: 1.15; }
+.r-bubble.e1 .r-msg-text { font-size: 76px; }
+.r-bubble.e2 .r-msg-text { font-size: 56px; }
+.r-bubble.e3 .r-msg-text { font-size: 44px; }
 .r-room .r-chat-form { width: calc(100% - 32px); max-width: 600px; margin-left: auto; margin-right: auto; }
 .r-day { margin: 8px 0 4px; }
 .r-chat-item { padding: 7px 10px; gap: 10px; }
@@ -1135,7 +1140,7 @@ html { -webkit-tap-highlight-color: transparent; }
   input, textarea, select { font-size: 16px !important; }
   .tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
   .tabs button { flex: none; }
-  .sticker-panel { width: min(312px, calc(100vw - 104px)); }
+  .sticker-panel { width: min(360px, calc(100vw - 104px)); }
   .r-chat { height: calc(100dvh - var(--top-h) - 72px); min-height: 0; }
   /* Открытая переписка на весь экран, как в мессенджерах: шапка и меню не отнимают место у клавиатуры */
   .r-chat.has-room { position: fixed; inset: 0; z-index: 26; height: 100dvh; background: var(--panel); }

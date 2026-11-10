@@ -362,8 +362,15 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time;
       allow update: if signedIn() && (
         (resource.data.uid == request.auth.uid
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body', 'editedAt'])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body', 'editedAt', 'imageRatio', 'images'])
           && str(request.resource.data.body, 0, 10000)
+          // При правке можно поменять фото: те же условия, что при создании.
+          && (!('images' in request.resource.data)
+            || (request.resource.data.images is int && request.resource.data.images >= 2 && request.resource.data.images <= 10
+              && 'imageRatio' in request.resource.data))
+          && request.resource.data.get('imageRatio', 1) is number
+          && (!('imageRatio' in request.resource.data)
+            || getAfter(/databases/$(database)/documents/postimages/$(id)).data.uid == request.auth.uid)
           && request.resource.data.editedAt == request.time)
         || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['score'])
           && request.resource.data.score == resource.data.score + voteDelta('p', id))
@@ -379,6 +386,13 @@ service cloud.firestore {
       allow read: if true;
       allow create: if signedIn()
         && id.matches('^[A-Za-z0-9]+(_[1-9])?$')
+        && request.resource.data.keys().hasOnly(['uid', 'image'])
+        && request.resource.data.uid == request.auth.uid
+        && str(request.resource.data.image, 1, 800000)
+        && getAfter(postOf(id)).data.uid == request.auth.uid;
+      // Автор перезаписывает фото, когда правит пост.
+      allow update: if signedIn()
+        && resource.data.uid == request.auth.uid
         && request.resource.data.keys().hasOnly(['uid', 'image'])
         && request.resource.data.uid == request.auth.uid
         && str(request.resource.data.image, 1, 800000)

@@ -147,6 +147,17 @@ await no('images без imageRatio', (() => { const b = writeBatch(alice);
 await no('фото к чужому посту по суффиксу', setDoc(doc(bob, 'postimages', 'pm3_5'), { uid: 'bob', image: 'x' }));
 await no('кривой суффикс', setDoc(doc(alice, 'postimages', 'pm3_x'), { uid: 'alice', image: 'x' }));
 await no('чужое второе фото не удалить', deleteDoc(doc(bob, 'postimages', 'pm3_1')));
+// Правка фото в посте
+await ok('пост для правки', multiPost(alice, 'pe3', 'alice', 3));
+await ok('правка: два фото вместо трёх', (async () => { const b = writeBatch(alice);
+  b.set(doc(alice, 'postimages', 'pe3'), { uid: 'alice', image: 'data:image/png;base64,BB' });
+  b.delete(doc(alice, 'postimages', 'pe3_2'));
+  b.update(doc(alice, 'posts', 'pe3'), { body: 'y', images: 2, imageRatio: 1, editedAt: serverTimestamp() }); return b.commit(); })());
+await no('правка: images = 1', updateDoc(doc(alice, 'posts', 'pe3'), { images: 1, editedAt: serverTimestamp() }));
+await no('чужое фото не перезаписать', setDoc(doc(bob, 'postimages', 'pe3'), { uid: 'bob', image: 'x' }));
+await ok('правка: убрать все фото', (async () => { const b = writeBatch(alice);
+  b.delete(doc(alice, 'postimages', 'pe3')); b.delete(doc(alice, 'postimages', 'pe3_1'));
+  b.update(doc(alice, 'posts', 'pe3'), { images: deleteField(), imageRatio: deleteField(), editedAt: serverTimestamp() }); return b.commit(); })());
 await ok('после удаления поста фото чистит любой', (async () => { await deleteDoc(doc(alice, 'posts', 'pm3')); return deleteDoc(doc(bob, 'postimages', 'pm3_2')); })());
 
 // Заявка и селфи

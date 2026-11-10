@@ -209,6 +209,13 @@ export function setupSocial(ctx) {
       <div class="pop emoji-panel sticker-panel">${STICKERS.map(id => `<button type="button" data-sticker="${id}" aria-label="${T('Стикер')}"><img src="assets/stickers/${id}.svg" alt="" loading="lazy"></button>`).join('')}</div>
     </details>`;
 
+  // Сообщение только из эмодзи показываем крупно, как в Телеграме: чем их меньше, тем крупнее (до 3 штук).
+  const EMOJI_RE = /^(?:\p{Extended_Pictographic}|\p{Regional_Indicator})/u;
+  const graphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+  function emojiOnly(text) {
+    const parts = [...graphemes.segment(text.replace(/\s+/g, ''))].map(x => x.segment);
+    return parts.length <= 3 && parts.length && parts.every(x => EMOJI_RE.test(x)) ? parts.length : 0;
+  }
   const stickerTag = id => (STICKERS.includes(id) ? `<img class="c-sticker" src="assets/stickers/${id}.svg" alt="${T('Стикер')}">` : '');
 
   // Стикер уходит сразу по нажатию, как в мессенджерах.
@@ -845,6 +852,7 @@ export function setupSocial(ctx) {
     return `
       <form class="r-composer open" data-s-form="edit-${kind}" data-id="${esc(id)}">
         <textarea name="text" rows="5" maxlength="${kind === 'post' ? 10000 : 5000}" ${optional ? '' : 'required'} data-suggest="@" aria-label="${T('Текст')}">${esc(text)}</textarea>
+        ${kind === 'post' ? attachBar(false, true) : ''}
         <div class="r-composer-bar">
           <button type="button" class="r-pill ghost" data-s-cancel-edit>${T('Отмена')}</button>
           <button class="r-pill primary">${T('Сохранить')}</button>
@@ -855,11 +863,10 @@ export function setupSocial(ctx) {
   async function saveEdit(form) {
     const text = form.elements.text.value.trim();
     const kind = form.dataset.sForm === 'edit-post' ? 'post' : 'comment';
+    if (form.dataset.loading !== undefined) return ctx.toast(T('Фото ещё загружаются, подождите секунду.'));
     try {
-      if (kind === 'post') {
-        await F().updateDoc(ref('posts', thread.post.id), { body: text, editedAt: F().serverTimestamp() });
-        Object.assign(thread.post, { body: text, editedAt: true });
-      } else {
+      if (kind === 'post') await savePostEdit(form, text);
+      else {
         const c = thread.comments.find(x => x.id === form.dataset.id);
         if (!text && !c.image && !c.sticker) return;
         await F().updateDoc(ref('tcomments', c.id), { body: text, editedAt: F().serverTimestamp() });
@@ -867,6 +874,56 @@ export function setupSocial(ctx) {
       }
       drawPost(true);
     } catch (e) { fail(e); }
+  }
+
+  // Фото поста при правке: меняем только те, что поменялись, лишние стираем.
+  const postImageId = (id, i) => (i ? `${id}_${i}` : id);
+  async function savePostEdit(form, text) {
+    const { post } = thread;
+    if (!form.querySelector('.attach')) {
+      await F().updateDoc(ref('posts', post.id), { body: text, editedAt: F().serverTimestamp() });
+      return Object.assign(post, { body: text, editedAt: true });
+    }
+    const images = [...form.querySelectorAll('[name=image]')].map(i => i.value).filter(Boolean).slice(0, MAX_IMAGES);
+    const had = post.imageRatio ? Math.min(MAX_IMAGES, post.images || 1) : 0;
+    const size = images.length && await imageSize(images[0]);
+    const ratio = images.length ? +(size.width / size.height).toFixed(3) : 0;
+    const batch = F().writeBatch(ctx.db);
+    images.forEach((image, i) => {
+      const id = postImageId(post.id, i);
+      if (i >= had || mediaFiles.get(`post/${id}`) !== image) batch.set(ref('postimages', id), { uid: me(), image });
+    });
+    for (let i = images.length; i < had; i++) batch.delete(ref('postimages', postImageId(post.id, i)));
+    batch.update(ref('posts', post.id), {
+      body: text, editedAt: F().serverTimestamp(),
+      imageRatio: ratio || F().deleteField(),
+      images: images.length > 1 ? images.length : F().deleteField(),
+    });
+    await batch.commit();
+    images.forEach((image, i) => mediaFiles.set(`post/${postImageId(post.id, i)}`, image));
+    Object.assign(thread.post, { body: text, editedAt: true, imageRatio: ratio || 0, images: images.length > 1 ? images.length : 0 });
+    if (!ratio) delete thread.post.imageRatio;
+  }
+
+  // В форму правки подставляем уже загруженные фото поста, а сами кадры под ней прячем.
+  async function startPostEdit() {
+    const { post } = thread;
+    const body = document.getElementById('r-post-body');
+    body.innerHTML = editForm('post', post.id, post.body || '');
+    body.parentElement.querySelector(':scope > .r-media, :scope > .r-gallery')?.setAttribute('hidden', '');
+    const list = body.querySelector('.attach-list');
+    const form = list.closest('form');
+    form.dataset.loading = '';
+    const n = post.imageRatio ? Math.min(MAX_IMAGES, post.images || 1) : 0;
+    const urls = await Promise.all(Array.from({ length: n }, async (_, i) => {
+      const key = `post/${postImageId(post.id, i)}`;
+      if (!mediaFiles.has(key)) mediaFiles.set(key, (await F().getDoc(ref('postimages', postImageId(post.id, i))).catch(() => null))?.data()?.image || '');
+      return mediaFiles.get(key);
+    }));
+    // Не загрузилось хоть одно фото — правим только текст, иначе при сохранении фото пропали бы.
+    if (!urls.every(u => DATA_IMAGE.test(u))) { list.closest('.attach').remove(); delete form.dataset.loading; ctx.toast(T('Не получилось загрузить фото поста, можно изменить только текст.')); return; }
+    list.insertAdjacentHTML('afterbegin', urls.map(u => attachItem(u)).join(''));
+    delete form.dataset.loading;
   }
 
   // Стирает текст и картинку, ветка остаётся: на комментарий могли ответить.
@@ -1757,6 +1814,7 @@ export function setupSocial(ctx) {
     let html = '';
     let prev = null;
     let lastDay = '';
+    const big = m => (m.text && !m.media && !m.sticker ? emojiOnly(m.text) : 0);
     for (const m of roomMsgs) {
       const t = ms(m.createdAt) || Date.now();
       const d = new Date(t).toDateString();
@@ -1775,7 +1833,7 @@ export function setupSocial(ctx) {
               <button type="button" class="r-iconbtn" data-s-msg-del="${esc(m.id)}" title="${T('Удалить')}" aria-label="${T('Удалить')}">${ICON.trash}</button>
             </span>` : ''}
             ${roomGroup && !grouped && m.from !== me() ? `<div class="r-meta"><a class="r-user strong" href="${profileHref(m.from)}">${esc(shownName(m.from))}</a></div>` : ''}
-            <div class="r-bubble${m.text || m.media === 'voice' ? '' : ' sticker'}">
+            <div class="r-bubble${(m.text && !big(m)) || m.media === 'voice' ? '' : ' sticker'}${big(m) ? ` emoji e${big(m)}` : ''}">
               ${m.text ? `<span class="r-msg-text">${rich(m.text)}</span>` : ''}
               ${stickerTag(m.sticker)}
               ${m.media === 'image' ? `<div class="r-media" data-media="${esc(m.id)}" data-chat="${esc(roomId)}" style="aspect-ratio:${Math.min(3, Math.max(0.4, +m.ratio || 1))}"></div>` : ''}
@@ -2353,7 +2411,7 @@ export function setupSocial(ctx) {
     else if (d.sCancelEdit !== undefined) drawPost(true);
     else if (d.sEditPost !== undefined) {
       t.closest('details').open = false;
-      document.getElementById('r-post-body').innerHTML = editForm('post', thread.post.id, thread.post.body || '');
+      startPostEdit().catch(fail);
     }
     else if (d.sEditComment) {
       const c = thread.comments.find(x => x.id === d.sEditComment);
