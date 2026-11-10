@@ -1886,6 +1886,7 @@ export function setupSocial(ctx) {
         mediaFiles.set(`${roomId}/${mRef.id}`, media.data);
       }
       await batch.commit();
+      ctx.push?.('chat', roomId); // уведомление собеседнику на телефон, даже если у него всё закрыто
       if (!stopMsgs) openRoomStream();
     } catch (e) {
       if (!extra) input.value = text;

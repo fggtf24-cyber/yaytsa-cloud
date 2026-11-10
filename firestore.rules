@@ -109,7 +109,8 @@ service cloud.firestore {
         || (n.type in ['reply', 'like'] && get(/databases/$(database)/documents/comments/$(n.commentId)).data.uid == n.to);
     }
     match /notifications/{id} {
-      allow read: if request.auth != null && resource.data.to == request.auth.uid;
+      // Отправитель тоже читает своё уведомление: так сервер рассылки на телефоны (yaytsa-cloud-push) проверяет, что оно настоящее.
+      allow read: if request.auth != null && (resource.data.to == request.auth.uid || resource.data.from == request.auth.uid);
       allow create: if request.auth != null
         && request.resource.data.keys().hasOnly(['to', 'from', 'fromName', 'type', 'appId', 'commentId', 'text', 'createdAt', 'read'])
         && request.resource.data.from == request.auth.uid

@@ -2,11 +2,18 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content, viewport-fit=cover">
 <title>Яйца Cloud — все приложения</title>
 <meta name="description" content="Бесплатные программы для Windows: Smooth Cursor, VoiceType, Яйцечист, Яйца Таймер и другие.">
 <script>try { document.documentElement.dataset.theme = localStorage.getItem('theme') || 'dark'; } catch { /* приватный режим: тёмная */ }</script>
 <link rel="icon" href="assets/favicon.svg?v=4" type="image/svg+xml">
+<!-- Установка на экран «Домой»: на iPhone только так приходят уведомления -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Яйца Cloud">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0B0B0B">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -87,6 +94,6 @@
   <p><span data-t="Мы храним в браузере вход и настройки: без этого сайт не работает. Рекламы и слежки нет.">Мы храним в браузере вход и настройки: без этого сайт не работает. Рекламы и слежки нет.</span> <a class="link" href="#terms" data-t="Подробнее">Подробнее</a></p>
   <button type="button" id="cookie-ok" class="btn" data-t="Понятно">Понятно</button>
 </div>
-<script type="module" src="app.js?v=112"></script>
+<script type="module" src="app.js?v=113"></script>
 </body>
 </html>

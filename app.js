@@ -1,5 +1,5 @@
-import { EN, TERMS } from './i18n.js?v=67';
-import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=46';
+import { EN, TERMS } from './i18n.js?v=68';
+import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=47';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -477,6 +477,7 @@ const social = setupSocial({
   get authState() { return authState; },
   get birthday() { return profile.birthday || ''; },
   authorApps: uid => authorApps(uid),
+  push: (kind, id) => pushSend(kind, id),
   route: () => route(),
   render: () => render(),
   toast: text => toast(text),
@@ -518,13 +519,16 @@ if (host) {
 // Заголовок окна приложения красится в цвет сайта, а полоса прокрутки — в стиле сайта.
 function sendTheme() {
   // Цвет берём из переменной темы: у фона страницы плавный переход, и в первый момент он ещё старый.
-  host?.postMessage({ type: 'theme', bg: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim(), light: isLight() });
+  const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+  host?.postMessage({ type: 'theme', bg, light: isLight() });
+  // Полоса с часами у сайта на экране «Домой» (iPhone, Android) — тоже в цвет темы.
+  document.querySelector('meta[name=theme-color]')?.setAttribute('content', bg);
 }
+sendTheme();
 if (host) {
   // in-app — полосы прокрутки в стиле сайта; на телефоне их и так нет.
   if (desktop) document.documentElement.classList.add('in-app');
   document.getElementById('rail-settings').hidden = !desktop;
-  sendTheme();
 }
 // Сообщения, общие для обоих приложений: клик по уведомлению, ошибка, вход через Google из браузера.
 host?.addEventListener('message', ({ data }) => {
@@ -532,6 +536,66 @@ host?.addEventListener('message', ({ data }) => {
   else if (data.type === 'error') toast(data.text);
   else if (data.type === 'google-cred' && data.idToken) attempt(() => fb.signInWithCredential(auth, fb.GoogleAuthProvider.credential(data.idToken, data.accessToken || null)));
 });
+
+/* ---------- Уведомления на телефон и в браузер (Web Push) ---------- */
+// Рассылает сервер на Cloudflare (yaytsa-cloud-push). Тот, кто написал ответ или сообщение, сообщает ему id записи,
+// сервер проверяет её в базе и шлёт адресату. На iPhone работает у сайта, добавленного на экран «Домой» (iOS 16.4+).
+const PUSH = 'https://yaytsa-cloud-push.fggtf24.workers.dev';
+const PUSH_KEY = 'BAfvxfbfWiIrW66dJji5Sb1iy_1gSZjTJvkIbLKxXBpf5i2moye336KCS4Gw1IY8BovTfo9D3FnW0VOJW-TAM08';
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+// В приложениях для Windows и Android уведомления свои.
+const webPush = !host && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+if (!host && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+  navigator.serviceWorker.addEventListener('message', ({ data }) => { if (data?.type === 'go' && data.href) location.hash = data.href.replace(/^#/, ''); });
+}
+async function pushApi(path, data) {
+  if (!user) return;
+  const r = await fetch(PUSH + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: await user.getIdToken(), ...data }) });
+  if (!r.ok) throw new Error('push ' + r.status);
+}
+// Отправитель зовёт сервер после записи в базу: уведомление дойдёт, даже если у адресата всё закрыто.
+const pushSend = (kind, id) => { pushApi('/send', { kind, id }).catch(() => {}); };
+const pushSub = async () => (webPush ? (await navigator.serviceWorker.ready).pushManager.getSubscription() : null);
+// Вошёл в аккаунт — подписка этого устройства переходит к нему (и обновляется, если браузер её сменил).
+async function pushRelink() {
+  const sub = Notification.permission === 'granted' ? await pushSub() : null;
+  if (sub) await pushApi('/subscribe', { sub: sub.toJSON() });
+}
+async function setPush(on, perm) {
+  const reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  if (on) {
+    if ((await perm) !== 'granted') throw new Error('denied');
+    sub ||= await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: Uint8Array.from(atob(PUSH_KEY.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)) });
+  }
+  if (sub) await pushApi('/subscribe', { sub: sub.toJSON(), off: !on });
+  if (!on && sub) await sub.unsubscribe();
+}
+// Карточка в аккаунте: включить уведомления на этом устройстве.
+const pushCard = () => (host ? '' : `
+        <section class="edit-card" id="push-card">
+          <div class="edit-title"><h2>${T('Уведомления')}</h2><p>${T('Ответы, лайки и сообщения приходят на это устройство, даже когда сайт закрыт.')}</p></div>
+          <p class="msg" id="push-note" hidden></p>
+          <div class="edit-account-actions"><button type="button" class="btn" id="push-toggle" hidden></button></div>
+        </section>`);
+async function drawPush(note = '') {
+  const card = view.querySelector('#push-card');
+  if (!card) return;
+  const btn = card.querySelector('#push-toggle'), msg = card.querySelector('#push-note');
+  const say = t => { msg.textContent = t; msg.hidden = !t; };
+  if (isIOS && !standalone) {
+    btn.hidden = true;
+    return say(T('На iPhone: нажмите «Поделиться» → «На экран Домой» и откройте Яйца Cloud с экрана Домой. Там появится кнопка «Включить».'));
+  }
+  if (!webPush) { btn.hidden = true; return say(T('Этот браузер не умеет показывать уведомления.')); }
+  const on = Notification.permission === 'granted' && !!(await pushSub().catch(() => null));
+  btn.hidden = false;
+  btn.textContent = T(on ? 'Выключить' : 'Включить');
+  btn.dataset.on = on ? '1' : '';
+  say(note || (Notification.permission === 'denied' ? T('Уведомления запрещены. Разрешите их в настройках браузера или телефона для этого сайта.') : ''));
+}
 let installed = {}; // id -> { state: installed | update | busy, progress, open }, присылает приложение
 const desktopButton = (a, cls = 'btn') => {
   const s = installed[a.id];
@@ -912,7 +976,7 @@ function notify(type, commentId, to, appId, text = '') {
     text: text.slice(0, 120),
     createdAt: fs.serverTimestamp(),
     read: false,
-  }).catch(() => {}); // комментарий или лайк уже сохранён, без уведомления он не пострадает
+  }).then(() => pushSend('note', ref.id)).catch(() => {}); // комментарий или лайк уже сохранён, без уведомления он не пострадает
 }
 
 function watchNotifications(u) {
@@ -1633,6 +1697,7 @@ function renderAccount() {
             <button class="btn primary">${T('Сохранить')}</button>
           </div>
         </form>
+        ${pushCard()}
         <section class="edit-card edit-account">
           <div class="edit-title"><h2>${T('Аккаунт')}</h2><p id="who"></p></div>
           ${isAdmin ? `<p class="msg ok">${T('Вы админ: кнопки «Изменить» и «Добавить» есть в каталоге, цифры в разделе «Статистика».')}</p>` : ''}
@@ -1643,6 +1708,7 @@ function renderAccount() {
         </section>
       </section>`;
     view.querySelector('#who').textContent = user.email;
+    drawPush();
     view.querySelector('[name=name]').value = displayName();
     drawAvatar(view.querySelector('#big-avatar'));
     return;
@@ -2106,6 +2172,7 @@ async function initFirebase() {
       watchMessages(u);
       // Android-приложение само проверяет уведомления, пока закрыто: ему нужен вход (refreshToken живёт долго).
       android?.postMessage({ type: 'auth', uid: u?.uid || '', refresh: u?.refreshToken || '' });
+      if (u && webPush) pushRelink().catch(() => {});
       if (realAdmin) await syncAuthor().catch(console.error);
       if (u) {
         syncAccount(u).catch(console.error);
@@ -2346,7 +2413,22 @@ view.addEventListener('click', e => {
   }
   else if (t.id === 'photo-remove') attempt(() => saveProfile({ photo: '' }));
   else if (t.id === 'banner-remove') attempt(() => saveBanner(''));
-  else if (t.id === 'logout') attempt(() => fb.signOut(auth));
+  else if (t.id === 'logout') attempt(async () => {
+    // Устройство больше не получает уведомления этого аккаунта; разрешение браузера остаётся для следующего входа.
+    const sub = await pushSub().catch(() => null);
+    if (sub) await pushApi('/subscribe', { sub: sub.toJSON(), off: true }).catch(() => {});
+    await fb.signOut(auth);
+  });
+  else if (t.id === 'push-toggle') {
+    const on = !t.dataset.on;
+    // На iPhone разрешение спрашивают только прямо по нажатию, поэтому запрос — первым делом.
+    const perm = on ? Notification.requestPermission() : null;
+    t.disabled = true;
+    setPush(on, perm)
+      .then(() => drawPush(on ? T('Готово: уведомления будут приходить сюда.') : ''))
+      .catch(e => drawPush(e.message === 'denied' ? '' : T('Не получилось. Попробуйте ещё раз.')))
+      .finally(() => { t.disabled = false; });
+  }
   else if (t.matches('[data-pick-root]')) desktop?.postMessage({ type: 'pick-root', path: t.closest('form').querySelector('[data-root]').value });
   else if (t.id === 'google' && host) {
     host.postMessage({ type: 'google' });

@@ -183,6 +183,11 @@ await ok('после одобрения селфи видно анониму', g
 await ok('и другому пользователю', getDoc(doc(bob, 'selfies', 's1')));
 const note = (db, from, to, type, appId, id = 'n' + n) => setDoc(doc(db, 'notifications', id), { to, from, fromName: 'A', type, appId, commentId: 's1', text: 'App', createdAt: serverTimestamp(), read: false });
 await ok('админ шлёт решение', note(admin, 'adm', 'alice', 'mod', 's1'));
+// сервер рассылки на телефоны читает уведомление от имени отправителя
+await ok('уведомление для проверки чтения', note(admin, 'adm', 'alice', 'mod', 's1', 'push1'));
+await ok('отправитель читает своё уведомление', getDoc(doc(admin, 'notifications', 'push1')));
+await ok('адресат читает уведомление', getDoc(doc(alice, 'notifications', 'push1')));
+await no('посторонний не читает чужое уведомление', getDoc(doc(bob, 'notifications', 'push1')));
 await no('обычный не шлёт решение', note(bob, 'bob', 'alice', 'mod', 's1'));
 await ok('автор удаляет заявку и селфи', (() => { const b = writeBatch(alice); b.delete(doc(alice, 'submissions', 's1')); b.delete(doc(alice, 'selfies', 's1')); return b.commit(); })());
 await no('удалённое селфи больше не читается', getDoc(doc(anon, 'selfies', 's1')));
