@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=68';
+import { EN, TERMS } from './i18n.js?v=69';
 import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=47';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -758,6 +758,8 @@ const promo = () => {
   const app = a && !desktop && /Windows/.test(navigator.userAgent);
   // С телефона на Android (не из самого приложения) предлагаем APK.
   const phone = a && a.androidFile && isAndroid && !android;
+  // На iPhone приложения нет, но сайт ставится на экран «Домой» и тогда присылает уведомления.
+  const iphone = isIOS && !standalone && !host;
   return `
   <article class="card promo">
     <div class="card-head">
@@ -775,6 +777,10 @@ const promo = () => {
       <div class="card-foot">
         <a class="link" href="#app/${esc(a.id)}">${T('Подробнее')}</a>
         ${androidButton(a)}
+      </div>` : iphone ? `
+      <p>${T('Лента, чаты и уведомления на iPhone: добавьте сайт на экран «Домой».')}</p>
+      <div class="card-foot">
+        <button type="button" class="btn ios-install">${T('Установить на iPhone')}</button>
       </div>` : ''}
     <div class="eggs" aria-hidden="true">
       ${['#6FA8FF', '#FFB347', '#A58BFF', '#FF6F91', '#FFFFFF', '#6BE3B4', '#5ED0F0', '#FF8A5B', '#FFC531']
@@ -2346,6 +2352,27 @@ function macInstallDialog(a) {
   dlg.showModal();
 }
 
+// На iPhone ставят из Safari через «Поделиться»: кнопку «Установить» сайт нажать за человека не может.
+function iosInstallDialog() {
+  const dlg = document.createElement('dialog');
+  dlg.className = 'r-crop';
+  dlg.innerHTML = `
+    <form method="dialog" class="r-crop-box">
+      <h2>${T('Яйца Cloud на iPhone')}</h2>
+      <ol class="mac-steps">
+        <li>${T('Внизу Safari нажмите «Поделиться» — квадрат со стрелкой вверх.')}</li>
+        <li>${T('Прокрутите список и выберите «На экран Домой», затем «Добавить».')}</li>
+        <li>${T('Откройте Яйца Cloud со значка на экране Домой и войдите.')}</li>
+        <li>${T('Включите уведомления: «Аккаунт» → «Уведомления» → «Включить».')}</li>
+      </ol>
+      <p class="empty">${T('Нужен iOS 16.4 или новее. Уведомления приходят, только если открывать с экрана Домой.')}</p>
+      <div class="r-crop-bar"><button class="btn primary">${T('Понятно')}</button></div>
+    </form>`;
+  dlg.addEventListener('close', () => dlg.remove());
+  document.body.append(dlg);
+  dlg.showModal();
+}
+
 let toastTimer;
 function toast(text) {
   toastEl.textContent = text;
@@ -2379,6 +2406,7 @@ view.addEventListener('click', e => {
     count(`dl_${t.dataset.id}`);
     toast(T('Скачивание началось. Откройте файл, Android попросит разрешить установку.'));
   }
+  else if (t.classList.contains('ios-install')) iosInstallDialog();
   else if (t.classList.contains('dl-mac')) {
     count(`dl_${t.dataset.id}`);
     macInstallDialog(apps.find(x => x.id === t.dataset.id));
