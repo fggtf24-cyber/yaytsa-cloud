@@ -309,7 +309,7 @@ service cloud.firestore {
       return getAfter(/databases/$(database)/documents/votes/$(kind + '_' + target + '_' + request.auth.uid)).data.v == 1;
     }
     // Голос: один на человека, -1, 0 или 1. Меняется только вместе со счётом поста или комментария.
-    // За программу (a) — только лайк, 0 или 1, и только за ту, что есть в каталоге.
+    // За программу (a) — только за ту, что есть в каталоге.
     match /votes/{id} {
       allow read: if signedIn() && resource.data.uid == request.auth.uid;
       allow create, update: if signedIn() && !restricted()
@@ -317,7 +317,7 @@ service cloud.firestore {
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.kind in ['p', 'c', 'a']
         && request.resource.data.target is string
-        && request.resource.data.v in (request.resource.data.kind == 'a' ? [0, 1] : [-1, 0, 1])
+        && request.resource.data.v in [-1, 0, 1]
         && (request.resource.data.kind != 'a' || exists(/databases/$(database)/documents/apps/$(request.resource.data.target)))
         && id == request.resource.data.kind + '_' + request.resource.data.target + '_' + request.auth.uid
         && ((resource == null && request.resource.data.v == 1 && request.resource.data.kind != 'a'

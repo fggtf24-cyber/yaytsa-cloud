@@ -406,7 +406,6 @@ a.r-user:hover, .r-who:hover .r-user, .r-app:hover, .r-ptitle:hover { text-decor
 }
 button.r-sort { border: 0; background: none; font: inherit; cursor: pointer; }
 .app-sorts { margin: -6px 0 16px; }
-.r-vote > .r-score:last-child { padding-right: 12px; } /* лайк программы: стрелки вниз нет */
 .r-sort:hover, .r-tabs a:hover { background: var(--hover); color: var(--strong); }
 .r-sort[aria-current=page], .r-tabs a[aria-current=page] { background: var(--pill-hover); color: var(--strong); }
 .r-list { display: flex; flex-direction: column; }

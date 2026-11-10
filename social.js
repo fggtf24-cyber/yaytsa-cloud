@@ -295,7 +295,7 @@ export function setupSocial(ctx) {
       <div class="r-vote${v > 0 ? ' up' : v < 0 ? ' down' : ''}" data-vote-box="${esc(key)}" data-base="${(score || 0) - v}">
         <button type="button" class="r-arrow" data-vote="${kind}" data-id="${esc(id)}" data-dir="1" aria-pressed="${v > 0}" aria-label="${T('Голос за')}">${ICON.up}</button>
         <span class="r-score">${fmt(score || 0)}</span>
-        ${kind === 'a' ? '' : `<button type="button" class="r-arrow" data-vote="${kind}" data-id="${esc(id)}" data-dir="-1" aria-pressed="${v < 0}" aria-label="${T('Голос против')}">${ICON.down}</button>`}
+        <button type="button" class="r-arrow" data-vote="${kind}" data-id="${esc(id)}" data-dir="-1" aria-pressed="${v < 0}" aria-label="${T('Голос против')}">${ICON.down}</button>
       </div>`;
   }
 
@@ -321,7 +321,7 @@ export function setupSocial(ctx) {
     try {
       const batch = F().writeBatch(ctx.db);
       batch.set(ref('votes', `${key}_${me()}`), { uid: me(), kind, target: id, v: after });
-      // У программы (a) только лайк, а счёт лежит отдельно: каталог правит один админ.
+      // Счёт программы (a) лежит отдельно: каталог правит один админ.
       if (kind === 'a') batch.set(ref('applikes', id), { n: F().increment(after - before) }, { merge: true });
       else batch.update(ref(kind === 'p' ? 'posts' : 'tcomments', id), { score: F().increment(after - before) });
       await batch.commit();
