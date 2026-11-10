@@ -270,6 +270,16 @@ await ok('админ банит модератора', ban(admin, 'alice'));
 await ok('админ снимает модератора', deleteDoc(doc(admin, 'mods', 'bob')));
 await no('бывший модератор больше не банит', ban(bob, 'carol'));
 
+// День рождения в users/<uid>: видит и меняет только владелец.
+await ok('свой день рождения', setDoc(doc(alice, 'users', 'alice'), { birthday: '2001-11-10' }, { merge: true }));
+await ok('день рождения без года', setDoc(doc(alice, 'users', 'alice'), { birthday: '11-10' }, { merge: true }));
+await ok('убрать день рождения', setDoc(doc(alice, 'users', 'alice'), { birthday: '' }, { merge: true }));
+await ok('обращение в поздравлении', setDoc(doc(alice, 'users', 'alice'), { bdayName: 'Логика' }, { merge: true }));
+await no('слишком длинное обращение', setDoc(doc(alice, 'users', 'alice'), { bdayName: 'x'.repeat(41) }, { merge: true }));
+await no('кривая дата',setDoc(doc(alice, 'users', 'alice'), { birthday: '10 ноября' }, { merge: true }));
+await no('чужой день рождения не прочитать', getDoc(doc(bob, 'users', 'alice')));
+await no('чужой день рождения не записать', setDoc(doc(bob, 'users', 'alice'), { birthday: '2001-01-01' }, { merge: true }));
+
 // Лайки программ: свой голос a_<программа>_<uid> и счётчик applikes/<программа> меняются вместе.
 await env.withSecurityRulesDisabled(c => setDoc(doc(c.firestore(), 'apps', 'va'), { name: 'V', community: true }));
 const like = (db, uid, v, d, app = 'va') => { const b = writeBatch(db);

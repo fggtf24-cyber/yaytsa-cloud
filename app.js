@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=64';
+import { EN, TERMS } from './i18n.js?v=65';
 import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=44';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -451,7 +451,8 @@ let stopMessages = [];
 let notifications = [];
 let stopNotifications = [];
 let broadcasts = []; // посты с @everyone
-let profile = {};  // users/<uid>: name, photo
+let contentReady = null; // промис загрузки каталога из базы
+let profile = {};  // users/<uid>: name, photo, birthday (ГГГГ-ММ-ДД или ММ-ДД, видит только владелец)
 let apps = APPS;
 let projects = PROJECTS;
 
@@ -1620,6 +1621,7 @@ function renderAccount() {
             <div class="edit-title"><h2>${T('Основное')}</h2><p>${T('Так вас видят другие люди на сайте.')}</p></div>
             <div class="edit-fields">
               <label class="field">${T('Имя')}<input name="name" maxlength="80" autocomplete="name"></label>
+              ${birthdayField(profile.birthday)}
               ${social.accountFields()}
             </div>
           </section>
@@ -1664,12 +1666,47 @@ function renderAccount() {
         <label class="field">${T('Пароль')}
           <input name="password" type="password" required minlength="6" autocomplete="${reg ? 'new-password' : 'current-password'}">
         </label>
+        ${reg ? birthdayField() : ''}
         <button class="btn primary">${T(reg ? 'Создать аккаунт' : 'Войти')}</button>
       </form>
       ${reg ? '' : `<button type="button" class="link linkbtn" id="reset">${T('Забыли пароль?')}</button>`}
       <p class="r-hint">${T('Входя на сайт, вы принимаете')} <a class="link" href="#terms">${T('пользовательское соглашение')}</a>.</p>
       <p id="msg" class="msg" role="alert"></p>
     </section>`;
+}
+
+// День рождения: видит только сам человек (users/<uid>). Поле type=date даёт ГГГГ-ММ-ДД.
+const birthdayField = (value = '') => `
+  <label class="field">${T('День рождения')}
+    <input name="birthday" type="date" min="1900-01-01" max="${new Date().toISOString().slice(0, 10)}" autocomplete="bday" value="${/^\d{4}-\d{2}-\d{2}$/.test(value) ? value : ''}">
+    <small class="r-hint">${T('Видите только вы. В этот день сайт вас поздравит.')}</small>
+  </label>`;
+
+// Поздравление показываем при первом заходе в течение месяца после дня рождения, по разу на устройстве в год.
+async function greetBirthday(u) {
+  const m = /(\d{2})-(\d{2})$/.exec(profile.birthday || '');
+  if (!u || !m) return;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const year = [now.getFullYear(), now.getFullYear() - 1].find(y => {
+    let d = new Date(y, +m[1] - 1, +m[2]);
+    if (d.getMonth() !== +m[1] - 1) d = new Date(y, 1, 28); // 29 февраля в невисокосный год
+    const days = (today - d) / 864e5;
+    return days >= 0 && days <= 30;
+  });
+  if (!year) return;
+  const key = `bday-${u.uid}`;
+  try { if (localStorage.getItem(key) === String(year)) return; } catch { /* без хранилища покажем как есть */ }
+  // Автору программы сообщества — его селфи из заявки, остальным — аватарка.
+  await contentReady;
+  const own = apps.find(a => a.community && a.authorUid === u.uid);
+  let photo = '';
+  if (own) photo = (await fs.getDoc(fs.doc(db, 'selfies', own.id)).catch(() => null))?.data()?.image || '';
+  if (!social.isImage(photo)) photo = myPhoto();
+  const { celebrate } = await import('./birthday.js?v=1');
+  // Как обращаться: bdayName из users/<uid> (админ ставит в консоли, например прозвище), иначе имя из профиля, иначе логин.
+  celebrate({ name: profile.bdayName || displayName() || social.nameOf(u.uid) || T('Пользователь'), photo, lang });
+  try { localStorage.setItem(key, String(year)); } catch { /* ничего */ }
 }
 
 const displayName = () => profile.name || user?.displayName || '';
@@ -2052,7 +2089,7 @@ async function initFirebase() {
     db = fs.getFirestore(app);
     auth.languageCode = lang;
     countVisit();
-    loadContent()
+    contentReady = loadContent()
       .catch(e => { console.error(e); contentState = 'failed'; }) // каталог останется стартовым
       .then(render);
     fb.onAuthStateChanged(auth, async u => {
@@ -2078,6 +2115,7 @@ async function initFirebase() {
       drawRail();
       drawPending().catch(console.error);
       render();
+      greetBirthday(u).catch(console.error);
     });
   } catch (e) {
     // Каталог и скачивание от Firebase не зависят: падают только аккаунты и правки.
@@ -2338,12 +2376,19 @@ view.addEventListener('submit', e => {
     const name = f.name.value.trim();
     return attempt(async () => {
       await social.saveIdentity({ username: f.username.value, bio: f.bio.value, name: name || myName(), photo: myPhoto(), links: social.readLinks(e.target) });
-      await saveProfile({ name });
+      await saveProfile({ name, birthday: f.birthday.value });
     });
   }
-  const { email, password } = Object.fromEntries(new FormData(e.target));
-  const go = authMode === 'register' ? fb.createUserWithEmailAndPassword : fb.signInWithEmailAndPassword;
-  attempt(() => go(auth, email.trim(), password));
+  const { email, password, birthday } = Object.fromEntries(new FormData(e.target));
+  const reg = authMode === 'register';
+  const go = reg ? fb.createUserWithEmailAndPassword : fb.signInWithEmailAndPassword;
+  attempt(async () => {
+    const cred = await go(auth, email.trim(), password);
+    if (reg && birthday) {
+      await fs.setDoc(fs.doc(db, 'users', cred.user.uid), { birthday }, { merge: true });
+      profile = { ...profile, birthday };
+    }
+  });
 });
 
 document.getElementById('lang').addEventListener('click', () => setLang(lang === 'ru' ? 'en' : 'ru'));

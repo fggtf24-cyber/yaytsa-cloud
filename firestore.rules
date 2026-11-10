@@ -213,11 +213,15 @@ service cloud.firestore {
         && request.resource.data.n is int
         && (request.resource.data.n == resource.data.n + 1 || isAdmin());
     }
-    // Профиль: имя и аватарка (сжатая картинка строкой). Видит и меняет только владелец.
+    // Профиль: имя, аватарка (сжатая картинка строкой) и день рождения. Видит и меняет только владелец.
+    // День рождения — ГГГГ-ММ-ДД из формы, ММ-ДД если год не указан, '' — убрали.
     match /users/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow write: if request.auth != null && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['name', 'photo'])
+        && request.resource.data.keys().hasOnly(['name', 'photo', 'birthday', 'bdayName'])
+        && request.resource.data.get('birthday', '').matches('^(([0-9]{4}-)?[0-9]{2}-[0-9]{2})?$')
+        // Как обращаться в поздравлении вместо ника. Обычно ставит админ в консоли.
+        && str(request.resource.data.get('bdayName', ''), 0, 40)
         && request.resource.data.get('name', '').size() <= 80
         && request.resource.data.get('photo', '').size() <= 100000;
     }

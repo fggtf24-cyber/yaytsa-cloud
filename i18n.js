@@ -222,6 +222,8 @@ export const EN = {
   'Сервис входа сейчас недоступен. Скачивать программы можно и без аккаунта.': 'Sign-in is unavailable right now. You can still download programs without an account.',
   'Загрузить фото': 'Upload photo',
   'Убрать фото': 'Remove photo',
+  'День рождения': 'Birthday',
+  'Видите только вы. В этот день сайт вас поздравит.': 'Only you can see it. On that day the site will congratulate you.',
   'Имя': 'Name',
   'Вы админ: кнопки «Изменить» и «Добавить» есть в каталоге, цифры в разделе «Статистика».': 'You are an admin: Edit and Add buttons are in the catalog, numbers are in Statistics.',
   'Выйти': 'Sign out',
