@@ -1,5 +1,5 @@
-import { EN, TERMS } from './i18n.js?v=61';
-import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=42';
+import { EN, TERMS } from './i18n.js?v=62';
+import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=43';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -13,6 +13,7 @@ const APPS = [
     desc: 'Приложение Яйца Cloud для Windows: ставит и обновляет все программы с сайта в один клик, а сообщения и ответы приходят уведомлениями.',
     descEn: 'The Yaytsa Cloud app for Windows: installs and updates every program from the site in one click, with messages and replies as notifications.',
     file: 'https://github.com/fggtf24-cyber/yaytsa-cloud-desktop/releases/latest/download/YaytsaCloud.exe',
+    androidFile: 'https://github.com/fggtf24-cyber/yaytsa-cloud-android/releases/latest/download/YaytsaCloud.apk',
     size: '1 МБ',
     sizeEn: '1 MB',
     repo: 'https://github.com/fggtf24-cyber/yaytsa-cloud-desktop',
@@ -499,8 +500,15 @@ const isLinux = /Linux/.test(navigator.userAgent) && !/Android/.test(navigator.u
 const isAndroid = /Android/.test(navigator.userAgent);
 // Сайт открыт в приложении Яйца Cloud для Windows: программы ставятся, открываются и обновляются кнопкой.
 const desktop = / YaytsaCloud\//.test(navigator.userAgent) ? window.chrome?.webview : null;
+// Приложение Яйца Cloud для Android: тот же сайт в WebView, мост YaytsaAndroid (MainActivity.kt).
+// Ставить программы оно не умеет, только тема, уведомления и вход через Google.
+const android = / YaytsaCloudAndroid\//.test(navigator.userAgent) && window.YaytsaAndroid ? {
+  postMessage: m => window.YaytsaAndroid.post(JSON.stringify(m)),
+  addEventListener: (_, f) => addEventListener('yaytsa-app', e => f({ data: e.detail })),
+} : null;
+const host = desktop || android; // любое из двух приложений
 // В приложении вход и настройки лежат в его собственной папке, а не в браузере.
-if (desktop) {
+if (host) {
   const note = cookieBar.querySelector('[data-t]');
   note.dataset.t = 'Мы храним в приложении вход и настройки: без этого оно не работает. Рекламы и слежки нет.';
   note.textContent = T(note.dataset.t);
@@ -508,13 +516,20 @@ if (desktop) {
 // Заголовок окна приложения красится в цвет сайта, а полоса прокрутки — в стиле сайта.
 function sendTheme() {
   // Цвет берём из переменной темы: у фона страницы плавный переход, и в первый момент он ещё старый.
-  desktop?.postMessage({ type: 'theme', bg: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim(), light: isLight() });
+  host?.postMessage({ type: 'theme', bg: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim(), light: isLight() });
 }
-if (desktop) {
-  document.documentElement.classList.add('in-app');
-  document.getElementById('rail-settings').hidden = false;
+if (host) {
+  // in-app — полосы прокрутки в стиле сайта; на телефоне их и так нет.
+  if (desktop) document.documentElement.classList.add('in-app');
+  document.getElementById('rail-settings').hidden = !desktop;
   sendTheme();
 }
+// Сообщения, общие для обоих приложений: клик по уведомлению, ошибка, вход через Google из браузера.
+host?.addEventListener('message', ({ data }) => {
+  if (data.type === 'go' && data.href) location.hash = data.href.replace(/^#/, '');
+  else if (data.type === 'error') toast(data.text);
+  else if (data.type === 'google-cred' && data.idToken) attempt(() => fb.signInWithCredential(auth, fb.GoogleAuthProvider.credential(data.idToken, data.accessToken || null)));
+});
 let installed = {}; // id -> { state: installed | update | busy, progress, open }, присылает приложение
 const desktopButton = (a, cls = 'btn') => {
   const s = installed[a.id];
@@ -595,14 +610,11 @@ desktop?.addEventListener('message', ({ data }) => {
   }
   else if (data.type === 'picked') view.querySelectorAll('[data-root]').forEach(i => { i.value = data.path; i.dataset.dirty = '1'; });
   else if (data.type === 'need-root') askRoot(data.id);
-  else if (data.type === 'go' && data.href) location.hash = data.href.replace(/^#/, '');
-  else if (data.type === 'error') toast(data.text);
-  // Подтверждение от Google пришло из браузера: входим им здесь.
-  else if (data.type === 'google-cred' && data.idToken) attempt(() => fb.signInWithCredential(auth, fb.GoogleAuthProvider.credential(data.idToken, data.accessToken || null)));
 });
 const download = (a, cls = 'btn') => desktop && a.id === 'yaytsa-cloud' ? '' : desktop ? desktopButton(a, cls) : `<a class="${cls} dl" data-id="${esc(a.id)}" href="${safeUrl(a.file)}" aria-label="${T('Скачать {name}', { name: esc(nm(a)) })}">${T(a.macInstall || a.linuxFile || a.androidFile ? 'Скачать для Windows' : 'Скачать')}</a>`;
 const linuxButton = (a, cls = 'btn') => `<a class="${cls} dl-linux" data-id="${esc(a.id)}" href="${safeUrl(a.linuxFile)}">${T('Скачать для Linux')}</a>`;
-const androidButton = (a, cls = 'btn') => `<a class="${cls} dl-android" data-id="${esc(a.id)}" href="${safeUrl(a.androidFile)}">${T('Скачать для Android')}</a>`;
+// Внутри Android-приложения само приложение скачивать незачем.
+const androidButton = (a, cls = 'btn') => android && a.id === 'yaytsa-cloud' ? '' : `<a class="${cls} dl-android" data-id="${esc(a.id)}" href="${safeUrl(a.androidFile)}">${T('Скачать для Android')}</a>`;
 const macButton = (a, cls = 'btn') => `<button type="button" class="${cls} dl-mac" data-id="${esc(a.id)}">${T('Скачать для Mac')}</button>`;
 const siteLink = a => (safeUrl(a.site) ? `<a class="link" href="${safeUrl(a.site)}" target="_blank" rel="noopener">${T('Сайт')}</a>` : '');
 const editLink = (kind, a) => (isAdmin ? `<a class="link" href="#edit/${kind}/${esc(a.id)}" aria-label="${T('Изменить {name}', { name: esc(nm(a)) })}">${T('Изменить')}</a>` : '');
@@ -865,7 +877,7 @@ function soundOnGrowth(kind, count, note) {
   if (count > heard[kind] && Date.now() > quietUntil) {
     ping();
     // В приложении то же самое приходит уведомлением Windows, если окно свёрнуто или в трее.
-    if (desktop && note) desktop.postMessage({ type: 'notify', ...note() });
+    if (host && note) host.postMessage({ type: 'notify', ...note() });
   }
   heard[kind] = count;
 }
@@ -2047,6 +2059,8 @@ async function initFirebase() {
       await social.onUser(u);
       watchNotifications(u);
       watchMessages(u);
+      // Android-приложение само проверяет уведомления, пока закрыто: ему нужен вход (refreshToken живёт долго).
+      android?.postMessage({ type: 'auth', uid: u?.uid || '', refresh: u?.refreshToken || '' });
       if (realAdmin) await syncAuthor().catch(console.error);
       if (u) {
         syncAccount(u).catch(console.error);
@@ -2288,8 +2302,8 @@ view.addEventListener('click', e => {
   else if (t.id === 'banner-remove') attempt(() => saveBanner(''));
   else if (t.id === 'logout') attempt(() => fb.signOut(auth));
   else if (t.matches('[data-pick-root]')) desktop?.postMessage({ type: 'pick-root', path: t.closest('form').querySelector('[data-root]').value });
-  else if (t.id === 'google' && desktop) {
-    desktop.postMessage({ type: 'google' });
+  else if (t.id === 'google' && host) {
+    host.postMessage({ type: 'google' });
     toast(T('В браузере выберите аккаунт Google, и приложение войдёт само.'));
   }
   else if (t.id === 'google') attempt(() => fb.signInWithPopup(auth, googleProvider()));

@@ -629,6 +629,9 @@ a.r-stat:hover b { text-decoration: underline; }
   .r-c { grid-template-columns: 24px minmax(0, 1fr); column-gap: 6px; }
   .r-c-line::before { left: 11.5px; }
   .r-c-kids > .r-c::before { left: -18.5px; width: 14px; }
+  /* Глубже третьего ответа лесенка больше не сдвигается: иначе на телефоне тексту остаётся пара слов в строку. */
+  .r-c-kids .r-c-kids .r-c-kids { margin-left: -30px; }
+  .r-c-kids .r-c-kids .r-c-kids > .r-c::before { display: none; }
   .r-pill.flat span { display: none; }
   .top { padding: 10px 16px; }
   .top-nav { display: none; }
