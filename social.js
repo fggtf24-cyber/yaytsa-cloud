@@ -227,36 +227,53 @@ export function setupSocial(ctx) {
     input.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
-  const attachBar = (stickers = false) => `
-    <div class="attach">
+  const MAX_IMAGES = 10; // фото в одном посте
+  const attachBar = (stickers = false, multi = false) => `
+    <div class="attach"${multi ? ' data-multi' : ''}>
       ${emojiBtn()}
       ${stickers ? stickerBtn() : ''}
       <label class="r-iconbtn" title="${T('Добавить картинку или гифку')}">${ICON.image}<span class="sr">${T('Добавить картинку или гифку')}</span>
-        <input class="sr" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/heic,image/heif,.heic,.heif" data-attach></label>
-      <input type="hidden" name="image">
-      <span class="attach-preview" hidden><img alt="${T('Открыть картинку')}" tabindex="0" role="button"><button type="button" data-attach-clear aria-label="${T('Убрать картинку')}">×</button></span>
+        <input class="sr" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/heic,image/heif,.heic,.heif" data-attach${multi ? ' multiple' : ''}></label>
+      ${multi ? '<span class="attach-list"></span>' : `<input type="hidden" name="image">${attachItem()}`}
     </div>`;
+  // Превью прикреплённой картинки. В посте их несколько, у каждой своё поле image.
+  const attachItem = (url = '') => `
+      <span class="attach-preview"${url ? '' : ' hidden'}>${url ? `<input type="hidden" name="image" value="${url}">` : ''}<img alt="${T('Открыть картинку')}" tabindex="0" role="button"${url ? ` src="${url}"` : ''}><button type="button" data-attach-clear aria-label="${T('Убрать картинку')}">×</button></span>`;
 
   function clearAttach(form) {
     const box = form.querySelector('.attach');
     if (!box) return;
+    if (box.dataset.multi !== undefined) { box.querySelector('.attach-list').innerHTML = ''; return; }
     box.querySelector('[name=image]').value = '';
     box.querySelector('.attach-preview').hidden = true;
   }
 
-  async function attach(input, file = input.files[0]) {
+  async function attach(input, file) {
+    const files = file ? [file] : [...input.files];
     input.value = ''; // чтобы тот же файл можно было выбрать снова
-    if (!file) return;
+    if (!files.length) return;
     const box = input.closest('.attach');
+    if (box.dataset.multi !== undefined) {
+      const list = box.querySelector('.attach-list');
+      const room = MAX_IMAGES - list.children.length;
+      if (files.length > room) ctx.toast(T('В посте можно до {n} фото.', { n: MAX_IMAGES }));
+      for (const f of files.slice(0, Math.max(room, 0))) {
+        try { list.insertAdjacentHTML('beforeend', attachItem(await fileToImage(f))); }
+        catch (e) { attachFailed(e); }
+      }
+      return;
+    }
     try {
-      const url = await fileToImage(file);
+      const url = await fileToImage(files[0]);
       box.querySelector('[name=image]').value = url;
       box.querySelector('.attach-preview img').src = url;
       box.querySelector('.attach-preview').hidden = false;
-    } catch (e) {
-      console.error(e);
-      ctx.toast(T(e.message === 'big-gif' ? 'Гифка слишком большая: можно до 580 КБ.' : 'Не получилось открыть эту картинку. Попробуйте JPG или PNG.'));
-    }
+    } catch (e) { attachFailed(e); }
+  }
+
+  function attachFailed(e) {
+    console.error(e);
+    ctx.toast(T(e.message === 'big-gif' ? 'Гифка слишком большая: можно до 580 КБ.' : 'Не получилось открыть эту картинку. Попробуйте JPG или PNG.'));
   }
 
   function fail(e) {
@@ -380,7 +397,31 @@ export function setupSocial(ctx) {
   const shareBtn = href => `<button type="button" class="r-pill" data-s-share="${esc(href)}">${ICON.share}<span>${T('Поделиться')}</span></button>`;
 
   // Картинка поста. Место под неё занято сразу, поэтому лента не прыгает, когда файл догрузится.
-  const postMedia = p => (p.imageRatio ? `<div class="r-media" data-media="${esc(p.id)}" style="aspect-ratio:${Math.min(3, Math.max(0.4, +p.imageRatio || 1))}"></div>` : '');
+  // Несколько фото — лента, которая листается стрелками или свайпом; все кадры в пропорциях первого.
+  const postMedia = p => {
+    if (!p.imageRatio) return '';
+    const n = Math.min(MAX_IMAGES, Math.max(1, p.images || 1));
+    const box = i => `<div class="r-media" data-media="${esc(i ? `${p.id}_${i}` : p.id)}" style="aspect-ratio:${Math.min(3, Math.max(0.4, +p.imageRatio || 1))}"></div>`;
+    if (n === 1) return box(0);
+    return `
+      <div class="r-gallery">
+        <div class="r-gallery-track">${Array.from({ length: n }, (_, i) => box(i)).join('')}</div>
+        <button type="button" class="r-gallery-step prev" data-gallery-step="-1" aria-label="${T('Предыдущее фото')}" hidden>${ICON.back}</button>
+        <button type="button" class="r-gallery-step next" data-gallery-step="1" aria-label="${T('Следующее фото')}">${ICON.back}</button>
+        <span class="r-gallery-count">1/${n}</span>
+      </div>`;
+  };
+  // Номер кадра и стрелки по краям обновляются, когда ленту листают любым способом.
+  view.addEventListener('scroll', e => {
+    const track = e.target;
+    if (!track.classList?.contains('r-gallery-track')) return;
+    const n = track.children.length;
+    const i = Math.round(track.scrollLeft / track.clientWidth);
+    const g = track.parentElement;
+    g.querySelector('.r-gallery-count').textContent = `${i + 1}/${n}`;
+    g.querySelector('.prev').hidden = i === 0;
+    g.querySelector('.next').hidden = i >= n - 1;
+  }, true);
 
   // Файлы постов и личных сообщений, уже скачанные за этот визит.
   const mediaFiles = new Map();
@@ -866,7 +907,7 @@ export function setupSocial(ctx) {
       await Promise.allSettled([
         ...comments.map(c => F().deleteDoc(ref('tcomments', c.id))),
         ...(ctx.isAdmin ? [F().deleteDoc(ref('broadcasts', post.id))] : []),
-        ...(post.imageRatio ? [F().deleteDoc(ref('postimages', post.id))] : []),
+        ...(post.imageRatio ? Array.from({ length: post.images || 1 }, (_, i) => F().deleteDoc(ref('postimages', i ? `${post.id}_${i}` : post.id))) : []),
       ]);
       const mine = post.uid === me();
       thread = null;
@@ -1073,7 +1114,7 @@ export function setupSocial(ctx) {
         </div>
         <div class="r-field r-field-body">
           <textarea name="body" rows="9" maxlength="10000" data-suggest="@" placeholder="${T('Текст (необязательно)')}" aria-label="${T('Текст')}"></textarea>
-          ${attachBar()}
+          ${attachBar(false, true)}
         </div>
         <label class="field r-tagfield"><span class="sr">${T('Программа')}</span>
           <span class="r-at"><span aria-hidden="true">#</span><input name="tag" maxlength="60" autocomplete="off" data-suggest="app" placeholder="${T('Программа, необязательно')}" value="${app ? esc(appTag(ctx.nm(app))) : ''}"></span>
@@ -1099,7 +1140,8 @@ export function setupSocial(ctx) {
 
   async function addPost(form) {
     if (needAccount()) return;
-    const { title, body, tag, image } = Object.fromEntries(new FormData(form));
+    const { title, body, tag } = Object.fromEntries(new FormData(form));
+    const images = [...form.querySelectorAll('[name=image]')].map(i => i.value).filter(Boolean).slice(0, MAX_IMAGES);
     if (!title.trim()) return;
     const text = `${title}\n${body}`;
     const tagName = tag.trim().replace(/^#/, '');
@@ -1110,12 +1152,13 @@ export function setupSocial(ctx) {
     try {
       const pRef = F().doc(col('posts'));
       const batch = F().writeBatch(ctx.db);
-      const size = image && await imageSize(image);
+      const size = images.length && await imageSize(images[0]);
       batch.set(pRef, {
         uid: me(), title: title.trim(), body: body.trim(), appId: tagged?.id || '', score: 1, commentCount: 0, createdAt: F().serverTimestamp(),
-        ...(image ? { imageRatio: +(size.width / size.height).toFixed(3) } : {}),
+        ...(images.length ? { imageRatio: +(size.width / size.height).toFixed(3) } : {}),
+        ...(images.length > 1 ? { images: images.length } : {}),
       });
-      if (image) batch.set(ref('postimages', pRef.id), { uid: me(), image });
+      images.forEach((image, i) => batch.set(ref('postimages', i ? `${pRef.id}_${i}` : pRef.id), { uid: me(), image }));
       batch.set(ref('votes', `p_${pRef.id}_${me()}`), { uid: me(), kind: 'p', target: pRef.id, v: 1 });
       if (ctx.isAdmin && /(^|[\s(])@everyone\b/.test(text)) {
         batch.set(ref('broadcasts', pRef.id), {
@@ -2283,7 +2326,15 @@ export function setupSocial(ctx) {
     else if (d.sGroupDelete !== undefined) deleteGroup();
     else if (d.sGroupLeave !== undefined) leaveGroup();
     else if (d.emoji) insertEmoji(t);
-    else if (d.attachClear !== undefined) clearAttach(t.closest('form'));
+    else if (d.attachClear !== undefined) {
+      const item = t.closest('.attach-list > .attach-preview'); // в посте убираем одну из картинок
+      if (item) item.remove();
+      else clearAttach(t.closest('form'));
+    }
+    else if (d.galleryStep) {
+      const track = t.closest('.r-gallery').querySelector('.r-gallery-track');
+      track.scrollBy({ left: +d.galleryStep * track.clientWidth, behavior: 'smooth' });
+    }
     else if (d.netAdd !== undefined) {
       view.querySelector('.net-rows').insertAdjacentHTML('beforeend', netRow());
       view.querySelector('.net-row:last-child input').focus();

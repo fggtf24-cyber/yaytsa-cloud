@@ -339,7 +339,11 @@ service cloud.firestore {
     match /posts/{id} {
       allow read: if true;
       allow create: if signedIn() && hasProfile()
-        && request.resource.data.keys().hasOnly(['uid', 'title', 'body', 'appId', 'score', 'commentCount', 'createdAt', 'imageRatio'])
+        && request.resource.data.keys().hasOnly(['uid', 'title', 'body', 'appId', 'score', 'commentCount', 'createdAt', 'imageRatio', 'images'])
+        // images — сколько фото, если их больше одного (2–10); вторая и дальше лежат в postimages/<id>_1, _2…
+        && (!('images' in request.resource.data)
+          || (request.resource.data.images is int && request.resource.data.images >= 2 && request.resource.data.images <= 10
+            && 'imageRatio' in request.resource.data))
         && request.resource.data.uid == request.auth.uid
         && str(request.resource.data.title, 1, 300)
         && str(request.resource.data.body, 0, 10000)
@@ -362,16 +366,19 @@ service cloud.firestore {
           && request.resource.data.commentCount == resource.data.commentCount + 1));
       allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isStaff());
     }
-    // Картинка поста лежит отдельно, чтобы лента не качала все картинки разом. id такой же, как у поста.
+    // Картинка поста лежит отдельно, чтобы лента не качала все картинки разом. id такой же, как у поста,
+    // у второй и дальше — <id поста>_1 … _9.
     match /postimages/{id} {
+      function postOf(id) { return /databases/$(database)/documents/posts/$(id.split('_')[0]); }
       allow read: if true;
       allow create: if signedIn()
+        && id.matches('^[A-Za-z0-9]+(_[1-9])?$')
         && request.resource.data.keys().hasOnly(['uid', 'image'])
         && request.resource.data.uid == request.auth.uid
         && str(request.resource.data.image, 1, 800000)
-        && getAfter(/databases/$(database)/documents/posts/$(id)).data.uid == request.auth.uid;
+        && getAfter(postOf(id)).data.uid == request.auth.uid;
       allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isStaff()
-        || !existsAfter(/databases/$(database)/documents/posts/$(id)));
+        || !existsAfter(postOf(id)));
     }
     // Комментарии в ветке поста. parentId = '' — ответ на сам пост. Удаление стирает текст, ветка остаётся.
     match /tcomments/{id} {

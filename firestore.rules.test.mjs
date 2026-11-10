@@ -133,6 +133,21 @@ await no('картинка к чужому посту', setDoc(doc(bob, 'postima
 await no('чужую картинку не удалить', deleteDoc(doc(bob, 'postimages', 'pi1')));
 await ok('автор удаляет пост', deleteDoc(doc(alice, 'posts', 'pi1')));
 await ok('автор удаляет картинку', deleteDoc(doc(alice, 'postimages', 'pi1')));
+// Несколько фото: images = сколько, вторая и дальше в postimages/<id>_1 …
+const multiPost = (db, id, uid, n, extra = {}) => { const b = writeBatch(db);
+  b.set(doc(db, 'posts', id), { uid, title: 'x', body: '', appId: '', score: 1, commentCount: 0, imageRatio: 1.5, images: n, createdAt: serverTimestamp(), ...extra });
+  b.set(doc(db, 'votes', `p_${id}_${uid}`), { uid, kind: 'p', target: id, v: 1 });
+  for (let i = 0; i < Math.min(n, 12); i++) b.set(doc(db, 'postimages', i ? `${id}_${i}` : id), { uid, image: 'data:image/jpeg;base64,AA' });
+  return b.commit(); };
+await ok('пост с тремя фото', multiPost(alice, 'pm3', 'alice', 3));
+await no('11 фото', multiPost(alice, 'pm11', 'alice', 11));
+await no('images = 1', multiPost(alice, 'pm1', 'alice', 1));
+await no('images без imageRatio', (() => { const b = writeBatch(alice);
+  b.set(doc(alice, 'posts', 'pmr'), { uid: 'alice', title: 'x', body: '', appId: '', score: 0, commentCount: 0, images: 2, createdAt: serverTimestamp() }); return b.commit(); })());
+await no('фото к чужому посту по суффиксу', setDoc(doc(bob, 'postimages', 'pm3_5'), { uid: 'bob', image: 'x' }));
+await no('кривой суффикс', setDoc(doc(alice, 'postimages', 'pm3_x'), { uid: 'alice', image: 'x' }));
+await no('чужое второе фото не удалить', deleteDoc(doc(bob, 'postimages', 'pm3_1')));
+await ok('после удаления поста фото чистит любой', (async () => { await deleteDoc(doc(alice, 'posts', 'pm3')); return deleteDoc(doc(bob, 'postimages', 'pm3_2')); })());
 
 // Заявка и селфи
 const sub = (db, id, uid, selfie = true, consent = true) => { const b = writeBatch(db);

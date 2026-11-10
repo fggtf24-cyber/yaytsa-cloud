@@ -967,6 +967,22 @@ body, .content { transition: background-color .12s ease; }
 .r-media img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .r-media-bg { object-fit: cover; filter: blur(24px) brightness(.7); transform: scale(1.15); }
 .r-media-img { object-fit: contain; }
+/* Несколько фото в посте: лента со щелчком по кадрам, стрелки и номер поверх. */
+.r-gallery { position: relative; margin: 4px 0; border-radius: 16px; overflow: hidden; }
+.r-gallery-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.r-gallery-track::-webkit-scrollbar { display: none; }
+.r-gallery-track > .r-media { flex: 0 0 100%; margin: 0; border-radius: 0; scroll-snap-align: start; }
+.r-gallery-step {
+  position: absolute; top: 50%; translate: 0 -50%; width: 36px; height: 36px; border: 0; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, .55); color: #fff; cursor: pointer;
+}
+.r-gallery-step[hidden] { display: none; }
+.r-gallery-step.prev { left: 10px; }
+.r-gallery-step.next { right: 10px; }
+.r-gallery-step.next svg { rotate: 180deg; }
+.r-gallery-step:hover { background: rgba(0, 0, 0, .75); }
+.r-gallery-count { position: absolute; top: 10px; right: 10px; padding: 3px 9px; border-radius: 999px; background: rgba(0, 0, 0, .55); color: #fff; font-size: 12px; font-weight: 600; }
+.attach-list { display: flex; flex-wrap: wrap; gap: 6px; }
 
 /* Просмотр картинки: цвета свои, потому что фон тёмный и в светлой теме */
 .c-image, .r-media-img, .attach-preview img { cursor: zoom-in; }
