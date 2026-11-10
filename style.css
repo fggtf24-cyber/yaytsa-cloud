@@ -616,7 +616,7 @@ a.r-stat:hover b { text-decoration: underline; }
 .r-phead-actions { display: none; flex-wrap: wrap; align-items: center; gap: 8px; }
 .r-phead-actions b { color: var(--text); }
 @media (max-width: 760px) {
-  .r-chat { grid-template-columns: 1fr; height: calc(100vh - 150px); }
+  .r-chat { grid-template-columns: minmax(0, 1fr); height: calc(100vh - 150px); }
   .r-chat.has-room .r-chat-list, .r-chat:not(.has-room) .r-room { display: none; }
   .r-room-back { display: inline-flex; }
 }
@@ -1094,7 +1094,8 @@ html.in-app::-webkit-scrollbar-corner, html.in-app *::-webkit-scrollbar-corner {
 .r-chat-list { border-right: 0; }
 .r-room { background: var(--card2); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
 @media (max-width: 760px) {
-  .r-chat { width: 100%; height: calc(100vh - 150px); margin: 0; grid-template-columns: 1fr; gap: 0; }
+  /* minmax(0, …): иначе колонка растягивается под самое длинное «последнее сообщение» и страница шире экрана */
+  .r-chat { width: 100%; height: calc(100vh - 150px); margin: 0; grid-template-columns: minmax(0, 1fr); gap: 0; }
   .r-room { border: 0; border-radius: 0; }
 }
 
