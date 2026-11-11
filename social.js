@@ -1564,15 +1564,15 @@ export function setupSocial(ctx) {
     );
   }
 
-  async function renderChat(name, group = '') {
+  async function renderChat(name, group = '', peerUid = '') {
     editingMsg = null;
     if (notReady()) return;
     document.title = `${T('Чаты')} — ${T('Яйца Cloud')}`;
     if (!ctx.user) return note(`<a class="link" href="#account">${T('Войдите')}</a>${T(', чтобы писать сообщения.')}`);
     const my = ++seq;
-    let peer = null;
-    if (name) {
-      try { peer = await uidByName(name); } catch (e) { console.error(e); }
+    let peer = peerUid || null;
+    if (name || peer) {
+      if (!peer) try { peer = await uidByName(name); } catch (e) { console.error(e); }
       if (my !== seq) return;
       if (!peer) return note(T('Пользователь @{name} не найден.', { name: esc(name) }));
       await loadPeople([peer]);
@@ -1653,7 +1653,7 @@ export function setupSocial(ctx) {
     box.innerHTML = chats.filter(found).map(c => {
       const peer = peerOf(c);
       return `
-        <a class="r-chat-item${c.id === roomId ? ' active' : ''}${unread(c) ? ' unread' : ''}" href="${c.group ? `#group/${esc(c.id)}` : handle(peer) ? `#chat/${esc(handle(peer))}` : profileHref(peer)}">
+        <a class="r-chat-item${c.id === roomId ? ' active' : ''}${unread(c) ? ' unread' : ''}" href="${c.group ? `#group/${esc(c.id)}` : handle(peer) ? `#chat/${esc(handle(peer))}` : `#dm/${esc(peer)}`}">
           ${c.group ? groupAva(c, 40) : ava(peer, 40)}
           <span class="r-chat-text">
             <span class="r-chat-line"><b>${esc(c.group ? c.name : shownName(peer))}</b><small>${ms(c.lastAt) ? ago(c.lastAt) : ''}</small></span>
@@ -2388,6 +2388,8 @@ export function setupSocial(ctx) {
     if (name === 'submit') return { name: 'submit', appId: a || '', social: true };
     if (name === 'chat') return { name: 'chat', handle: (a || '').toLowerCase(), social: true };
     if (name === 'group' && a) return { name: 'chat', handle: '', group: a, social: true };
+    // Чат с человеком без @имени (не выбрал имя или удалил профиль): по uid, иначе его не открыть и не отметить прочитанным.
+    if (name === 'dm' && a) return { name: 'chat', handle: '', peer: a, social: true };
     return null;
   }
 
@@ -2402,7 +2404,7 @@ export function setupSocial(ctx) {
     else if (r.name === 'u') renderProfile(r.handle, r.tab);
     else if (r.name === 'uid') renderUid(r.uid);
     else if (r.name === 'submit') renderSubmit(r.appId);
-    else if (r.name === 'chat') renderChat(r.handle, r.group);
+    else if (r.name === 'chat') renderChat(r.handle, r.group, r.peer);
   }
 
   view.addEventListener('click', e => {
