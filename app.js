@@ -681,6 +681,7 @@ const download = (a, cls = 'btn') => desktop && a.id === 'yaytsa-cloud' ? '' : d
 const linuxButton = (a, cls = 'btn') => `<a class="${cls} dl-linux" data-id="${esc(a.id)}" href="${safeUrl(a.linuxFile)}">${T('Скачать для Linux')}</a>`;
 // Внутри Android-приложения само приложение скачивать незачем.
 const androidButton = (a, cls = 'btn') => android && a.id === 'yaytsa-cloud' ? '' : `<a class="${cls} dl-android" data-id="${esc(a.id)}" href="${safeUrl(a.androidFile)}">${T('Скачать для Android')}</a>`;
+const iosButton = (cls = 'btn') => `<button type="button" class="${cls} ios-install">${T('Установить на iPhone')}</button>`;
 const macButton = (a, cls = 'btn') => `<button type="button" class="${cls} dl-mac" data-id="${esc(a.id)}">${T('Скачать для Mac')}</button>`;
 const siteLink = a => (safeUrl(a.site) ? `<a class="link" href="${safeUrl(a.site)}" target="_blank" rel="noopener">${T('Сайт')}</a>` : '');
 const editLink = (kind, a) => (isAdmin ? `<a class="link" href="#edit/${kind}/${esc(a.id)}" aria-label="${T('Изменить {name}', { name: esc(nm(a)) })}">${T('Изменить')}</a>` : '');
@@ -841,6 +842,8 @@ function renderApp(a) {
   const needs = tr(a, 'needs') || [];
   const size = tr(a, 'size');
   const isWindows = /Windows/.test(navigator.userAgent);
+  // Яйца Cloud на iPhone ставится как сайт на экран «Домой»: кнопка с инструкцией (кроме уже установленного).
+  const ios = a.id === 'yaytsa-cloud' && !host && !standalone;
   view.innerHTML = `
     <div class="app-bar">
       <a class="app-back" href="#apps" aria-label="${T('Все приложения')}">
@@ -860,12 +863,12 @@ function renderApp(a) {
         </div>
         <p class="app-desc">${esc(tr(a, 'desc'))}</p>
         <ul class="app-meta">
-          <li>${isWindows || (isMac && a.macInstall) || (isLinux && a.linuxFile) || (isAndroid && a.androidFile) ? `${metaIcon('ok')}${T('Работает на этом устройстве')}` : `${metaIcon('warn')}${T(a.macInstall ? 'Только для Windows и Mac' : a.linuxFile ? 'Только для Windows и Linux' : a.androidFile ? 'Только для Windows и Android' : 'Только для Windows')}`}</li>
+          <li>${isWindows || (isMac && a.macInstall) || (isLinux && a.linuxFile) || (isAndroid && a.androidFile) || (ios && isIOS) ? `${metaIcon('ok')}${T('Работает на этом устройстве')}` : `${metaIcon('warn')}${T(a.macInstall ? 'Только для Windows и Mac' : a.linuxFile ? 'Только для Windows и Linux' : a.androidFile ? 'Только для Windows и Android' : 'Только для Windows')}`}</li>
           ${size ? `<li>${metaIcon('down')}${T(a.portable ? '{size}, установка не нужна' : '{size} после установки', { size: esc(size) })}</li>` : ''}
           ${authorText(a) ? `<li>${metaIcon('at')}<span>${authorText(a)}</span></li>` : ''}
           ${a.community ? `<li>${metaIcon('warn')}${T('Программу добавил участник. Админ проверил заявку, но файл вы скачиваете на свой риск.')}</li>` : ''}
         </ul>
-        ${a.androidFile ? (isAndroid ? androidButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + androidButton(a)) : a.linuxFile ? (isLinux ? linuxButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + linuxButton(a)) : !a.macInstall ? download(a, 'btn primary') : isMac ? macButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + macButton(a)}
+        ${ios && isIOS ? iosButton('btn primary') + download(a) + androidButton(a) : (a.androidFile ? (isAndroid ? androidButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + androidButton(a)) : a.linuxFile ? (isLinux ? linuxButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + linuxButton(a)) : !a.macInstall ? download(a, 'btn primary') : isMac ? macButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + macButton(a)) + (ios ? iosButton() : '')}
         ${desktop ? removeButton(a) : ''}
         ${a.community ? `<figure id="author-selfie" class="author-selfie" data-app="${esc(a.id)}" hidden></figure>` : ''}
         ${authorName(a) ? `<a class="btn report-link" href="#report/${esc(a.id)}">${T('Сообщить о баге или идее')}</a>` : ''}
