@@ -565,6 +565,7 @@ a.r-stat:hover b { text-decoration: underline; }
 .r-room-hello { margin: auto; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
 .r-room-empty { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; }
 .r-chat-form { display: flex; align-items: flex-end; gap: 8px; margin: 0 16px 16px; padding: 6px 6px 6px 16px; border: 1px solid var(--edge); border-radius: 22px; background: var(--bg); }
+.r-chat-staged:not([hidden]) { display: flex; gap: 6px; align-self: center; }
 .r-chat-form:focus-within { border-color: var(--text); }
 .r-chat-form textarea { flex: 1; min-height: 36px; padding: 7px 0; border: 0; outline: 0; background: none; resize: none; font: inherit; line-height: 1.45; }
 /* Всё в строке на одной высоте с кнопкой отправки (36px): значки 32px поднимаем на 2px, поле — тоже 36px. */

@@ -1419,6 +1419,7 @@ export function setupSocial(ctx) {
       ${stickerBtn()}
       <label class="r-iconbtn r-chat-photo" title="${T('Отправить фото')}">${ICON.image}<span class="sr">${T('Отправить фото')}</span>
         <input class="sr" type="file" accept="image/*,.heic,.heif" data-chat-photo></label>
+      <span class="r-chat-staged" hidden></span>
       <textarea name="text" rows="1" maxlength="2000" aria-label="${T('Сообщение')}" placeholder="${T('Сообщение')}"></textarea>
       <span class="r-rec"><i></i><b data-rec-time>0:00</b><button type="button" class="link linkbtn" data-rec-cancel>${T('Отмена')}</button></span>
       <button type="button" class="r-iconbtn r-mic" data-rec-start title="${T('Записать голосовое')}" aria-label="${T('Записать голосовое')}">${ICON.mic}</button>
@@ -1787,6 +1788,7 @@ export function setupSocial(ctx) {
     recorder.rec.stop();
   }
 
+  // Фото в чате не уходит сразу, а ждёт над строкой ввода: можно дописать подпись, как в Telegram.
   async function sendChatPhoto(input, file = input.files[0]) {
     const form = input.closest('form');
     input.value = '';
@@ -1794,7 +1796,9 @@ export function setupSocial(ctx) {
     try {
       const data = await fileToImage(file);
       const { width, height } = await imageSize(data);
-      await sendChat(form, { media: { kind: 'image', data, ratio: +(width / height).toFixed(3) } });
+      (form.photos ||= []).push({ kind: 'image', data, ratio: +(width / height).toFixed(3) });
+      drawStaged(form);
+      form.elements.text.focus();
     } catch (e) {
       console.error(e);
       ctx.toast(T(e.message === 'big-gif' ? 'Гифка слишком большая: можно до 580 КБ.' : 'Не получилось открыть эту картинку. Попробуйте JPG или PNG.'));
@@ -1833,9 +1837,9 @@ export function setupSocial(ctx) {
             </span>` : ''}
             ${roomGroup && !grouped && m.from !== me() ? `<div class="r-meta"><a class="r-user strong" href="${profileHref(m.from)}">${esc(shownName(m.from))}</a></div>` : ''}
             <div class="r-bubble${(m.text && !big(m)) || m.media === 'voice' ? '' : ' sticker'}${big(m) ? ` emoji e${big(m)}` : ''}">
+              ${m.media === 'image' ? `<div class="r-media" data-media="${esc(m.id)}" data-chat="${esc(roomId)}" style="aspect-ratio:${Math.min(3, Math.max(0.4, +m.ratio || 1))}"></div>` : ''}
               ${m.text ? `<span class="r-msg-text">${rich(m.text)}</span>` : ''}
               ${stickerTag(m.sticker)}
-              ${m.media === 'image' ? `<div class="r-media" data-media="${esc(m.id)}" data-chat="${esc(roomId)}" style="aspect-ratio:${Math.min(3, Math.max(0.4, +m.ratio || 1))}"></div>` : ''}
               ${m.media === 'voice' ? voiceTag(m) : ''}
               <span class="r-msg-info">${m.edited ? `${T('изменено')} ` : ''}${new Date(t).toLocaleTimeString(ctx.lang === 'en' ? 'en-GB' : 'ru-RU', { hour: '2-digit', minute: '2-digit' })}${m.from === me() ? ticks(ms(m.createdAt) && ms(m.createdAt) <= peerSeen) : ''}</span>
             </div>
@@ -1857,14 +1861,30 @@ export function setupSocial(ctx) {
     F().updateDoc(ref('chats', c.id), { [`seen.${me()}`]: F().serverTimestamp() }).catch(console.error);
   }
 
+  function drawStaged(form) {
+    const box = form.querySelector('.r-chat-staged');
+    box.innerHTML = (form.photos || []).map((p, i) => `<span class="attach-preview"><img src="${p.data}" alt="${T('Открыть картинку')}" tabindex="0" role="button"><button type="button" data-chat-unstage="${i}" aria-label="${T('Убрать картинку')}">×</button></span>`).join('');
+    box.hidden = !form.photos?.length;
+  }
+
+  // Отложенные фото: первое уходит с подписью из строки ввода, остальные следом без подписи.
+  async function sendStaged(form) {
+    const photos = form.photos;
+    form.photos = [];
+    drawStaged(form);
+    for (const media of photos) await sendChat(form, { media });
+  }
+
   async function sendChat(form, { sticker = '', media = null } = {}) {
     if (needAccount() || !roomId) return;
     if (editingMsg && !sticker && !media) return saveMsgEdit(form);
+    if (!sticker && !media && form.photos?.length) return sendStaged(form);
     const input = form.elements.text;
     const extra = sticker || media;
-    const text = extra ? '' : input.value.trim();
+    const caption = !sticker && media?.kind !== 'voice'; // текст из строки ввода уходит с сообщением или как подпись к фото
+    const text = caption ? input.value.trim() : '';
     if (!text && !extra) return;
-    if (!extra) input.value = '';
+    if (caption) input.value = '';
     try {
       const batch = F().writeBatch(ctx.db);
       const label = sticker ? '[стикер]' : media?.kind === 'voice' ? '[голосовое]' : '[фото]';
@@ -1888,7 +1908,7 @@ export function setupSocial(ctx) {
       ctx.push?.('chat', roomId); // уведомление собеседнику на телефон, даже если у него всё закрыто
       if (!stopMsgs) openRoomStream();
     } catch (e) {
-      if (!extra) input.value = text;
+      if (caption && !input.value) input.value = text;
       fail(e);
     }
   }
@@ -2434,6 +2454,11 @@ export function setupSocial(ctx) {
     else if (d.sGroupDelete !== undefined) deleteGroup();
     else if (d.sGroupLeave !== undefined) leaveGroup();
     else if (d.emoji) insertEmoji(t);
+    else if (d.chatUnstage !== undefined) {
+      const form = t.closest('form');
+      form.photos.splice(+d.chatUnstage, 1);
+      drawStaged(form);
+    }
     else if (d.attachClear !== undefined) {
       const item = t.closest('.attach-list > .attach-preview'); // в посте убираем одну из картинок
       if (item) item.remove();
