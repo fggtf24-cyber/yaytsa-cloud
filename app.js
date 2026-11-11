@@ -1,5 +1,5 @@
-import { EN, TERMS } from './i18n.js?v=69';
-import { setupSocial, cropImage, askDialog, readImage } from './social.js?v=48';
+import { EN, TERMS } from './i18n.js?v=70';
+import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=49';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -638,8 +638,57 @@ function renderSettings() {
         <div class="edit-fields">${rootField()}</div>
         <div class="root-bar"><button class="btn primary">${T('Сохранить')}</button></div>
       </form>
+      <form id="mic-form" class="edit-card">
+        <div class="edit-title"><h2>${T('Микрофон')}</h2><p>${T('Для голосовых сообщений. Нажмите «Проверить» и скажите что-нибудь: полоска должна двигаться.')}</p></div>
+        <div class="edit-fields">
+          <label class="field wide">${T('Какой микрофон использовать')}<select data-mic><option value="">${T('По умолчанию')}</option></select></label>
+          <meter class="wide mic-level" data-mic-level min="0" max="1" value="0" hidden></meter>
+          <p class="msg wide" role="alert" data-mic-msg></p>
+        </div>
+        <div class="root-bar"><button class="btn primary">${T('Проверить')}</button></div>
+      </form>
     </section>`;
   desktop.postMessage({ type: 'settings' });
+  setupMicSettings(view.querySelector('#mic-form'));
+}
+// Выбор микрофона для голосовых. Названия микрофонов браузер отдаёт только после разрешения, поэтому список
+// заполняется ещё раз после «Проверить».
+function setupMicSettings(form) {
+  const select = form.querySelector('[data-mic]');
+  const meter = form.querySelector('[data-mic-level]');
+  const msg = form.querySelector('[data-mic-msg]');
+  const fill = async () => {
+    const mics = (await navigator.mediaDevices?.enumerateDevices?.() || []).filter(d => d.kind === 'audioinput' && d.deviceId !== 'default' && d.deviceId !== 'communications');
+    let saved = '';
+    try { saved = localStorage.getItem('mic') || ''; } catch { /* приватный режим */ }
+    select.innerHTML = `<option value="">${T('По умолчанию')}</option>` + mics.map((d, i) => `<option value="${esc(d.deviceId)}">${esc(d.label || T('Микрофон {n}', { n: i + 1 }))}</option>`).join('');
+    select.value = mics.some(d => d.deviceId === saved) ? saved : '';
+  };
+  fill().catch(console.error);
+  select.addEventListener('change', () => { try { localStorage.setItem('mic', select.value); } catch { /* приватный режим */ } });
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    msg.className = 'msg wide';
+    msg.textContent = '';
+    let stream;
+    try { stream = await micStream(); } catch (err) { msg.textContent = micError(err, T); return; }
+    await fill().catch(console.error);
+    const audio = new AudioContext();
+    const analyser = audio.createAnalyser();
+    audio.createMediaStreamSource(stream).connect(analyser);
+    const buf = new Uint8Array(analyser.fftSize);
+    meter.hidden = false;
+    msg.className = 'msg ok wide';
+    msg.textContent = T('Микрофон работает: {name}', { name: stream.getAudioTracks()[0]?.label || T('По умолчанию') });
+    const end = Date.now() + 6000;
+    const tick = () => {
+      analyser.getByteTimeDomainData(buf);
+      meter.value = Math.min(1, Math.max(...buf.map(v => Math.abs(v - 128))) / 64);
+      if (Date.now() < end && form.isConnected) requestAnimationFrame(tick);
+      else { stream.getTracks().forEach(t => t.stop()); audio.close(); meter.value = 0; meter.hidden = true; }
+    };
+    tick();
+  });
 }
 // Первая установка: приложение спрашивает папку, после выбора ставим программу.
 function askRoot(id) {
@@ -1873,14 +1922,14 @@ function renderReport(appId) {
         <label class="field">${T('Сообщение')}
           <textarea name="text" rows="6" maxlength="2000" required></textarea>
         </label>
-        <button class="btn primary">${T('Отправить автору')}</button>
+        <div class="report-bar">${social.attachBar()}<button class="btn primary">${T('Отправить автору')}</button></div>
       </form>
       <p id="msg" class="msg" role="alert"></p>
     </section>`;
 }
 
 async function sendReport(form) {
-  const { type, appId, text } = Object.fromEntries(new FormData(form));
+  const { type, appId, text, image } = Object.fromEntries(new FormData(form));
   const app = apps.find(a => a.id === appId);
   if (!authorName(app) || !text.trim()) return;
   await fs.addDoc(fs.collection(db, 'messages'), {
@@ -1894,8 +1943,10 @@ async function sendReport(form) {
     text: text.trim(),
     createdAt: fs.serverTimestamp(),
     read: false,
+    ...(social.isImage(image) ? { image } : {}),
   });
   form.reset();
+  social.clearAttach(form);
   say(T('Отправлено. Сообщение получит {name}, ответ появится в разделе «Сообщения».', { name: authorName(app) }), true);
 }
 
@@ -2003,6 +2054,7 @@ const messageItem = m => {
           <span>${when(m.createdAt)}</span>
         </div>
         <p>${esc(m.text)}</p>
+        ${social.imageTag(m.image)}
         <div class="comment-head">${mine ? `<b>${esc(m.fromName)}</b><span>${esc(m.fromEmail)}</span>` : `<span>${T('Вы написали автору программы')}</span>`}</div>
         ${thread.length ? `<div class="thread">${thread.map(replyItem).join('')}</div>` : ''}
         <form class="comment-form message-reply" data-id="${esc(m.id)}">
@@ -2479,6 +2531,7 @@ view.addEventListener('click', e => {
 view.addEventListener('submit', e => {
   if (e.target.method === 'dialog') return; // окно вопроса закрывается само
   e.preventDefault();
+  if (e.target.id === 'mic-form') return; // проверку микрофона запускает setupMicSettings
   if (e.target.id === 'root-form' || e.target.id === 'root-ask') return desktop?.postMessage({ type: 'set-root', path: e.target.querySelector('[data-root]').value });
   if (e.target.id === 'edit-form') return attempt(() => saveItem(e.target));
   if (e.target.id === 'report-form') return attempt(() => sendReport(e.target));

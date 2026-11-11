@@ -1748,9 +1748,9 @@ export function setupSocial(ctx) {
     if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) return ctx.toast(T('Этот браузер не умеет записывать звук.'));
     let stream;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch {
-      return ctx.toast(T('Нет доступа к микрофону. Разрешите его в настройках браузера.'));
+      stream = await micStream();
+    } catch (e) {
+      return ctx.toast(micError(e, T));
     }
     const mimeType = ['audio/mp4;codecs=mp4a.40.2', 'audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'].find(t => MediaRecorder.isTypeSupported(t));
     const rec = new MediaRecorder(stream, { mimeType, audioBitsPerSecond: 24000 });
@@ -2603,6 +2603,9 @@ export function setupSocial(ctx) {
     mirror,
     updatePublic,
     isImage: url => DATA_IMAGE.test(url || ''),
+    attachBar,
+    imageTag,
+    clearAttach,
     loadPeople,
     likeBox: (appId, n) => voteBox('a', appId, n),
     uidsByNames,
@@ -2681,6 +2684,26 @@ function loadHeicLib() {
 }
 
 // Единая точка чтения картинки: сначала сам браузер (Safari умеет), для HEIC запасной путь через конвертер.
+// Микрофон, выбранный в настройках приложения; если его отключили, берём микрофон по умолчанию.
+export async function micStream() {
+  let id = '';
+  try { id = localStorage.getItem('mic') || ''; } catch { /* приватный режим */ }
+  if (id) {
+    try { return await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: id } } }); }
+    catch (e) { if (e.name !== 'OverconstrainedError' && e.name !== 'NotFoundError') throw e; }
+  }
+  return navigator.mediaDevices.getUserMedia({ audio: true });
+}
+
+export function micError(e, T) {
+  console.error(e);
+  if (e?.name === 'NotFoundError') return T('Микрофон не найден. Подключите его и попробуйте ещё раз.');
+  if (e?.name === 'NotReadableError') return T('Микрофон занят другой программой или выключен.');
+  return T(navigator.userAgent.includes('YaytsaCloud/')
+    ? 'Нет доступа к микрофону. Включите его в Параметрах Windows: Конфиденциальность → Микрофон.'
+    : 'Нет доступа к микрофону. Разрешите его в настройках браузера.');
+}
+
 export async function readImage(file) {
   try {
     return await createImageBitmap(file);

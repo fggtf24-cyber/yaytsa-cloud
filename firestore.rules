@@ -154,7 +154,8 @@ service cloud.firestore {
         && (resource.data.to == request.auth.uid || resource.data.from == request.auth.uid);
       allow delete: if request.auth != null && resource.data.to == request.auth.uid;
       allow create: if request.auth != null
-        && request.resource.data.keys().hasOnly(['to', 'from', 'fromName', 'fromEmail', 'type', 'appId', 'appName', 'text', 'createdAt', 'read'])
+        && request.resource.data.keys().hasOnly(['to', 'from', 'fromName', 'fromEmail', 'type', 'appId', 'appName', 'text', 'createdAt', 'read', 'image'])
+        && str(request.resource.data.get('image', ''), 0, 800000)
         && request.resource.data.from == request.auth.uid
         && request.resource.data.type in ['bug', 'idea']
         && request.resource.data.fromName is string

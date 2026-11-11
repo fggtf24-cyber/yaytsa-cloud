@@ -319,6 +319,14 @@ await ok('снять лайк', like(alice, 'alice', 0, -1));
 await ok('счётчик читают все', getDoc(doc(anon, 'applikes', 'va')));
 await env.withSecurityRulesDisabled(async c => assert.equal((await getDoc(doc(c.firestore(), 'applikes', 'va'))).data().n, 1));
 
+// Сообщение автору программы, можно со скриншотом
+await env.withSecurityRulesDisabled(c => setDoc(doc(c.firestore(), 'apps', 'rp'), { name: 'R', community: true, authorUid: 'alice' }));
+const report = (extra = {}) => setDoc(doc(collection(bob, 'messages')), { to: 'alice', from: 'bob', fromName: 'bob', fromEmail: 'bob@t.dev', type: 'bug', appId: 'rp', appName: 'R', text: 'x', createdAt: serverTimestamp(), read: false, ...extra });
+await ok('сообщение автору', report());
+await ok('сообщение со скриншотом', report({ image: 'data:image/jpeg;base64,AAAA' }));
+await no('скриншот больше 800 КБ', report({ image: 'x'.repeat(800001) }));
+await no('скриншот не строкой', report({ image: 5 }));
+
 await env.cleanup();
 assert.ok(n > 30);
 console.log(`\nвсе проверки прошли: ${n}`);
