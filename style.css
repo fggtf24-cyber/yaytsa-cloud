@@ -1028,6 +1028,7 @@ html.in-app::-webkit-scrollbar-corner, html.in-app *::-webkit-scrollbar-corner {
 /* Группы */
 .r-chat-top { align-items: center; }
 .r-chat-bugs { display: block; padding: 0 16px 10px; font-size: 13px; }
+.r-chat-bugs .rail-count:not([hidden]) { position: static; display: inline-block; margin-left: 4px; vertical-align: 1px; }
 .r-group-new { width: min(420px, 100%); margin: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
 .r-group-new h2 { font-size: 18px; font-weight: 800; }
 .r-group-new .btn { padding: 10px 20px; cursor: pointer; }

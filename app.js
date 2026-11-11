@@ -1,5 +1,5 @@
 import { EN, TERMS } from './i18n.js?v=70';
-import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=50';
+import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=51';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -2025,9 +2025,12 @@ function savedAdminView() {
 }
 
 function drawInboxCount() {
-  const unread = messages.filter(m => m.to === user?.uid && !m.read).length
-    + notifications.filter(n => n.type === 'dm' && !n.read).length // ответы на баги и идеи
-    + social.unreadChats();
+  // Баги и идеи вместе с ответами на них отмечаются прочитанными только на своей странице, не в чатах:
+  // цифра на ссылке «Баги и идеи» показывает, откуда взялась цифра на «Сообщениях».
+  const bugs = messages.filter(m => m.to === user?.uid && !m.read).length
+    + notifications.filter(n => n.type === 'dm' && !n.read).length; // ответы на баги и идеи
+  view.querySelectorAll('.r-chat-bugs b').forEach(b => { b.hidden = !bugs; b.textContent = bugs; });
+  const unread = bugs + social.unreadChats();
   const count = document.getElementById('inbox-count');
   count.hidden = !unread;
   count.textContent = unread > 9 ? '9+' : unread;

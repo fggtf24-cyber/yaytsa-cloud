@@ -1611,7 +1611,7 @@ export function setupSocial(ctx) {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
             <input id="chat-search" type="search" autocomplete="off" aria-label="${T('Поиск по чатам и людям')}" placeholder="${T('Поиск по чатам и людям')}">
           </label>
-          <a class="link r-chat-bugs" href="#inbox">${T('Баги и идеи')}</a>
+          <a class="link r-chat-bugs" href="#inbox">${T('Баги и идеи')} <b class="rail-count" hidden></b></a>
           <div id="chat-items"></div>
         </aside>
         <section class="r-room" aria-label="${T('Переписка')}">
@@ -1628,6 +1628,7 @@ export function setupSocial(ctx) {
       </div>`;
     drawChatList();
     drawMsgs();
+    ctx.drawInboxCount();
     if (roomId && chats.some(c => c.id === roomId)) openRoomStream();
     markSeen();
     view.querySelector('.r-chat-form textarea')?.focus();
