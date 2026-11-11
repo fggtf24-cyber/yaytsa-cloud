@@ -256,7 +256,7 @@ export function setupSocial(ctx) {
   }
 
   async function attach(input, file) {
-    const files = file ? [file] : [...input.files];
+    const files = file ? [].concat(file) : [...input.files];
     input.value = ''; // чтобы тот же файл можно было выбрать снова
     if (!files.length) return;
     const box = input.closest('.attach');
@@ -1787,8 +1787,7 @@ export function setupSocial(ctx) {
     recorder.rec.stop();
   }
 
-  async function sendChatPhoto(input) {
-    const file = input.files[0];
+  async function sendChatPhoto(input, file = input.files[0]) {
     const form = input.closest('form');
     input.value = '';
     if (!file) return;
@@ -2475,17 +2474,44 @@ export function setupSocial(ctx) {
     if (e.target.id === 'group-photo') setGroupPhoto(e.target);
   });
 
-  // Ctrl+V скриншота в форме с кнопкой картинки (пост, комментарий) — как выбор файла.
-  // Курсор не в поле — картинка уходит в первую такую форму на странице (новый пост, комментарий к посту).
-  document.addEventListener('paste', e => {
-    const t = e.target instanceof Element ? e.target : null;
+  // Ctrl+V и перетаскивание картинки в форму с кнопкой картинки (пост, комментарий, чат) — как выбор файла.
+  // Не над формой — картинка уходит в первую такую форму на странице (новый пост, комментарий к посту, открытый чат).
+  const PICK = '[data-attach], [data-chat-photo]';
+  const isImage = f => f.type.startsWith('image/') || /\.(heic|heif)$/i.test(f.name);
+  const pickInput = t => {
     const form = t?.closest('form');
-    const input = form ? form.querySelector('[data-attach]')
-      : t?.closest('input, textarea, [contenteditable]') ? null : view.querySelector('form [data-attach]');
-    const file = input && [...(e.clipboardData?.files || [])].find(f => f.type.startsWith('image/'));
-    if (!file) return;
+    if (form) return form.querySelector(PICK);
+    return t?.closest('input, textarea, [contenteditable]') ? null : view.querySelector(`form :is(${PICK})`);
+  };
+  async function takeImages(input, files) {
+    if (input.matches('[data-attach]')) return attach(input, input.multiple ? files : files[0]);
+    for (const f of files) await sendChatPhoto(input, f);
+  }
+  document.addEventListener('paste', e => {
+    const input = pickInput(e.target instanceof Element ? e.target : null);
+    const files = [...(e.clipboardData?.files || [])].filter(isImage);
+    if (!input || !files.length) return;
     e.preventDefault();
-    attach(input, file);
+    takeImages(input, files);
+  });
+  let dropForm = null;
+  const markDrop = form => { dropForm?.classList.remove('dropping'); dropForm = form; form?.classList.add('dropping'); };
+  document.addEventListener('dragover', e => {
+    if (!e.dataTransfer?.types.includes('Files')) return;
+    const input = pickInput(e.target.closest?.('form') || view);
+    markDrop(input?.closest('form'));
+    if (!input) return;
+    e.preventDefault(); // иначе браузер откроет картинку вместо сайта
+    e.dataTransfer.dropEffect = 'copy';
+  });
+  document.addEventListener('dragleave', e => { if (!e.relatedTarget) markDrop(null); });
+  document.addEventListener('drop', e => {
+    const input = pickInput(e.target.closest?.('form') || view);
+    markDrop(null);
+    if (!input) return;
+    e.preventDefault();
+    const files = [...(e.dataTransfer?.files || [])].filter(isImage);
+    if (files.length) takeImages(input, files);
   });
 
   view.addEventListener('input', e => {
