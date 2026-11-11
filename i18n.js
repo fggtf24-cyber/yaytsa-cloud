@@ -345,7 +345,7 @@ export const EN = {
   'Не получилось воспроизвести запись.': 'Could not play the recording.',
   'Этот браузер не умеет записывать звук.': 'This browser cannot record audio.',
   'Нет доступа к микрофону. Разрешите его в настройках браузера.': 'No microphone access. Allow it in your browser settings.',
-  'Нет доступа к микрофону. Включите его в Параметрах Windows: Конфиденциальность → Микрофон.': 'No microphone access. Turn it on in Windows Settings: Privacy → Microphone.',
+  'Нет доступа к микрофону. Перезапустите приложение. Если не поможет, в Параметрах Windows откройте «Конфиденциальность → Микрофон» и включите «Разрешить классическим приложениям доступ к микрофону».': 'No microphone access. Restart the app. If that does not help, open Windows Settings → Privacy → Microphone and turn on “Let desktop apps access your microphone”.',
   'Микрофон не найден. Подключите его и попробуйте ещё раз.': 'No microphone found. Connect one and try again.',
   'Микрофон занят другой программой или выключен.': 'The microphone is busy in another app or turned off.',
   'Микрофон': 'Microphone',
