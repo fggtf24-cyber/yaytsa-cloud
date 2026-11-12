@@ -13,7 +13,7 @@ const SYNC = {
   site: 'https://fggtf24-cyber.github.io/yaytsa-cloud/',
 };
 // Settings that follow the account; the rest (theme, zoom, window options) stay per device.
-const SYNC_SETTINGS = ['work', 'brk', 'autoStart', 'goal', 'goalWeek', 'sound', 'popup', 'lang', 'plans'];
+const SYNC_SETTINGS = ['work', 'brk', 'longBrk', 'longEvery', 'autoStart', 'goal', 'goalWeek', 'sound', 'popup', 'lang', 'plans'];
 // A deleted item is remembered as '-<time of deletion>'; older copies of it are not brought back.
 const isDel = g => typeof g === 'string' && g[0] === '-';
 const delAt = g => Number(g.slice(1)) || 0;
@@ -489,7 +489,7 @@ const timerCore = () => ({
   startedAt: timer.startedAt || 0,
   label: $('#label').value.trim(),
   // the schedule, without this device's own bookkeeping
-  series: series ? { id: series.id || '', start: series.start, count: series.count, work: series.work, brk: series.brk, pausedAt: series.pausedAt || 0, label: series.label || $('#label').value.trim() } : null,
+  series: series ? { id: series.id || '', start: series.start, count: series.count, work: series.work, brk: series.brk, every: series.every || 0, lbrk: series.lbrk || 0, pausedAt: series.pausedAt || 0, label: series.label || $('#label').value.trim() } : null,
 });
 
 // Called from renderOuter (about once a second): sends the state when it changed here.

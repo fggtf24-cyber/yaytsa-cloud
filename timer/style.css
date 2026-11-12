@@ -2248,4 +2248,79 @@ html.web .set:has([data-key="alwaysOnTop"]), html.web .set:has([data-key="popup"
 html.web .tabs { padding-top: 6px; }
 
 /* phone: pages meant for the PC only never take a place in the swipe strip (the Plan page put itself before Settings) */
-html.android .view[data-desktop], html.android #view-plan { display: none !important; }
+html.android .view[data-desktop] { display: none !important; }
+.set-pair { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+html.android .set-pair { gap: 6px; }
+
+/* ======================= 2.19.2: a calmer timer page (PC) ======================= */
+/* the session settings as one row of chips, only before a run; the day at a glance under the key */
+html:not(.android) #view-timer .props, html:not(.android) #view-timer .test-row { display: none !important; }
+.tchips { display: none; }
+html:not(.android) #view-timer.idle .tchips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 18px auto 0; }
+.tchip {
+  display: inline-flex; align-items: center; gap: 7px;
+  border: 0; border-radius: 999px; padding: 7px 13px 7px 11px;
+  background: var(--hover); color: var(--text); font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums;
+  transition: background .15s var(--ease), color .15s var(--ease), box-shadow .15s var(--ease);
+}
+.tchip svg { width: 16px; height: 16px; color: var(--text-2); flex: none; }
+.tchip:hover, .tchip.open { background: var(--active); color: var(--text-strong); }
+.tchip.open { box-shadow: inset 0 0 0 1.5px var(--border-strong); }
+.tchip.set { background: linear-gradient(135deg, rgba(79, 139, 255, .22), rgba(138, 92, 255, .22)); color: var(--text-strong); }
+.tchip.set svg { color: var(--text-strong); }
+html.simple .tchip[data-chip="seriesCount"], html.simple .tchip[data-chip="when"] { display: none; }
+.chip-pop { padding: 10px 12px 12px; min-width: 190px; }
+.cp-title { font-size: 12.5px; color: var(--text-2); margin: 0 4px 6px; text-align: center; }
+.chip-pop .stepper { display: flex; justify-content: center; }
+.chip-pop .stepper .val { min-width: 90px; font-weight: 600; color: var(--text-strong); }
+/* the day at a glance (the simple mode's line) on the full PC page too, under the key */
+html:not(.android) .simple-day { display: block; position: relative; width: 100%; max-width: 360px; margin: 2px auto 18px; }
+.sd-streak { display: none !important; }
+html:not(.android) #view-timer .controls { margin-bottom: 18px; }
+
+/* App chart 2.19.2: open time as soft bands, a "when did I work" strip, a slider when zoomed */
+.lc-bands rect { fill: var(--hover); }
+.lc-zoom { top: -30px; right: 0; }
+.lc-zoom .lc-b[hidden] { display: none; }
+.lc-tools { display: none; }
+.lc-strip { position: relative; height: 8px; margin: 6px 0 0 46px; border-radius: 4px; background: var(--track); overflow: hidden; }
+.lc-strip i { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
+.lc-strip i.o { background: var(--active); }
+.lc-strip i.w { background: linear-gradient(90deg, #4f8bff, #8a5cff); }
+.lc-scroll { position: relative; height: 6px; margin: 8px 0 0 46px; border-radius: 3px; background: var(--track); cursor: pointer; }
+.lc-scroll[hidden] { display: none; }
+.lc-thumb { position: absolute; top: -2px; bottom: -2px; min-width: 18px; border-radius: 5px; background: var(--border-strong); cursor: grab; }
+.lc-thumb:hover, .lc-thumb:active { background: var(--text-3); }
+.lc-plot.panning { cursor: grabbing; }
+
+/* ---------- 2.19.2: one look on the phone and the PC ----------
+   The same greys, the same bold digits, the same gradient pill key with a word on it,
+   the same blue/green phase tag and the same soft chips. Phone ergonomics (wheels, bottom bar) stay. */
+html.android { --bg: #191919; --block: #222222; --block-2: #2a2a2a; --pc-grad: linear-gradient(120deg, #3d8bff, #7a5cff 55%, #b05cff); --pc-grad-break: linear-gradient(120deg, #22b38a, #2fb5c9 60%, #3d8bff); }
+html.android[data-theme="light"] { --bg: #ffffff; --block: #f7f7f5; --block-2: #f1f1ef; --text-strong: rgb(37, 35, 30); }
+html.android #view-timer .time { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.04em; }
+html.android .wr, html.android .wr.cur { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+html.android h1 { font-weight: 700; letter-spacing: -0.02em; }
+html.android .card-val, html.android .proj-total { font-weight: 650; }
+html.android .tag { height: 26px; padding: 0 10px; border-radius: 999px; font-size: 13.5px; font-weight: 600; background: var(--tag-blue-bg); color: var(--tag-blue-fg); }
+html.android .tag.break { background: var(--tag-green-bg); color: var(--tag-green-fg); padding: 0 10px; font-size: 13.5px; font-weight: 600; }
+html.android .tag.mini { height: 20px; font-size: 11.5px; padding: 0 7px; }
+/* the key: the PC's gradient pill, with the moving play/pause icon in front of the word */
+html.android #btnStart, html.android #btnStart.secondary {
+  width: auto; min-width: 184px; height: 60px; padding: 0 30px 0 24px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  background: var(--pc-grad); color: #fff; font-size: 17px; font-weight: 650; letter-spacing: .01em;
+  box-shadow: 0 12px 30px -10px rgba(98, 92, 255, .75), inset 0 1px 0 rgba(255,255,255,.25);
+}
+html.android .face.break ~ .controls #btnStart:not(.secondary) { background: var(--pc-grad-break); box-shadow: 0 12px 30px -10px rgba(34, 179, 138, .7), inset 0 1px 0 rgba(255,255,255,.25); }
+html.android #btnStart.secondary { background: var(--block-2); color: var(--text-strong); box-shadow: inset 0 0 0 1px var(--border-strong); }
+html.android #btnStart .pp { width: 22px; height: 22px; flex: none; }
+html.android #btnStart .pp path { fill: currentColor; stroke: currentColor; }
+html.android #view-timer .controls { gap: 18px; align-items: center; }
+html.android #view-timer .icon-btn { width: 52px; height: 52px; border-radius: 50%; background: var(--block); }
+/* sessions and start time as the PC's chips */
+html.android .when-chip { border-radius: 999px; background: var(--hover); font-weight: 600; }
+html.android .when-chip.set { background: linear-gradient(135deg, rgba(79, 139, 255, .28), rgba(138, 92, 255, .28)); color: var(--text-strong); }
+html.android .stepper button { border-radius: 50%; background: var(--hover); }
+html.android .tab.active { color: var(--text-strong); }
+html.android .tab-blob { background: var(--active); }

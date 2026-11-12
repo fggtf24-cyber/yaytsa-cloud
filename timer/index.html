@@ -41,7 +41,7 @@
     <button class="tab" data-view="projects" data-i18n-title="pickProj"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 7.5a2 2 0 0 1 2-2h3.8l2 2.2h7.2a2 2 0 0 1 2 2v7.8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></svg><span data-i18n="tabProjects"></span></button>
     <button class="tab" data-view="apps" data-i18n-title="tabApps"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.8"/></svg><span data-i18n="tabApps"></span></button>
     <button class="tab" data-view="stats" data-i18n-title="tabStats"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 19.5v-7M12 19.5V5M18.5 19.5v-10"/></svg><span data-i18n="tabStats"></span></button>
-    <button class="tab" data-view="plan" data-desktop data-i18n-title="tabPlan"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4M9 14.5l2 2 4-4"/></svg><span data-i18n="tabPlan"></span></button>
+    <button class="tab" data-view="plan" data-i18n-title="tabPlan"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4M9 14.5l2 2 4-4"/></svg><span data-i18n="tabPlan"></span></button>
     <button class="tab" data-view="settings" data-i18n-title="tabSettings"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg><span data-i18n="tabSettings"></span></button>
   </nav>
 
@@ -107,6 +107,13 @@
         </div>
       </div>
 
+      <!-- PC: the session settings as a quiet row of chips; a chip opens its own small control -->
+      <div class="tchips" id="tChips" data-desktop>
+        <button class="tchip" data-chip="work" data-i18n-title="work"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7.5" width="17" height="12" rx="2.5"/><path d="M9 7.5V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5M3.5 12.5h17"/></svg><span></span></button>
+        <button class="tchip" data-chip="brk" data-i18n-title="break"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9h11v4.5A4.5 4.5 0 0 1 11.5 18h-2A4.5 4.5 0 0 1 5 13.5z"/><path d="M16 10.5h1.2a2.2 2.2 0 0 1 0 4.4H16M8.5 4v2.5M12 4v2.5"/></svg><span></span></button>
+        <button class="tchip" data-chip="seriesCount" data-i18n-title="seriesCountL"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11a7 7 0 0 1 12-4.9L19 8M19 4v4h-4M19 13a7 7 0 0 1-12 4.9L5 16M5 20v-4h4"/></svg><span></span></button>
+        <button class="tchip" data-chip="when" data-i18n-title="startAt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7.5"/><path d="M12 8.5V12l2.4 1.5"/></svg><span></span></button>
+      </div>
       <div class="props">
         <div class="prop" data-p="work">
           <div class="prop-key">
@@ -232,7 +239,7 @@
     </section>
 
     <!-- PLAN (PC; the phone opens the same box as a panel from the timer page) -->
-    <section class="view" id="view-plan" data-desktop>
+    <section class="view" id="view-plan">
       <h1 data-i18n="tabPlan" data-info="planLead"></h1>
     </section>
 
@@ -248,6 +255,10 @@
       <div class="set">
         <span class="set-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9h11v4.5A4.5 4.5 0 0 1 11.5 18h-2A4.5 4.5 0 0 1 5 13.5z"/><path d="M16 10.5h1.2a2.2 2.2 0 0 1 0 4.4H16M8.5 4v2.5M12 4v2.5"/></svg></span><div class="set-text"><div class="set-name" data-i18n="breakLen"></div><div class="set-desc" data-i18n="stepDesc"></div></div>
         <div class="stepper" data-key="brk"></div>
+      </div>
+      <div class="set">
+        <span class="set-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h12v4.5A5 5 0 0 1 11 18.5H9A5 5 0 0 1 4 13.5z"/><path d="M16 10.5h1.5a2.3 2.3 0 0 1 0 4.6H16M7.5 3.5v3M10.5 3.5v3M13.5 3.5v3"/></svg></span><div class="set-text"><div class="set-name" data-i18n="longBreakL"></div><div class="set-desc" data-i18n="longBreakDesc"></div></div>
+        <div class="set-pair"><div class="stepper" data-key="longBrk"></div><div class="stepper" data-key="longEvery"></div></div>
       </div>
       <div class="set">
         <span class="set-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".9" fill="currentColor"/></svg></span><div class="set-text"><div class="set-name" data-i18n="goalSet"></div><div class="set-desc" data-i18n="goalDesc"></div></div>
@@ -326,6 +337,7 @@
   <div class="popover cal" id="cal" hidden></div>
   <div class="popover tp" id="tp" hidden></div>
   <div class="popover menu" id="menu" hidden></div>
+  <div class="popover chip-pop" id="chipPop" hidden></div>
   <div class="modal" id="modal" hidden>
     <div class="modal-card">
       <h3 id="modalTitle"></h3>

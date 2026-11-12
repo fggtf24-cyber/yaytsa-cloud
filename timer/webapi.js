@@ -7,7 +7,7 @@
 //   updates       the service worker caches the app; a new version is offered like on the PC
 // Nothing native: no tray, no program tracking, no window buttons (the browser has its own).
 (() => {
-  const VERSION = '2.19.1';
+  const VERSION = '2.19.2';
   document.documentElement.classList.add('web');
   const KEY = 'yaytsa-timer-data';
   const handlers = {};

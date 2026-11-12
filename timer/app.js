@@ -72,6 +72,7 @@ winMin: 'Свернуть', winMax: 'Развернуть', winClose: 'Закр�
     monthsNom: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
 scale: 'Масштаб', appsPickTitle: 'Добавить программу', appsSearchPh: 'Поиск по программам на компьютере', appsBrowse: 'Выбрать .exe вручную…', appsBrowseTitle: 'Выберите программу',    appsFound: 'Найдено', appsAll: 'Все программы', appsNothing: 'Ничего не нашлось. Попробуйте выбрать .exe вручную', appsAdded: n => `«${n}» отслеживается`,    r3m: '3 мес', r6m: '6 мес', r1y: 'Год', modeBars: 'Столбики', modeSquares: 'Квадратики',    monthsShort: ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'],    daysMon: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'], noWork: 'без работы',    activeDays: n => `${n} ${plural(n, 'рабочий день', 'рабочих дня', 'рабочих дней')}`, streak: n => `серия ${n} ${plural(n, 'день', 'дня', 'дней')} подряд`,    less: 'Меньше', more: 'Больше', byHour: 'По часам за неделю',
     appsActiveL: 'Активное время', adSpan: (a, b) => `Работа в программе с ${a} до ${b}`, singleDoneTitle: 'Заход завершён', singleDoneBody: m => `${m} мин в копилке. Можно отдохнуть.`,
+    longBreakL: 'Длинный перерыв', longBreakDesc: 'Каждый N-й перерыв длиннее — как в классическом помодоро. «выкл» — все перерывы одинаковые', everyN: n => `каждый ${n}-й`,
     simpleL: 'Просто таймер', simpleDesc: 'Только время, кнопка и прогресс дня. Проекты, программы и план прячутся, данные остаются',
     modeQ: 'Как будете пользоваться?', modeText: 'Просто таймер — время, кнопка и прогресс дня, ничего лишнего. Или всё сразу: проекты, программы, план, подробная статистика. Поменять можно в любой момент в настройках.',
     modeSimple: 'Просто таймер', modeFull: 'Всё и сразу', nudgeQ: 'Включить полный режим?', nudgeText: 'Похоже, вам интересна статистика. В полном режиме есть проекты, время в программах и план — всё, что вы уже записали, останется.',
@@ -171,6 +172,7 @@ winMin: 'Minimize', winMax: 'Maximize', winClose: 'Close', importCsv: 'Import CS
     monthsNom: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
 scale: 'Zoom', appsPickTitle: 'Add a program', appsSearchPh: 'Search programs on this PC', appsBrowse: 'Pick an .exe manually…', appsBrowseTitle: 'Choose a program',    appsFound: 'Found', appsAll: 'All programs', appsNothing: 'Nothing found. Try picking the .exe manually', appsAdded: n => `Tracking “${n}”`,    r3m: '3 mo', r6m: '6 mo', r1y: 'Year', modeBars: 'Bars', modeSquares: 'Squares',    monthsShort: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],    daysMon: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], noWork: 'no focus',    activeDays: n => `${n} active day${n === 1 ? '' : 's'}`, streak: n => `${n}-day streak`,    less: 'Less', more: 'More', byHour: 'By hour, last 7 days',
     appsActiveL: 'Active time', adSpan: (a, b) => `Worked in it from ${a} to ${b}`, singleDoneTitle: 'Session complete', singleDoneBody: m => `${m} min in the bank. Time to rest.`,
+    longBreakL: 'Long break', longBreakDesc: 'Every N-th break is longer, like a classic pomodoro. “off”: all breaks are the same', everyN: n => `every ${n}th`,
     simpleL: 'Just a timer', simpleDesc: 'Only the time, the key and the day’s progress. Projects, apps and plan step aside; your data stays',
     modeQ: 'How will you use it?', modeText: 'Just a timer: the time, the key and the day’s progress, nothing else. Or everything: projects, apps, a plan and detailed stats. You can switch any time in Settings.',
     modeSimple: 'Just a timer', modeFull: 'Everything', nudgeQ: 'Turn on the full mode?', nudgeText: 'Looks like you like the stats. The full mode adds projects, time in apps and a plan; everything you have recorded stays.',
@@ -216,7 +218,7 @@ const ANDROID = !!api.android;
 const DEFAULTS = {
   work: 25, brk: 5, autoStart: false, sound: true, notify: true,
   lang: 'ru', theme: 'dark', goal: 4, alwaysOnTop: false, popup: true, closeToTray: true,
-  zoom: 1, chartMode: 'bars', heatRange: 13, seriesCount: 0, appsRange: 1, goalWeek: 0, simple: false, modeAsked: 0,
+  zoom: 1, chartMode: 'bars', heatRange: 13, seriesCount: 0, appsRange: 1, goalWeek: 0, simple: false, modeAsked: 0, longBrk: 15, longEvery: 4,
 };
 const MIN_SAVE_SEC = 10 * 60; // a session stopped by hand is kept only from 10 minutes on
 const ZOOM = { min: 0.7, max: 1.6, step: 0.1 };
@@ -225,6 +227,8 @@ const LIMITS = {
   brk: { min: 5, max: 60, step: 5 },
   goal: { min: 0, max: 12, step: 0.5 },
   goalWeek: { min: 0, max: 80, step: 1 },
+  longBrk: { min: 0, max: 60, step: 5 },
+  longEvery: { min: 2, max: 8, step: 1 },
   seriesCount: { min: 0, max: 12, step: 1 }, // 0 = endless
 };
 
@@ -463,6 +467,7 @@ async function stopEarly() {
 }
 
 let alertIsTest = false;
+let brkMinNow = 0; // minutes of the break that just began (a long one is longer than settings.brk)
 function alertTexts(finished, test, forceAuto) {
   if (finished === 'work' && !test && !forceAuto && !series) {
     return { next: 'break', auto: true, single: true, title: t('singleDoneTitle'), body: t('singleDoneBody')(settings.work), goLabel: '', okLabel: t('gotIt') };
@@ -473,8 +478,8 @@ function alertTexts(finished, test, forceAuto) {
     next, auto,
     title: test ? t('testTitle') : (next === 'break' ? t('nBreakTitle') : t('nWorkTitle')),
     body: auto
-      ? (next === 'break' ? t('aBreakAuto')(settings.brk) : t('aWorkAuto')(settings.work))
-      : (next === 'break' ? t('aBreakBody')(settings.work, settings.brk) : t('aWorkBody')(settings.work)),
+      ? (next === 'break' ? t('aBreakAuto')(brkMinNow || settings.brk) : t('aWorkAuto')(settings.work))
+      : (next === 'break' ? t('aBreakBody')(settings.work, brkMinNow || settings.brk) : t('aWorkBody')(settings.work)),
     goLabel: next === 'break' ? t('goBreak') : t('goWork'),
     okLabel: auto ? t('gotIt') : t('later'),
   };
@@ -495,7 +500,7 @@ function alertPhaseEnd(finished, test, forceAuto) {
   } else {
     chime(next);
     if (settings.notify) {
-      api.notify(title, single ? body : next === 'break' ? t('nBreakBody')(settings.brk) : t('nWorkBody')(settings.work));
+      api.notify(title, single ? body : next === 'break' ? t('nBreakBody')(brkMinNow || settings.brk) : t('nWorkBody')(settings.work));
     }
   }
 }
@@ -577,15 +582,35 @@ let seriesStartAt = 0; // start time picked in the setup (0 = now)
 // a series of N sessions, or (count 0) an endless run: work and break by turns until stopped
 const validSeries = s => !!s && typeof s === 'object' && s.work > 0 && Number(s.count) >= 0;
 const isEndless = () => !!series && !(series.count > 0);
+// Long break: every `every`-th break lasts `lbrk` instead of `brk` (0 = no long breaks), like a
+// classic pomodoro (25-5, 25-5, 25-5, 25-15). The schedule stays pure arithmetic, so any device
+// still knows where a series is. The same maths is in Host.java.
+// the long break as set now (both 0 when it is off)
+const longOf = () => ({ every: settings.longBrk > 0 ? settings.longEvery : 0, lbrk: (settings.longBrk || 0) * 60000 });
+const seriesLong = s => (s.every > 1 && s.lbrk > 0 ? { n: s.every, L: s.lbrk } : null);
+function seriesWorkStart(s, k) {
+  const lg = seriesLong(s), c = s.work + s.brk;
+  if (!lg) return s.start + k * c;
+  const block = lg.n * s.work + (lg.n - 1) * s.brk + lg.L;
+  return s.start + Math.floor(k / lg.n) * block + (k % lg.n) * c;
+}
+const seriesBreakLen = (s, k) => { const lg = seriesLong(s); return lg && k % lg.n === lg.n - 1 ? lg.L : s.brk; };
 function seriesAt(s, at) {
-  const c = s.work + s.brk;
   if (at < s.start) return { waiting: true, idx: 0, phase: 'work', start: s.start, end: s.start + s.work };
-  const k = Math.floor((at - s.start) / c), within = at - s.start - k * c;
+  const lg = seriesLong(s), c = s.work + s.brk;
+  let k;
+  if (!lg) k = Math.floor((at - s.start) / c);
+  else {
+    const block = lg.n * s.work + (lg.n - 1) * s.brk + lg.L;
+    const b = Math.floor((at - s.start) / block), rem = at - s.start - b * block;
+    k = b * lg.n + Math.min(lg.n - 1, Math.floor(rem / c));
+  }
+  const base = seriesWorkStart(s, k), within = at - base;
   if (s.count > 0 && (k >= s.count || (k === s.count - 1 && within >= s.work))) return { done: true, idx: s.count }; // count 0: endless
-  const base = s.start + k * c;
+  const bl = seriesBreakLen(s, k);
   return within < s.work
     ? { idx: k, phase: 'work', start: base, end: base + s.work }
-    : { idx: k, phase: 'break', start: base + s.work, end: base + c };
+    : { idx: k, phase: 'break', start: base + s.work, end: base + s.work + bl, long: bl !== s.brk };
 }
 const seriesWorksDone = (s, at) => {
   const p = seriesAt(s, at);
@@ -602,7 +627,7 @@ function applySeries(quiet) {
   const label = s.label || $('#label').value.trim(); // the series' own task name, the same on every device
   let logged = false;
   for (let w = s.logged; w < finished; w++) {
-    const start = s.start + w * (s.work + s.brk);
+    const start = seriesWorkStart(s, w);
     const one = { start, end: start + s.work, dur: Math.round(s.work / 1000), label, full: true, ...(s.id ? { series: s.id } : {}) };
     if (!sessions.some(x => sessionKey(x) === sessionKey(one))) { sessions.push({ id: newId(), ...one }); logged = true; }
   }
@@ -618,13 +643,13 @@ function applySeries(quiet) {
     setPhase('work');
     persist();
     // only a boundary that just happened rings here; older ones already rang (phone host) or are stale
-    const lastEnd = s.start + (s.count - 1) * (s.work + s.brk) + s.work;
+    const lastEnd = seriesWorkStart(s, s.count - 1) + s.work;
     if (!quiet && prev && now - lastEnd < 4000) alertSeriesDone();
     render();
     return true;
   }
   timer.phase = p.phase;
-  timer.total = p.phase === 'work' ? s.work : s.brk;
+  timer.total = p.phase === 'work' ? s.work : p.end - p.start; // a long break is longer
   timer.startedAt = p.phase === 'work' && !p.waiting ? p.start : 0;
   timer.running = !p.waiting && !s.pausedAt;
   timer.endAt = timer.running ? p.end : 0;
@@ -632,6 +657,7 @@ function applySeries(quiet) {
   if (changed && !quiet && prev && now - p.start < 4000) {
     // a new phase began while we watched: the same alert as a normal phase end, already running
     if (p.phase === 'break') celebrate(s.work);
+    brkMinNow = p.phase === 'break' ? Math.round((p.end - p.start) / 60000) : 0; // a long break says how long it is
     alertPhaseEnd(p.phase === 'work' ? 'break' : 'work', false, true);
   }
   if (changed) api.schedule(timer.running ? Math.max(0, p.end - now) : p.waiting ? Math.max(0, p.start - now) : 0);
@@ -642,7 +668,7 @@ function startSeries(count, at) {
   const now = Date.now();
   series = {
     id: newId(), start: at && at > now ? at : now, count,
-    work: settings.work * 60000, brk: settings.brk * 60000, logged: 0, pausedAt: 0,
+    work: settings.work * 60000, brk: settings.brk * 60000, ...longOf(), logged: 0, pausedAt: 0,
     label: $('#label').value.trim(),
   };
   seriesPos = '';
@@ -769,7 +795,8 @@ function renderTimer() {
   $('#time').classList.toggle('paused', touched && !timer.running);
 
   const tag = $('#phaseTag');
-  tag.textContent = isWork ? t('work') : t('break');
+  const longNow = !isWork && !!series && !seriesPos.startsWith('wait') && !!seriesAt(series, series.pausedAt || Date.now()).long;
+  tag.textContent = isWork ? t('work') : longNow ? t('longBreakL') : t('break');
   tag.classList.toggle('break', !isWork);
 
   const endless = isEndless();
@@ -806,9 +833,12 @@ function renderTimer() {
   $('#btnReset').title = run ? t('endStop') : series ? t('reset') : t('stopHint');
   if (ANDROID) {
     // phone: a triangle that flows into two bars, or into a stop square
-    if (!btn.dataset.ico) { btn.dataset.ico = '1'; btn.innerHTML = PLAY_PAUSE_SVG; }
+    // and the word next to it, as on the PC: one key, one look
+    if (!btn.dataset.ico) { btn.dataset.ico = '1'; btn.innerHTML = PLAY_PAUSE_SVG + '<span class="bs-l"></span>'; }
     btn.classList.toggle('is-running', timer.running && !seriesOn);
     btn.classList.toggle('is-stop', seriesOn);
+    const bl = btn.querySelector('.bs-l');
+    if (bl && bl.textContent !== btnText) bl.textContent = btnText;
     btn.setAttribute('aria-label', btnText);
   } else btn.textContent = btnText; // PC: the word, as before
   btn.classList.toggle('secondary', timer.running);
@@ -826,6 +856,7 @@ function renderTimer() {
   $('#view-timer').classList.toggle('no-brk', !series && !settings.simple && settings.seriesCount === 1);
   renderWhen();
   renderSimpleDay();
+  renderChips();
 
   // Running time in the title bar while another tab is open
   const status = touched && view !== 'timer' ? `${isWork ? 'w' : 'b'}${timer.running ? '' : 'p'}|${fmtClock(rem)}` : '';
@@ -842,13 +873,56 @@ function renderTimer() {
 }
 
 
+/* ---------- PC timer page: the settings of a run as a row of chips ----------
+   "💼 25 min · ☕ 5 min · ↻ ∞ · 🕗" instead of a column of steppers; a chip opens its own small
+   control (the start time opens the quick start). Shown only before a run starts. */
+function renderChips() {
+  const box = $('#tChips');
+  if (!box || ANDROID) return;
+  const set = (k, txt) => { const s = box.querySelector(`[data-chip="${k}"] span`); if (s && s.textContent !== txt) s.textContent = txt; };
+  set('work', fmtMinutes(settings.work));
+  set('brk', fmtMinutes(settings.brk));
+  set('seriesCount', settings.seriesCount > 0 ? t('seriesN')(settings.seriesCount) : '∞');
+  const n = nextPlan();
+  set('when', n ? (startOfDay(n.at) === startOfDay() ? hm(n.at) : `${hm(n.at)} +1`) : t('startAt'));
+  box.querySelector('[data-chip="when"]').classList.toggle('set', !!n);
+  box.querySelector('[data-chip="brk"]').hidden = !settings.simple && settings.seriesCount === 1; // one session has no break
+}
+let chipKey = '';
+function openChip(btn) {
+  const key = btn.dataset.chip, pop = $('#chipPop');
+  if (key === 'when') { closeChip(); quickStart(btn); return; }
+  if (chipKey === key) { closeChip(); return; }
+  chipKey = key;
+  const title = { work: t('work'), brk: t('break'), seriesCount: t('seriesCountL') }[key];
+  pop.innerHTML = `<div class="cp-title">${esc(title)}</div><div class="stepper" data-key="${key}"></div>`;
+  pop.hidden = false;
+  renderSteppers();
+  const r = btn.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+  pop.style.left = `${Math.min(Math.max(10, r.left + r.width / 2 - w / 2), innerWidth - w - 10)}px`;
+  pop.style.top = `${r.bottom + 8 + h > innerHeight - 10 ? r.top - h - 8 : r.bottom + 8}px`;
+  $$('#tChips .tchip').forEach(b => b.classList.toggle('open', b === btn));
+}
+function closeChip() {
+  chipKey = '';
+  $('#chipPop').hidden = true;
+  $$('#tChips .tchip').forEach(b => b.classList.remove('open'));
+}
+function bindChips() {
+  if (ANDROID) return;
+  $('#tChips').addEventListener('click', e => { const b = e.target.closest('.tchip'); if (b) openChip(b); });
+  document.addEventListener('mousedown', e => { if (chipKey && !e.target.closest('#chipPop') && !e.target.closest('.tchip')) closeChip(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && chipKey) closeChip(); });
+  addEventListener('resize', () => { if (chipKey) closeChip(); });
+}
 function renderSteppers() {
   if (ANDROID) renderDials();
   $$('.stepper[data-key]').forEach(el => {
     const key = el.dataset.key;
     const lim = LIMITS[key];
     const v = settings[key];
-    const label = key === 'goal' || key === 'goalWeek' ? fmtHours(v) : key === 'seriesCount' ? (v > 0 ? t('seriesN')(v) : '∞') : fmtMinutes(v);
+    const label = key === 'goal' || key === 'goalWeek' ? fmtHours(v) : key === 'seriesCount' ? (v > 0 ? t('seriesN')(v) : '∞')
+      : key === 'longBrk' ? (v > 0 ? fmtMinutes(v) : t('off')) : key === 'longEvery' ? t('everyN')(v) : fmtMinutes(v);
     if (!el.firstChild) {
       el.innerHTML = '<button class="dec" aria-label="−">−</button><span class="val"></span><button class="inc" aria-label="+">+</button>';
       el.querySelector('.dec').addEventListener('click', () => changeSetting(key, -1));
@@ -930,12 +1004,15 @@ function maybeAskMode() {
   setTimeout(() => confirmModal(t('modeQ'), t('modeText'), t('modeSimple'), { safe: true, cancel: t('modeFull') })
     .then(ok => setValue('simple', !!ok)), 900);
 }
-// Someone in the simple mode who keeps looking at stats may want the rest: offer it once
+// Someone in the simple mode who keeps coming back to the stats may want the rest: offer it once,
+// only when it is a habit (8 visits on at least 3 different days of the last week), never at once
 function nudgeFull() {
   if (!settings.simple || settings.nudged) return;
+  const today = dayKey(Date.now()), weekAgo = dayKey(addDays(startOfDay(), -6));
   settings.simpleStats = (settings.simpleStats || 0) + 1;
+  settings.statsDays = [...new Set([...(settings.statsDays || []).filter(d => d >= weekAgo), today])];
   persist();
-  if (settings.simpleStats < 3) return;
+  if (settings.simpleStats < 8 || settings.statsDays.length < 3) return;
   settings.nudged = 1;
   confirmModal(t('nudgeQ'), t('nudgeText'), t('nudgeYes'), { safe: true, cancel: t('nudgeNo') })
     .then(ok => { if (ok) setValue('simple', false); });
@@ -955,8 +1032,7 @@ function renderSimpleDay() {
   const done = todaySec(), goal = settings.goal * 3600;
   const txt = goal > 0 ? t('sdGoal')(fmtDur(done), fmtHours(settings.goal)) : t('sdToday')(fmtDur(done));
   if ($('#sdDone').textContent !== txt) $('#sdDone').textContent = txt;
-  const n = dayStreak();
-  const st = n > 1 ? t('sdStreak')(n) : '';
+  const st = ''; // no streak here: the day is enough (2.19.2)
   if ($('#sdStreak').textContent !== st) $('#sdStreak').textContent = st;
   $('#simpleDay').classList.toggle('no-goal', !(goal > 0));
   $('#sdFill').style.width = `${goal > 0 ? Math.min(100, (done / goal) * 100).toFixed(1) : 0}%`;
@@ -2220,6 +2296,7 @@ function renderAppDetail() {
     };
     lineChart($('#adChart'), pts, {
       slots: total, yMax: per, caption: fine ? t('adPerHour') : t('adPerHourH'), labels, key: `${a.exe}|1`, minSpan: fine ? 6 : 2,
+      smooth: fine ? 1.1 : 0.6, bands: true, // steady work reads as a plateau; open time as bands and a strip
       // a click takes the whole block of work around it, a drag takes the stretch you marked
       pick: i => addAppBlock(a, pts, i, fine ? 30 : 60),
       pickRange: (i, j) => addAppRange(a, pts, i, j),
@@ -2266,16 +2343,29 @@ function smoothPath(xy) {
   }
   return p;
 }
-// A smooth line chart with zoom: active time as a line with a soft fill, open time as a faint area.
-//   wheel over it (or − / +) zooms around the pointer, Shift+wheel or ‹ › moves along, ⟲ shows all;
-//   hover (or touch) shows the slot; a drag selects a stretch (pickRange), a click picks one (pick).
-// The view (zoom) survives the refresh every few seconds as long as the same chart is shown (key).
-// Light on memory: one SVG, redrawn only on a change; nothing kept but the points.
-function lineChart(el, pts, { slots, labels, yMax, caption, pick, pickRange, key = '', minSpan = 3 }) {
+// A line chart made to read "when did I work": the active time as a smoothed area (steady work is a
+// plateau, not a picket fence), the time the program was open as soft bands behind it, and under it
+// a strip — grey where the program was open, coloured where you worked.
+//   wheel: a smooth zoom around the pointer · wheel held down (or Shift+wheel, or the slider) moves along
+//   hover / touch: the slot · drag: mark a stretch (pickRange) · click: the block around (pick)
+// The view survives the refresh every few seconds while the same chart is shown (key). Light: one
+// SVG and a few divs, redrawn only when something moves.
+function lineChart(el, pts, { slots, labels, yMax, caption, pick, pickRange, key = '', minSpan = 3, smooth = 0, bands = false }) {
   if (el._busy) return; // a drag is going on: the refresh waits
   const W = 300, H = 120;
+  // smoothing: a small Gaussian over the neighbours, so ten-minute jitter does not read as spikes
+  const sv = smooth > 0 ? pts.map((_, i) => {
+    let s = 0, w = 0;
+    for (let d = -3; d <= 3; d++) {
+      const j = i + d;
+      if (j < 0 || j >= pts.length) continue;
+      const k = Math.exp(-(d * d) / (2 * smooth * smooth));
+      s += pts[j].v * k; w += k;
+    }
+    return s / w;
+  }) : pts.map(p => p.v);
   const max = yMax || niceMax(Math.max(60, ...pts.map(p => Math.max(p.v, p.w))));
-  if (el._key !== key || !el._vp) el._vp = [0, slots];
+  if (el._key !== key || !el._vp) { el._vp = [0, slots]; el._goal = null; }
   el._key = key;
   const clamp = (a, b) => {
     const w = Math.min(slots, Math.max(minSpan, b - a));
@@ -2284,59 +2374,93 @@ function lineChart(el, pts, { slots, labels, yMax, caption, pick, pickRange, key
   };
   el._vp = clamp(el._vp[0], el._vp[1]);
   el.innerHTML = `
-    <div class="lc-tools" hidden><button class="lc-b" data-z="pan-1" title="‹">‹</button><button class="lc-b" data-z="pan1" title="›">›</button><button class="lc-b" data-z="all" title="⟲">⟲</button></div>
-    <div class="lc-zoom"><button class="lc-b" data-z="out" title="−">−</button><button class="lc-b" data-z="in" title="+">+</button></div>
+    <div class="lc-zoom"><button class="lc-b" data-z="out" title="−">−</button><button class="lc-b" data-z="in" title="+">+</button><button class="lc-b" data-z="all" title="⟲" hidden>⟲</button></div>
     <div class="lc-plot">
       <span class="lc-y" style="top:0">${fmtMinutes(max / 60)}</span><span class="lc-y" style="top:50%">${fmtMinutes(max / 120)}</span>
       <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
         <defs>
-          <linearGradient id="lcFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6f6bff" stop-opacity=".38"/><stop offset="1" stop-color="#6f6bff" stop-opacity="0"/></linearGradient>
+          <linearGradient id="lcFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6f6bff" stop-opacity=".5"/><stop offset="1" stop-color="#6f6bff" stop-opacity=".04"/></linearGradient>
           <linearGradient id="lcLine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4f8bff"/><stop offset="1" stop-color="#8a5cff"/></linearGradient>
         </defs>
+        <g class="lc-bands"></g>
         <path class="lc-grid" d="M0 0H${W}M0 ${H / 2}H${W}M0 ${H}H${W}"/>
         <path class="lc-run"/><path class="lc-area"/><path class="lc-line"/>
       </svg>
       <i class="lc-sel" hidden></i><i class="lc-guide" hidden></i><i class="lc-dot" hidden></i><div class="lc-tip" hidden></div>
     </div>
+    ${bands ? '<div class="lc-strip"></div>' : ''}
     <div class="lc-x"></div>
+    <div class="lc-scroll" hidden><i class="lc-thumb"></i></div>
     ${caption ? `<div class="lc-cap">${esc(caption)}${pickRange ? ' <button type="button" class="info-i sm" data-k="adPickHint" aria-label="i">i</button>' : ''}</div>` : ''}`;
   const plot = el.querySelector('.lc-plot'), svg = el.querySelector('svg');
   const guide = el.querySelector('.lc-guide'), dot = el.querySelector('.lc-dot'), tip = el.querySelector('.lc-tip'), sel = el.querySelector('.lc-sel');
+  const strip = el.querySelector('.lc-strip'), scroll = el.querySelector('.lc-scroll'), thumb = el.querySelector('.lc-thumb');
   const Y = v => H - (Math.min(v, max) / max) * H;
   const X = i => ((i + 0.5 - el._vp[0]) / (el._vp[1] - el._vp[0])) * W;
+  const XL = i => ((i - el._vp[0]) / (el._vp[1] - el._vp[0])) * W; // the left edge of slot i
+  // runs of slots where cond holds: [from, to) pairs, for the bands and the strip
+  const runs = cond => { const out = []; let a = -1; pts.forEach((p, i) => { if (cond(p, i)) { if (a < 0) a = i; } else if (a >= 0) { out.push([a, i]); a = -1; } }); if (a >= 0) out.push([a, pts.length]); return out; };
+  const openRuns = bands ? runs(p => p.w > 0) : [];
+  const workRuns = bands ? runs(p => p.v >= Math.max(60, (yMax || max) * 0.25)) : [];
   const draw = () => {
     const [v0, v1] = el._vp;
-    const a = Math.max(0, Math.floor(v0) - 1), b = Math.min(pts.length, Math.ceil(v1) + 1);
-    const part = pts.slice(a, b);
-    const xy = key2 => part.map((p, k) => [X(a + k), Y(p[key2])]);
+    const a = Math.max(0, Math.floor(v0) - 4), b = Math.min(pts.length, Math.ceil(v1) + 4);
+    const qa = [], qr = [];
+    for (let i = a; i < b; i++) { qa.push([X(i), Y(sv[i])]); qr.push([X(i), Y(pts[i].w)]); }
     const area = (line, q) => (q.length ? `${line}L${q[q.length - 1][0].toFixed(2)} ${H}L${q[0][0].toFixed(2)} ${H}Z` : '');
-    const qa = xy('v'), qr = xy('w');
-    const la = qa.length ? smoothPath(qa) : '', lr = qr.length ? smoothPath(qr) : '';
-    svg.querySelector('.lc-run').setAttribute('d', area(lr, qr));
+    const la = qa.length ? smoothPath(qa) : '';
+    svg.querySelector('.lc-run').setAttribute('d', bands || !qr.length ? '' : area(smoothPath(qr), qr));
     svg.querySelector('.lc-area').setAttribute('d', area(la, qa));
     svg.querySelector('.lc-line').setAttribute('d', la);
+    if (bands) {
+      svg.querySelector('.lc-bands').innerHTML = openRuns.map(([s, e]) => `<rect x="${XL(s).toFixed(2)}" y="0" width="${(XL(e) - XL(s)).toFixed(2)}" height="${H}"/>`).join('');
+      const pct = i => ((i - v0) / (v1 - v0)) * 100;
+      strip.innerHTML = openRuns.map(([s, e]) => `<i class="o" style="left:${pct(s).toFixed(2)}%;width:${(pct(e) - pct(s)).toFixed(2)}%"></i>`).join('')
+        + workRuns.map(([s, e]) => `<i class="w" style="left:${pct(s).toFixed(2)}%;width:${(pct(e) - pct(s)).toFixed(2)}%"></i>`).join('');
+    }
     const lab = typeof labels === 'function' ? labels(v0, v1) : labels.map(([f, s]) => [f * slots - 0.5, s]);
     el.querySelector('.lc-x').innerHTML = lab.filter(([s]) => s + 0.5 >= v0 && s + 0.5 <= v1)
       .map(([s, txt]) => `<span style="left:${(((s + 0.5 - v0) / (v1 - v0)) * 100).toFixed(2)}%">${esc(txt)}</span>`).join('');
     const zoomed = v1 - v0 < slots - 0.01;
-    el.querySelector('.lc-tools').hidden = !zoomed;
-    el.querySelector('[data-z="in"]').disabled = v1 - v0 <= minSpan;
+    scroll.hidden = !zoomed;
+    thumb.style.left = `${(v0 / slots) * 100}%`;
+    thumb.style.width = `${((v1 - v0) / slots) * 100}%`;
+    el.querySelector('[data-z="all"]').hidden = !zoomed;
+    el.querySelector('[data-z="in"]').disabled = v1 - v0 <= minSpan + 0.01;
     el.querySelector('[data-z="out"]').disabled = !zoomed;
   };
-  const zoom = (k, at) => {
-    const [v0, v1] = el._vp, w = v1 - v0, c = at == null ? v0 + w / 2 : at;
-    const nw = Math.min(slots, Math.max(minSpan, w * k));
-    el._vp = clamp(c - (c - v0) * (nw / w), c - (c - v0) * (nw / w) + nw);
-    draw();
+  // the view glides to where it is asked to go (a few frames, then it stops: nothing runs at rest)
+  const goTo = (vp, now) => {
+    el._goal = clamp(vp[0], vp[1]);
+    if (now) { el._vp = el._goal; el._goal = null; draw(); return; }
+    if (el._anim) return;
+    const step = () => {
+      const g = el._goal;
+      if (!g) { el._anim = 0; return; }
+      const [a, b] = el._vp, k = 0.28;
+      const na = a + (g[0] - a) * k, nb = b + (g[1] - b) * k;
+      if (Math.abs(na - g[0]) < 0.01 && Math.abs(nb - g[1]) < 0.01) { el._vp = g; el._goal = null; el._anim = 0; draw(); return; }
+      el._vp = [na, nb];
+      draw();
+      el._anim = requestAnimationFrame(step);
+    };
+    el._anim = requestAnimationFrame(step);
   };
-  const pan = d => { const w = el._vp[1] - el._vp[0]; el._vp = clamp(el._vp[0] + d * w * 0.35, el._vp[1] + d * w * 0.35); draw(); };
+  const cur = () => el._goal || el._vp;
+  const zoom = (k, at) => {
+    const [v0, v1] = cur(), w = v1 - v0, c = at == null ? v0 + w / 2 : at;
+    const nw = Math.min(slots, Math.max(minSpan, w * k));
+    const n0 = c - (c - v0) * (nw / w);
+    goTo([n0, n0 + nw]);
+  };
+  const panBy = d => { const [v0, v1] = cur(); goTo([v0 + d, v1 + d]); };
   const slotAt = e => { const r = plot.getBoundingClientRect(); return el._vp[0] + ((e.clientX - r.left) / r.width) * (el._vp[1] - el._vp[0]); };
   const idx = e => Math.max(0, Math.min(pts.length - 1, Math.floor(slotAt(e))));
   const pctOf = i => ((i - el._vp[0]) / (el._vp[1] - el._vp[0])) * 100;
   const show = e => {
     if (!pts.length) return;
     const i = idx(e), r = plot.getBoundingClientRect();
-    const x = (X(i) / W) * 100, y = (Y(pts[i].v) / H) * 100;
+    const x = (X(i) / W) * 100, y = (Y(sv[i]) / H) * 100;
     guide.hidden = dot.hidden = tip.hidden = false;
     guide.style.left = dot.style.left = `${x}%`;
     dot.style.top = `${y}%`;
@@ -2345,14 +2469,28 @@ function lineChart(el, pts, { slots, labels, yMax, caption, pick, pickRange, key
     tip.style.left = `${Math.min(Math.max(0, px - tw / 2), r.width - tw)}px`;
   };
   const hide = () => { guide.hidden = dot.hidden = tip.hidden = true; };
-  let drag = null;
+  let drag = null, pan = null;
+  plot.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); }); // no autoscroll on the middle button
   plot.addEventListener('pointerdown', e => {
     if (!pts.length) return;
+    if (e.button === 1) { // the wheel held down: move along
+      pan = { x: e.clientX, vp: [...el._vp], id: e.pointerId, w: plot.getBoundingClientRect().width };
+      try { plot.setPointerCapture(e.pointerId); } catch {}
+      plot.classList.add('panning');
+      el._busy = true;
+      return;
+    }
+    if (e.button !== 0) return;
     drag = { x: e.clientX, i: idx(e), moved: false, id: e.pointerId };
     el._busy = true;
     show(e);
   });
   plot.addEventListener('pointermove', e => {
+    if (pan && e.pointerId === pan.id) {
+      const span = pan.vp[1] - pan.vp[0], d = -((e.clientX - pan.x) / pan.w) * span;
+      goTo([pan.vp[0] + d, pan.vp[1] + d], true);
+      return;
+    }
     show(e);
     if (!drag || e.pointerId !== drag.id) return;
     if (!drag.moved && Math.abs(e.clientX - drag.x) < 5) return;
@@ -2363,6 +2501,7 @@ function lineChart(el, pts, { slots, labels, yMax, caption, pick, pickRange, key
     sel.style.width = `${Math.min(100, pctOf(b + 1)) - Math.max(0, pctOf(a))}%`;
   });
   const up = e => {
+    if (pan && e.pointerId === pan.id) { pan = null; el._busy = false; plot.classList.remove('panning'); return; }
     if (!drag || e.pointerId !== drag.id) return;
     const d = drag;
     drag = null;
@@ -2372,18 +2511,30 @@ function lineChart(el, pts, { slots, labels, yMax, caption, pick, pickRange, key
     else { sel.hidden = true; if (!d.moved && pick) pick(i); }
   };
   plot.addEventListener('pointerup', up);
-  plot.addEventListener('pointercancel', e => { if (drag && e.pointerId === drag.id) { drag = null; el._busy = false; sel.hidden = true; } });
-  plot.addEventListener('pointerleave', () => { if (!drag) hide(); });
+  plot.addEventListener('pointercancel', e => { drag = null; pan = null; el._busy = false; sel.hidden = true; plot.classList.remove('panning'); void e; });
+  plot.addEventListener('pointerleave', () => { if (!drag && !pan) hide(); });
   plot.addEventListener('wheel', e => {
     e.preventDefault();
-    if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) pan((e.shiftKey ? e.deltaY : e.deltaX) > 0 ? 1 : -1);
-    else zoom(e.deltaY < 0 ? 0.7 : 1 / 0.7, slotAt(e));
+    const [v0, v1] = cur();
+    if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) panBy(((e.shiftKey ? e.deltaY : e.deltaX) > 0 ? 1 : -1) * (v1 - v0) * 0.2);
+    else zoom(Math.pow(1.0015, e.deltaY), slotAt(e)); // follows the wheel (or a touchpad) in small steps
     show(e);
   }, { passive: false });
+  // the slider under a zoomed chart: drag the thumb, or click the track to jump there
+  let sdrag = null;
+  thumb.addEventListener('pointerdown', e => { e.stopPropagation(); sdrag = { x: e.clientX, vp: [...el._vp], w: scroll.getBoundingClientRect().width, id: e.pointerId }; try { thumb.setPointerCapture(e.pointerId); } catch {} el._busy = true; });
+  thumb.addEventListener('pointermove', e => { if (!sdrag || e.pointerId !== sdrag.id) return; const d = ((e.clientX - sdrag.x) / sdrag.w) * slots; goTo([sdrag.vp[0] + d, sdrag.vp[1] + d], true); });
+  const sup = e => { if (sdrag && e.pointerId === sdrag.id) { sdrag = null; el._busy = false; } };
+  thumb.addEventListener('pointerup', sup);
+  thumb.addEventListener('pointercancel', sup);
+  scroll.addEventListener('pointerdown', e => {
+    if (e.target === thumb) return;
+    const r = scroll.getBoundingClientRect(), c = ((e.clientX - r.left) / r.width) * slots, [v0, v1] = cur(), w = v1 - v0;
+    goTo([c - w / 2, c + w / 2]);
+  });
   el.querySelectorAll('.lc-b').forEach(b => b.addEventListener('click', () => {
     const z = b.dataset.z;
-    if (z === 'in') zoom(0.6); else if (z === 'out') zoom(1 / 0.6);
-    else if (z === 'all') { el._vp = [0, slots]; draw(); } else pan(z === 'pan1' ? 1 : -1);
+    if (z === 'in') zoom(0.6); else if (z === 'out') zoom(1 / 0.6); else goTo([0, slots]);
   }));
   draw();
 }
@@ -2557,7 +2708,7 @@ function planStart(p, key) {
 }
 const planWork = p => (p.work || settings.work) * 60000, planBrk = p => (p.brk || settings.brk) * 60000;
 const planCount = p => (Number(p.count) >= 0 ? Number(p.count) : 2);
-const planBlock = p => (planCount(p) > 0 ? planCount(p) * planWork(p) + (planCount(p) - 1) * planBrk(p) : PLAN_ENDLESS_MS);
+const planBlock = p => (planCount(p) > 0 ? seriesWorkStart({ start: 0, work: planWork(p), brk: planBrk(p), ...longOf() }, planCount(p) - 1) + planWork(p) : PLAN_ENDLESS_MS);
 const planSeriesId = (p, key) => `plan-${p.id}-${key}`;
 // when a plan ends (0 = no end): the app works it out, so the plan reads "07:30–09:20"
 const planEndAt = (p, at) => (planCount(p) > 0 ? at + planBlock(p) : 0);
@@ -2634,7 +2785,7 @@ function startPlan(p, at, id, fresh) {
   // the plan's task, or none yet: yesterday's text in the field is not a guess worth keeping (the app will ask)
   $('#label').value = p.label || '';
   if (p.label) commitLabel(true);
-  series = { id, start: at, count: planCount(p), work: planWork(p), brk: planBrk(p), logged: 0, pausedAt: 0, label: p.label || '' };
+  series = { id, start: at, count: planCount(p), work: planWork(p), brk: planBrk(p), ...longOf(), logged: 0, pausedAt: 0, label: p.label || '' };
   seriesPos = '';
   api.closeAlert();
   applySeries(true);
@@ -2656,7 +2807,7 @@ async function askMissed(list) {
     const ok = await confirmModal(t('planMissedQ'), t('planMissedText')(p.time, planCountText(p), fmtDur(n * planWork(p) / 1000)), t('planMissedYes'), { safe: true, cancel: t('planMissedNo') });
     if (!ok) continue;
     for (let k = 0; k < n; k++) {
-      const start = at + k * (planWork(p) + planBrk(p));
+      const start = seriesWorkStart({ start: at, work: planWork(p), brk: planBrk(p), ...longOf() }, k);
       const one = { start, end: start + planWork(p), dur: Math.round(planWork(p) / 1000), label: p.label || '', full: true, series: id };
       if (!sessions.some(x => sessionKey(x) === sessionKey(one))) sessions.push({ id: newId(), ...one });
     }
@@ -2684,7 +2835,7 @@ function hostPlan() {
   const p = n.p;
   return {
     at: n.at, title: t('planGoTitle'), body: t('planGoBody')(planCountText(p), p.label || ''),
-    series: { id: planSeriesId(p, n.key), start: n.at, count: planCount(p), work: planWork(p), brk: planBrk(p), logged: 0, pausedAt: 0, label: p.label || '' },
+    series: { id: planSeriesId(p, n.key), start: n.at, count: planCount(p), work: planWork(p), brk: planBrk(p), ...longOf(), logged: 0, pausedAt: 0, label: p.label || '' },
   };
 }
 
@@ -2917,35 +3068,34 @@ function renderWhen() {
   $('#seriesWhen').dataset.day = !later ? '' : startOfDay(n.at) === addDays(startOfDay(), 1) ? '+1' : t('daysMon')[(new Date(n.at).getDay() + 6) % 7];
 }
 function bindWhen() {
-  // the clock on the timer page opens the plan: what is planned, and a way to add a time
-  // The clock on the timer page is the quick way, as before: pick a time and the timer starts
-  // then, once (a one-off start, nothing to edit). The schedule is one tap further ("Schedule").
-  $('#seriesWhen').addEventListener('click', e => {
-    e.preventDefault();
-    const quick = planList().find(p => p.quick);
-    const init = quick ? { h: Number(quick.time.slice(0, 2)), m: Number(quick.time.slice(3)) } : null;
-    askTime($('#seriesWhen'), init, v => {
-      if (!v) { if (quick) dropPlan(quick.id); return; }
-      const d = new Date();
-      d.setHours(v.h, v.m, 0, 0);
-      if (d.getTime() <= Date.now() + 30000) d.setDate(d.getDate() + 1);
-      if (quick) delete settings.plans[quick.id]; // one quick start at a time: the new time replaces it
-      putPlan({
-        id: newId(), quick: true, time: `${pad(v.h)}:${pad(v.m)}`, date: dayKey(d.getTime()), days: [],
-        count: settings.simple ? 0 : settings.seriesCount > 0 ? settings.seriesCount : 0, work: settings.work, brk: settings.brk,
-        label: $('#label').value.trim(), on: true,
-      });
-      toast(t('planSaved')(planWhenText({ at: d.getTime() })));
-    }, { now: !!quick, nowLabel: t('quickOff'), extra: { label: t('schedL'), fn: openSchedule } });
-  });
-  if (!ANDROID) $('#view-plan').appendChild($('#planBox'));
+  // The clock is the quick way, as before: pick a time and the timer starts then, once (nothing to
+  // edit). The plan (schedules) is a tab of its own, on the PC and on the phone alike.
+  $('#seriesWhen').addEventListener('click', e => { e.preventDefault(); quickStart($('#seriesWhen')); });
+  $('#view-plan').appendChild($('#planBox'));
   $('#seriesWhenX').addEventListener('click', cancelNext);
   $('#planPanel').addEventListener('click', e => { if (e.target.closest('#planSkip')) { cancelNext(); return; } if (e.target.id === 'planPanel' || e.target.closest('#planClose')) closePlanPanel(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && planOpen && !peState && $('#modal').hidden) closePlanPanel(); });
 }
+function quickStart(anchor) {
+  const quick = planList().find(p => p.quick);
+  const init = quick ? { h: Number(quick.time.slice(0, 2)), m: Number(quick.time.slice(3)) } : null;
+  askTime(anchor, init, v => {
+    if (!v) { if (quick) dropPlan(quick.id); return; }
+    const d = new Date();
+    d.setHours(v.h, v.m, 0, 0);
+    if (d.getTime() <= Date.now() + 30000) d.setDate(d.getDate() + 1);
+    if (quick) delete settings.plans[quick.id]; // one quick start at a time: the new time replaces it
+    putPlan({
+      id: newId(), quick: true, time: `${pad(v.h)}:${pad(v.m)}`, date: dayKey(d.getTime()), days: [],
+      count: settings.simple ? 0 : settings.seriesCount > 0 ? settings.seriesCount : 0, work: settings.work, brk: settings.brk,
+      label: $('#label').value.trim(), on: true,
+    });
+    toast(t('planSaved')(planWhenText({ at: d.getTime() })));
+  }, { now: !!quick, nowLabel: t('quickOff'), extra: { label: t('schedL'), fn: openSchedule } });
+}
 let planOpen = false;
-// The full schedule: a tab on the PC, a panel over the timer on the phone
-function openSchedule() { if (ANDROID) openPlanPanel(); else $('.tab[data-view="plan"]').click(); }
+// The full schedule: its own tab, on the PC and on the phone
+function openSchedule() { $('.tab[data-view="plan"]').click(); }
 function openPlanPanel() {
   planOpen = true;
   renderPlans();
@@ -2975,7 +3125,7 @@ function setThemeAnimated(val, e) {
 }
 // A finished work session, like a planted tree: "+50 min" rises from the ring and the ring glows once
 function celebrate(ms) {
-  if (!winVisible || (!ANDROID && !settings.simple)) return;
+  if (!winVisible) return;
   // phone: over the ring; PC in the simple mode: over the day bar, which then fills
   const face = ANDROID ? $('#face') : $('#simpleDay');
   const chip = document.createElement('span');
@@ -3772,6 +3922,7 @@ function showCrashNote(c, bootLogged) {
   bindArchive();
   bindPlans();
   bindTask();
+  bindChips();
   initInfo();
   syncInit(data);
   render();
