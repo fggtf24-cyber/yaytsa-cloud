@@ -173,8 +173,8 @@ const APPS = [
     file: 'https://github.com/fggtf24-cyber/fig2ae/raw/main/Fig2AE-Setup.exe',
     silent: '/quiet', // самодельный установщик: ключ тихой установки для приложения Яйца Cloud
     macInstall: 'curl -fsSL https://raw.githubusercontent.com/fggtf24-cyber/fig2ae/main/install-mac.sh | bash',
-    size: '220 КБ',
-    sizeEn: '220 KB',
+    size: '222 КБ',
+    sizeEn: '222 KB',
     repo: 'https://github.com/fggtf24-cyber/fig2ae',
     features: [
       'Выделили фрейм в Figma, нажали «Send selection to Ae» — композиция появляется в открытом проекте After Effects',
@@ -190,6 +190,8 @@ const APPS = [
       'Аккуратная структура в AE: нули и прекомпы только там, где они что-то группируют, один фон вместо повторяющихся, никаких пустых слоёв, понятные имена групп',
       'Шрифты: находит установленный шрифт, даже если он называется чуть иначе; недостающие предлагает скачать с Google Fonts; кнопка «Re-check missing fonts» ставит нужный шрифт, когда он появился',
       'Импорт в текущую композицию встаёт над выделенным слоем',
+      'Растр по выбору: помеченный слой получает «*» в имени и свой масштаб 1×–4× — запас по качеству, в AE уменьшается обратно',
+      'Обводка и фон — один слой; Un-Precomp умеет продлевать вложенные прекомпы до конца композиции',
       'Референсный кадр из Figma поверх, чтобы сверить результат',
       'Кнопка Log: журнал ошибок копируется одним нажатием',
       'Обновляется сама, без переустановки и перезапуска After Effects',
@@ -217,6 +219,8 @@ const APPS = [
       'Tidy AE structure: nulls and precomps only where they group something, one background instead of repeated ones, no empty layers, readable group names',
       'Fonts: finds an installed font even under a slightly different name; offers to download missing ones from Google Fonts; "Re-check missing fonts" puts the right font in once it is installed',
       'Importing into the current comp lands above the selected layer',
+      'Pixels on demand: a marked layer gets a "*" in its name and its own 1x-4x scale — quality headroom, scaled back in AE',
+      'Border and fill in one layer; Un-Precomp can extend nested precomps to the end of the comp',
       'Figma reference frame on top to compare the result',
       'Log button: the error log is copied in one click',
       'Updates itself, no reinstall and no After Effects restart',
