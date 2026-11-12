@@ -72,7 +72,7 @@ winMin: 'Свернуть', winMax: 'Развернуть', winClose: 'Закр�
     monthsNom: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
 scale: 'Масштаб', appsPickTitle: 'Добавить программу', appsSearchPh: 'Поиск по программам на компьютере', appsBrowse: 'Выбрать .exe вручную…', appsBrowseTitle: 'Выберите программу',    appsFound: 'Найдено', appsAll: 'Все программы', appsNothing: 'Ничего не нашлось. Попробуйте выбрать .exe вручную', appsAdded: n => `«${n}» отслеживается`,    r3m: '3 мес', r6m: '6 мес', r1y: 'Год', modeBars: 'Столбики', modeSquares: 'Квадратики',    monthsShort: ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'],    daysMon: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'], noWork: 'без работы',    activeDays: n => `${n} ${plural(n, 'рабочий день', 'рабочих дня', 'рабочих дней')}`, streak: n => `серия ${n} ${plural(n, 'день', 'дня', 'дней')} подряд`,    less: 'Меньше', more: 'Больше', byHour: 'По часам за неделю',
     appsActiveL: 'Активное время', adSpan: (a, b) => `Работа в программе с ${a} до ${b}`, singleDoneTitle: 'Заход завершён', singleDoneBody: m => `${m} мин в копилке. Можно отдохнуть.`,
-    longBreakL: 'Длинный перерыв', longBreakDesc: 'Каждый N-й перерыв длиннее — как в классическом помодоро. «выкл» — все перерывы одинаковые', everyN: n => `каждый ${n}-й`,
+    longBreakL: 'Длинный перерыв', longBreakDesc: 'Каждый N-й перерыв длиннее — как в классическом помодоро', longLenL: 'Длина', longEveryL: 'Как часто', everyN: n => `каждый ${n}-й`,
     simpleL: 'Просто таймер', simpleDesc: 'Только время, кнопка и прогресс дня. Проекты, программы и план прячутся, данные остаются',
     modeQ: 'Как будете пользоваться?', modeText: 'Просто таймер — время, кнопка и прогресс дня, ничего лишнего. Или всё сразу: проекты, программы, план, подробная статистика. Поменять можно в любой момент в настройках.',
     modeSimple: 'Просто таймер', modeFull: 'Всё и сразу', nudgeQ: 'Включить полный режим?', nudgeText: 'Похоже, вам интересна статистика. В полном режиме есть проекты, время в программах и план — всё, что вы уже записали, останется.',
@@ -80,7 +80,7 @@ scale: 'Масштаб', appsPickTitle: 'Добавить программу', a
     stopHint: 'Стоп — заход от 10 минут сохранится', goalWeek: 'Цель на неделю', goalWeekDesc: 'Часов работы за неделю (с понедельника)', goalWeekL: 'Цель на неделю',
     pWeekL7: '7 дней', editEntry: 'Изменить запись', saveL: 'Сохранить', edited: 'Запись изменена', newProjOnly: 'Такого проекта нет. Откройте список ▾ и нажмите «Создать новый проект»', newProjBtn: 'Создать новый проект', createNamed: n => `Создать «${n}»`, newProjPh: 'Название нового проекта', projCreated: n => `Проект «${n}» создан`,
     adPerHour: 'активных минут в каждые 10 минут', adPerDay: 'активных часов в день', adToHist: 'В историю', adAddQ: (d, a, b) => `Добавить ${d} работы (${a}–${b}) в историю?`, adAdded: d => `Добавлено: ${d}`,
-    planSkipNext: 'Пропустить ближайший', untilShort: 'до', taQ: 'Над чем вы сейчас работаете?', taSub: tm => `Таймер идёт по плану с ${tm}. Выберите задачу — она запишется ко всем заходам этой серии.`, taNewPh: 'Или новая задача', taLater: 'Позже', quickOff: 'Убрать', schedL: 'Весь план…', taSet: n => `Задача: ${n}`, scTaskL: 'Задача', scNameQ: 'Как назвать эту серию?', scNameSub: 'Название запишется ко всем её заходам.', skipToday: 'пропустить сегодня', skipTomorrow: 'пропустить завтра', skipDay: d => `пропустить в ${d.toLowerCase()}`, skippedToday: 'сегодня пропущено · вернуть', adPerHourH: 'активных минут в каждом часе', adPickHint: 'Проведите по графику с зажатой кнопкой мыши — выделенный участок можно записать в историю как работу (удобно, если забыли включить таймер). Нажатие на участок берёт весь блок работы вокруг. Колесо мыши приближает и отдаляет, Shift + колесо листает.', adNothing: 'В этом промежутке нет активной работы',
+    planSkipNext: 'Пропустить ближайший', untilShort: 'до', taQ: 'Над чем вы сейчас работаете?', taSub: tm => `Таймер идёт по плану с ${tm}. Выберите задачу — она запишется ко всем заходам этой серии.`, taNewPh: 'Или новая задача', taLater: 'Позже', quickOff: 'Убрать', schedL: 'Весь план…', taSet: n => `Задача: ${n}`, scTaskL: 'Задача', scNameQ: 'Как назвать эту серию?', scNameSub: 'Название запишется ко всем её заходам.', skipToday: 'пропустить сегодня', planRemove: 'удалить', undone: 'Отменено', redone: 'Возвращено', undoNone: 'Нечего отменять', redoNone: 'Нечего возвращать', hintLong: 'Можно включить длинный перерыв: каждый 4-й перерыв будет длиннее, как в помодоро', hintLongAct: 'Настроить', hintRange: 'Забыли включить таймер? Выделите участок на графике — его можно записать как работу', hintTrack: 'Выберите программы, в которых вы работаете, — таймер покажет, сколько времени вы в них проводите', hintTrackAct: 'Выбрать', skipTomorrow: 'пропустить завтра', skipDay: d => `пропустить в ${d.toLowerCase()}`, skippedToday: 'сегодня пропущено · вернуть', adPerHourH: 'активных минут в каждом часе', adPickHint: 'Проведите по графику с зажатой кнопкой мыши — выделенный участок можно записать в историю как работу (удобно, если забыли включить таймер). Нажатие на участок берёт весь блок работы вокруг. Колесо мыши приближает и отдаляет, Shift + колесо листает.', adNothing: 'В этом промежутке нет активной работы',
     tabPlan: 'План', planLead: 'Таймер сам запустится в нужное время — на компьютере и на телефоне. Откроете позже — время уже будет идти с начала.',
     planAdd: '+ Добавить время', planNextL: 'Следующий старт:', planNone: 'Ничего не запланировано', planEmpty: 'Например: по будням в 7:30 — два захода',
     planOnOff: 'Включить или выключить', planNew: 'Новое время', planEditT: 'Время старта', peTimeL: 'Во сколько', peRepeatL: 'Повтор',
@@ -172,7 +172,7 @@ winMin: 'Minimize', winMax: 'Maximize', winClose: 'Close', importCsv: 'Import CS
     monthsNom: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
 scale: 'Zoom', appsPickTitle: 'Add a program', appsSearchPh: 'Search programs on this PC', appsBrowse: 'Pick an .exe manually…', appsBrowseTitle: 'Choose a program',    appsFound: 'Found', appsAll: 'All programs', appsNothing: 'Nothing found. Try picking the .exe manually', appsAdded: n => `Tracking “${n}”`,    r3m: '3 mo', r6m: '6 mo', r1y: 'Year', modeBars: 'Bars', modeSquares: 'Squares',    monthsShort: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],    daysMon: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], noWork: 'no focus',    activeDays: n => `${n} active day${n === 1 ? '' : 's'}`, streak: n => `${n}-day streak`,    less: 'Less', more: 'More', byHour: 'By hour, last 7 days',
     appsActiveL: 'Active time', adSpan: (a, b) => `Worked in it from ${a} to ${b}`, singleDoneTitle: 'Session complete', singleDoneBody: m => `${m} min in the bank. Time to rest.`,
-    longBreakL: 'Long break', longBreakDesc: 'Every N-th break is longer, like a classic pomodoro. “off”: all breaks are the same', everyN: n => `every ${n}th`,
+    longBreakL: 'Long break', longBreakDesc: 'Every N-th break is longer, like a classic pomodoro', longLenL: 'Length', longEveryL: 'How often', everyN: n => `every ${n}th`,
     simpleL: 'Just a timer', simpleDesc: 'Only the time, the key and the day’s progress. Projects, apps and plan step aside; your data stays',
     modeQ: 'How will you use it?', modeText: 'Just a timer: the time, the key and the day’s progress, nothing else. Or everything: projects, apps, a plan and detailed stats. You can switch any time in Settings.',
     modeSimple: 'Just a timer', modeFull: 'Everything', nudgeQ: 'Turn on the full mode?', nudgeText: 'Looks like you like the stats. The full mode adds projects, time in apps and a plan; everything you have recorded stays.',
@@ -180,7 +180,7 @@ scale: 'Zoom', appsPickTitle: 'Add a program', appsSearchPh: 'Search programs on
     stopHint: 'Stop: a session of 10 minutes or more is kept', goalWeek: 'Weekly goal', goalWeekDesc: 'Hours of work per week (from Monday)', goalWeekL: 'This week’s goal',
     pWeekL7: '7 days', editEntry: 'Edit entry', saveL: 'Save', edited: 'Entry changed', newProjOnly: 'No such project. Open the list ▾ and press “Create a new project”', newProjBtn: 'Create a new project', createNamed: n => `Create “${n}”`, newProjPh: 'New project name', projCreated: n => `Project “${n}” created`,
     adPerHour: 'active minutes in every 10 minutes', adPerDay: 'active hours per day', adToHist: 'To history', adAddQ: (d, a, b) => `Add ${d} of work (${a}–${b}) to your history?`, adAdded: d => `Added: ${d}`,
-    planSkipNext: 'Skip the next one', untilShort: 'to', taQ: 'What are you working on?', taSub: tm => `The timer has been running as planned since ${tm}. Pick a task: it goes to every session of this run.`, taNewPh: 'Or a new task', taLater: 'Later', quickOff: 'Remove', schedL: 'Full plan…', taSet: n => `Task: ${n}`, scTaskL: 'Task', scNameQ: 'Name this series', scNameSub: 'The name goes to all its sessions.', skipToday: 'skip today', skipTomorrow: 'skip tomorrow', skipDay: d => `skip ${d}`, skippedToday: 'skipped today · undo', adPerHourH: 'active minutes in each hour', adPickHint: 'Drag across the chart to mark a stretch and add it to your history as work (handy if you forgot the timer). A click takes the whole block of work around it. The mouse wheel zooms, Shift + wheel moves along.', adNothing: 'No active work in this stretch',
+    planSkipNext: 'Skip the next one', untilShort: 'to', taQ: 'What are you working on?', taSub: tm => `The timer has been running as planned since ${tm}. Pick a task: it goes to every session of this run.`, taNewPh: 'Or a new task', taLater: 'Later', quickOff: 'Remove', schedL: 'Full plan…', taSet: n => `Task: ${n}`, scTaskL: 'Task', scNameQ: 'Name this series', scNameSub: 'The name goes to all its sessions.', skipToday: 'skip today', planRemove: 'remove', undone: 'Undone', redone: 'Redone', undoNone: 'Nothing to undo', redoNone: 'Nothing to redo', hintLong: 'You can turn on a long break: every 4th break gets longer, pomodoro style', hintLongAct: 'Set up', hintRange: 'Forgot the timer? Mark a stretch on the chart and log it as work', hintTrack: 'Pick the programs you work in, and the timer will show how much time you spend in them', hintTrackAct: 'Pick', skipTomorrow: 'skip tomorrow', skipDay: d => `skip ${d}`, skippedToday: 'skipped today · undo', adPerHourH: 'active minutes in each hour', adPickHint: 'Drag across the chart to mark a stretch and add it to your history as work (handy if you forgot the timer). A click takes the whole block of work around it. The mouse wheel zooms, Shift + wheel moves along.', adNothing: 'No active work in this stretch',
     tabPlan: 'Plan', planLead: 'The timer starts by itself at the time you set, on the PC and on the phone. Open it later and the time is already running from the start.',
     planAdd: '+ Add a time', planNextL: 'Next start:', planNone: 'Nothing planned', planEmpty: 'For example: weekdays at 7:30, two sessions',
     planOnOff: 'Turn on or off', planNew: 'New time', planEditT: 'Start time', peTimeL: 'At', peRepeatL: 'Repeat',
@@ -218,7 +218,7 @@ const ANDROID = !!api.android;
 const DEFAULTS = {
   work: 25, brk: 5, autoStart: false, sound: true, notify: true,
   lang: 'ru', theme: 'dark', goal: 4, alwaysOnTop: false, popup: true, closeToTray: true,
-  zoom: 1, chartMode: 'bars', heatRange: 13, seriesCount: 0, appsRange: 1, goalWeek: 0, simple: false, modeAsked: 0, longBrk: 15, longEvery: 4,
+  zoom: 1, chartMode: 'bars', heatRange: 13, seriesCount: 0, appsRange: 1, goalWeek: 0, simple: false, modeAsked: 0, longOn: false, longBrk: 15, longEvery: 4,
 };
 const MIN_SAVE_SEC = 10 * 60; // a session stopped by hand is kept only from 10 minutes on
 const ZOOM = { min: 0.7, max: 1.6, step: 0.1 };
@@ -227,7 +227,7 @@ const LIMITS = {
   brk: { min: 5, max: 60, step: 5 },
   goal: { min: 0, max: 12, step: 0.5 },
   goalWeek: { min: 0, max: 80, step: 1 },
-  longBrk: { min: 0, max: 60, step: 5 },
+  longBrk: { min: 5, max: 60, step: 5 },
   longEvery: { min: 2, max: 8, step: 1 },
   seriesCount: { min: 0, max: 12, step: 1 }, // 0 = endless
 };
@@ -260,6 +260,7 @@ const t = k => I18N[settings.lang][k];
 let saveTimer = null;
 const snapshot = () => ({ settings, sessions, projects, current: { label: $('#label').value, series, timer: TIMER_KEYS.reduce((o, k) => (o[k] = timer[k], o), {}) }, sync: syncSnapshot() });
 function persist() {
+  undoTrack();
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     api.save(snapshot());
@@ -267,6 +268,7 @@ function persist() {
   }, 250);
 }
 function persistNow() {
+  undoTrack();
   clearTimeout(saveTimer);
   syncSchedule();
   return api.save(snapshot());
@@ -586,7 +588,7 @@ const isEndless = () => !!series && !(series.count > 0);
 // classic pomodoro (25-5, 25-5, 25-5, 25-15). The schedule stays pure arithmetic, so any device
 // still knows where a series is. The same maths is in Host.java.
 // the long break as set now (both 0 when it is off)
-const longOf = () => ({ every: settings.longBrk > 0 ? settings.longEvery : 0, lbrk: (settings.longBrk || 0) * 60000 });
+const longOf = () => (settings.longOn && settings.longBrk > 0 ? { every: settings.longEvery, lbrk: settings.longBrk * 60000 } : { every: 0, lbrk: 0 });
 const seriesLong = s => (s.every > 1 && s.lbrk > 0 ? { n: s.every, L: s.lbrk } : null);
 function seriesWorkStart(s, k) {
   const lg = seriesLong(s), c = s.work + s.brk;
@@ -921,25 +923,32 @@ function renderSteppers() {
     const key = el.dataset.key;
     const lim = LIMITS[key];
     const v = settings[key];
-    const label = key === 'goal' || key === 'goalWeek' ? fmtHours(v) : key === 'seriesCount' ? (v > 0 ? t('seriesN')(v) : '∞')
-      : key === 'longBrk' ? (v > 0 ? fmtMinutes(v) : t('off')) : key === 'longEvery' ? t('everyN')(v) : fmtMinutes(v);
+    const cnt = key === 'seriesCount', endless = cnt && !(v > 0);
+    const label = key === 'goal' || key === 'goalWeek' ? fmtHours(v) : cnt ? (endless ? t('endless') : t('seriesN')(v))
+      : key === 'longEvery' ? t('everyN')(v) : fmtMinutes(v);
     if (!el.firstChild) {
-      el.innerHTML = '<button class="dec" aria-label="−">−</button><span class="val"></span><button class="inc" aria-label="+">+</button>';
+      // the number of sessions: − 2 + and a separate ∞ switch next to it (on = endless)
+      el.innerHTML = '<button class="dec" aria-label="−">−</button><span class="val"></span><button class="inc" aria-label="+">+</button>'
+        + (cnt ? `<button class="inf" title="${esc(t('endless'))}">∞</button>` : '');
       el.querySelector('.dec').addEventListener('click', () => changeSetting(key, -1));
       el.querySelector('.inc').addEventListener('click', () => changeSetting(key, +1));
+      if (cnt) el.querySelector('.inf').addEventListener('click', () => setEndless(settings.seriesCount > 0));
     }
     const val = el.querySelector('.val');
     const prev = Number(el.dataset.v);
     el.dataset.v = v;
     val.textContent = label;
-    if (!Number.isNaN(prev) && el.dataset.v !== '' && prev !== v) roll(val, v > prev); // the number rolls to its new value
-    el.querySelector('.dec').disabled = v <= lim.min;
-    el.querySelector('.inc').disabled = v >= lim.max;
+    if (!Number.isNaN(prev) && el.dataset.v !== '' && prev !== v && !cnt) roll(val, v > prev); // the number rolls to its new value
+    el.classList.toggle('endless', endless);
+    if (cnt) el.querySelector('.inf').classList.toggle('on', endless);
+    el.querySelector('.dec').disabled = cnt ? (!endless && v <= 1) : v <= lim.min;
+    el.querySelector('.inc').disabled = !endless && v >= lim.max;
   });
 }
 
 function renderControls() {
   $$('.toggle[data-key]').forEach(el => el.classList.toggle('on', !!settings[el.dataset.key]));
+  $$('[data-long]').forEach(el => el.classList.toggle('off', !settings.longOn));
   $$('.seg[data-key]').forEach(seg => {
     seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.val === settings[seg.dataset.key]));
   });
@@ -2246,6 +2255,7 @@ let adExe = null, adRange = 7;
 function openAppDetail(exe) {
   if (!appStats.some(a => a.exe === exe)) return;
   adExe = exe;
+  hintCount('appDetail');
   adRange = APP_RANGES.includes(settings.appsRange) ? settings.appsRange : 1; // opens on the period of the list
   renderAppDetail();
   $('#appDetail').hidden = false;
@@ -2884,7 +2894,9 @@ function renderPlans() {
     const st = planStart(p, today), end = planEndAt(p, st);
     const nx = p.on === false ? null : nextOf(p);
     const skippedToday = p.on !== false && !p.date && (p.skip || []).includes(today) && planOn(p, today) && planStart(p, today) > Date.now();
-    const act = skippedToday ? `<button class="plan-skip" data-act="unskip">${esc(t('skippedToday'))}</button>`
+    // a one-off plan has nothing to skip: its key removes it
+    const act = p.date ? `<button class="plan-skip plan-rm" data-act="skip">${esc(t('planRemove'))}</button>`
+      : skippedToday ? `<button class="plan-skip" data-act="unskip">${esc(t('skippedToday'))}</button>`
       : nx ? `<button class="plan-skip" data-act="skip" data-k="${nx.key}">${esc(skipWord(nx.key))}</button>` : '';
     return `<div class="plan${p.on === false ? ' off' : ''}" data-key="${esc(p.id)}">
       <div class="plan-span"><span class="pt">${esc(p.time)}</span><i class="plan-line"></i><span class="pt${end ? '' : ' inf'}">${end ? hm(end) : '∞'}</span></div>
@@ -3537,14 +3549,180 @@ function closePicker() {
 let autostartOn = false;
 function renderAutostart() { $('#autostartToggle').classList.toggle('on', autostartOn); }
 
+
+/* ---------- Undo / redo: Ctrl+Z, Ctrl+Shift+Z or Ctrl+Y ----------
+   Every save compares settings, history and projects with the last saved state. A change made right
+   after a click or a key press is a step that can be undone; changes that come on their own (a session
+   logged by the timer, sync) only move the baseline, so undo never eats them. A step stores only
+   what changed (settings keys, sessions by id, projects by name) and undo puts back just that. */
+const UNDO_SKIP = new Set(['u', 'uk', 'simpleStats', 'statsDays', 'hints', 'modeAsked', 'endlessDefault', 'endless3', 'appsRange', 'heatRange', 'chartMode']);
+let lastPush = 0, undoBase = null, undoStack = [], redoStack = [], undoBusy = false, lastInput = 0;
+function undoState() {
+  const st = {}, ss = new Map(), pr = {};
+  for (const k of Object.keys(settings)) if (!UNDO_SKIP.has(k)) st[k] = JSON.stringify(settings[k]);
+  for (const s of sessions) ss.set(String(s.id), JSON.stringify(s));
+  for (const k of Object.keys(projects || {})) pr[k] = JSON.stringify(projects[k]);
+  return { st, ss, pr };
+}
+function undoDiff(a, b) {
+  const d = { st: {}, ss: {}, pr: {} };
+  let n = 0;
+  for (const k of new Set([...Object.keys(a.st), ...Object.keys(b.st)])) if (a.st[k] !== b.st[k]) { d.st[k] = [a.st[k], b.st[k]]; n++; }
+  for (const [id, v] of b.ss) if (a.ss.get(id) !== v) { d.ss[id] = [a.ss.get(id), v]; n++; }
+  for (const [id, v] of a.ss) if (!b.ss.has(id)) { d.ss[id] = [v, undefined]; n++; }
+  for (const k of new Set([...Object.keys(a.pr), ...Object.keys(b.pr)])) if (a.pr[k] !== b.pr[k]) { d.pr[k] = [a.pr[k], b.pr[k]]; n++; }
+  return n ? d : null;
+}
+function undoMerge(a, b) {
+  for (const part of ['st', 'ss', 'pr']) for (const k of Object.keys(b[part])) a[part][k] = k in a[part] ? [a[part][k][0], b[part][k][1]] : b[part][k];
+}
+function undoTrack() {
+  if (undoBusy) return;
+  const cur = undoState();
+  if (undoBase) {
+    const d = undoDiff(undoBase, cur);
+    if (d && Date.now() - lastInput < 2500) {
+      const top = undoStack[undoStack.length - 1];
+      if (top && lastPush === lastInput) undoMerge(top, d); // one click, several saves: one step
+      else undoStack.push(d);
+      lastPush = lastInput;
+      if (undoStack.length > 60) undoStack.shift();
+      redoStack = [];
+    }
+  }
+  undoBase = cur;
+}
+// side = 0 puts back the "before" values (undo), 1 the "after" ones (redo)
+function undoApply(d, side) {
+  const val = v => (v === undefined ? undefined : JSON.parse(v));
+  const changed = Object.keys(d.st);
+  for (const k of changed) { const v = val(d.st[k][side]); if (v === undefined) delete settings[k]; else settings[k] = v; }
+  const ids = Object.keys(d.ss);
+  if (ids.length) {
+    const map = new Map(sessions.map(s => [String(s.id), s]));
+    for (const id of ids) { const v = val(d.ss[id][side]); if (v === undefined) map.delete(id); else map.set(id, v); }
+    sessions = [...map.values()].sort((a, b) => a.start - b.start);
+  }
+  for (const k of Object.keys(d.pr)) { const v = val(d.pr[k][side]); if (v === undefined) delete projects[k]; else projects[k] = v; }
+  if (changed.includes('lang')) { applyI18n(); renderLabelMeta(); }
+  if (changed.includes('theme')) applyTheme();
+  if (changed.includes('simple')) applyMode();
+  if (changed.includes('alwaysOnTop')) api.alwaysOnTop(settings.alwaysOnTop);
+  if (changed.includes('zoom')) applyZoom();
+  if ((changed.includes('work') && timer.phase === 'work') || (changed.includes('brk') && timer.phase === 'break')) { if (isUntouched()) setPhase(timer.phase); }
+  undoBusy = true;
+  persistNow();
+  undoBusy = false;
+  undoBase = undoState();
+  renderPlans(); renderStats(); renderApps(); if (view === 'projects') renderProjects(); render();
+}
+function undoStep(redo) {
+  const from = redo ? redoStack : undoStack, to = redo ? undoStack : redoStack;
+  undoTrack(); // a change still waiting to be saved becomes a step first
+  const d = from.pop();
+  if (!d) { toast(t(redo ? 'redoNone' : 'undoNone')); return; }
+  undoApply(d, redo ? 1 : 0);
+  to.push(d);
+  toast(t(redo ? 'redone' : 'undone'));
+}
+function bindUndo() {
+  const mark = () => { lastInput = Date.now(); };
+  ['pointerdown', 'change', 'input'].forEach(ev => document.addEventListener(ev, mark, true));
+  document.addEventListener('keydown', e => {
+    const k = e.key.toLowerCase(), mod = e.ctrlKey || e.metaKey;
+    const isUndo = mod && !e.altKey && (k === 'z' || k === 'я' || k === 'y' || k === 'н');
+    if (!isUndo) { mark(); return; }
+    // inside a text field the field keeps its own undo
+    const el = document.activeElement;
+    if (el && (el.isContentEditable || (el.tagName === 'INPUT' && !/^(button|checkbox|radio|range)$/.test(el.type)) || el.tagName === 'TEXTAREA')) return;
+    e.preventDefault();
+    undoStep(k === 'y' || k === 'н' || e.shiftKey);
+  }, true);
+}
+
+/* ---------- Gentle hints: the app notices a habit and shows a faster way, once ----------
+   Each hint shows only once, at most one a day, and only at the moment it is about. */
+const hintsData = () => settings.hints || (settings.hints = {});
+function hintCount(id) { const h = hintsData(); h[`n_${id}`] = (h[`n_${id}`] || 0) + 1; persist(); checkHints(id); }
+function goSettingsAt(sel) {
+  $('.tab[data-view="settings"]').click();
+  setTimeout(() => {
+    const row = $(sel) && $(sel).closest('.set');
+    if (!row) return;
+    row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    row.classList.remove('hint-flash'); void row.offsetWidth; row.classList.add('hint-flash');
+  }, 250);
+}
+const HINTS = {
+  // changes the break by hand again and again: a long break may be what they want
+  longBreak: { on: 'brk', when: h => !settings.longOn && (h.n_brk || 0) >= 5, text: 'hintLong', act: 'hintLongAct', go: () => goSettingsAt('.toggle[data-key="longOn"]') },
+  // keeps looking at a program's chart: the chart can log forgotten work
+  appRange: { on: 'appDetail', when: h => (h.n_appDetail || 0) >= 3, text: 'hintRange' },
+  // nothing tracked yet on the PC: pick the programs you work in
+  trackApps: { on: 'boot', when: h => !ANDROID && !api.web && !appStats.length && (h.n_boot || 0) >= 3, text: 'hintTrack', act: 'hintTrackAct',
+    go: () => { $('.tab[data-view="apps"]').click(); setTimeout(() => $('#btnAddApp') && $('#btnAddApp').click(), 300); } },
+  // a long break after it is on: where it lives (none needed)
+};
+function checkHints(on) {
+  const h = hintsData();
+  if (!winVisible || settings.simple && on !== 'brk') return;
+  if (Date.now() - (h.last || 0) < 20 * 3600e3) return;
+  for (const [id, x] of Object.entries(HINTS)) {
+    if (x.on !== on || h[`s_${id}`] || !x.when(h)) continue;
+    h[`s_${id}`] = h.last = Date.now();
+    persist();
+    showHint(t(x.text), x.act && t(x.act), x.go);
+    return;
+  }
+}
+let hintT = null;
+function showHint(text, act, go) {
+  let el = $('#hintCard');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'hintCard';
+    el.className = 'hint-card';
+    el.innerHTML = '<span class="hc-ico">💡</span><span class="hc-t"></span><button class="hc-go"></button><button class="hc-x" aria-label="×">×</button>';
+    document.body.appendChild(el);
+    el.querySelector('.hc-x').addEventListener('click', () => hideHint());
+  }
+  el.querySelector('.hc-t').textContent = text;
+  const b = el.querySelector('.hc-go');
+  b.hidden = !act;
+  b.textContent = act || '';
+  b.onclick = () => { hideHint(); go && go(); };
+  el.classList.remove('out');
+  el.hidden = false;
+  clearTimeout(hintT);
+  hintT = setTimeout(hideHint, 16000);
+}
+function hideHint() {
+  const el = $('#hintCard');
+  if (!el || el.hidden) return;
+  el.classList.add('out');
+  setTimeout(() => { el.hidden = true; }, 260);
+}
 /* ================= Settings changes ================= */
 function changeSetting(key, dir) {
   const lim = LIMITS[key];
+  if (key === 'seriesCount') {
+    // − / + on an endless run brings back the last count; a count never goes below one (∞ is its own switch)
+    settings.seriesCount = settings.seriesCount > 0 ? Math.min(lim.max, Math.max(1, settings.seriesCount + dir)) : (settings.seriesLast || 2);
+    settings.seriesLast = settings.seriesCount;
+    persist(); render(); return;
+  }
   const v = Math.round((settings[key] + dir * lim.step) * 10) / 10;
   settings[key] = Math.min(lim.max, Math.max(lim.min, v));
+  if (key === 'brk') hintCount('brk');
   if ((key === 'work' && timer.phase === 'work') || (key === 'brk' && timer.phase === 'break')) {
     if (isUntouched()) setPhase(timer.phase);
   }
+  persist();
+  render();
+}
+function setEndless(on) {
+  if (settings.seriesCount > 0) settings.seriesLast = settings.seriesCount;
+  settings.seriesCount = on ? 0 : (settings.seriesLast || 2);
   persist();
   render();
 }
@@ -3887,6 +4065,9 @@ function showCrashNote(c, bootLogged) {
   settings = { ...DEFAULTS, ...(data.settings || {}) };
   // 2.17: the endless timer is the new default — once, for everyone
   if (!settings.endlessDefault) { settings.seriesCount = 0; settings.endlessDefault = 1; }
+  // 2.19.3: endless once more for everyone (the count got its own ∞ switch); a long break needs a length
+  if (!settings.endless3) { if (settings.seriesCount > 0) settings.seriesLast = settings.seriesCount; settings.seriesCount = 0; settings.endless3 = 1; }
+  if (!(settings.longBrk >= 5)) settings.longBrk = 15;
   sessions = Array.isArray(data.sessions) ? data.sessions : [];
   dedupeSessions(); // twins logged by two devices before 2.17.1
   projects = data.projects && typeof data.projects === 'object' ? data.projects : {};
@@ -3923,6 +4104,9 @@ function showCrashNote(c, bootLogged) {
   bindPlans();
   bindTask();
   bindChips();
+  bindUndo();
+  undoBase = undoState();
+  setTimeout(() => hintCount('boot'), 9000);
   initInfo();
   syncInit(data);
   render();

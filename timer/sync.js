@@ -13,7 +13,7 @@ const SYNC = {
   site: 'https://fggtf24-cyber.github.io/yaytsa-cloud/',
 };
 // Settings that follow the account; the rest (theme, zoom, window options) stay per device.
-const SYNC_SETTINGS = ['work', 'brk', 'longBrk', 'longEvery', 'autoStart', 'goal', 'goalWeek', 'sound', 'popup', 'lang', 'plans'];
+const SYNC_SETTINGS = ['work', 'brk', 'longOn', 'longBrk', 'longEvery', 'autoStart', 'goal', 'goalWeek', 'sound', 'popup', 'lang', 'plans'];
 // A deleted item is remembered as '-<time of deletion>'; older copies of it are not brought back.
 const isDel = g => typeof g === 'string' && g[0] === '-';
 const delAt = g => Number(g.slice(1)) || 0;

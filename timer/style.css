@@ -2249,8 +2249,9 @@ html.web .tabs { padding-top: 6px; }
 
 /* phone: pages meant for the PC only never take a place in the swipe strip (the Plan page put itself before Settings) */
 html.android .view[data-desktop] { display: none !important; }
-.set-pair { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-html.android .set-pair { gap: 6px; }
+.set-sub.off { display: none !important; }
+.set-sub { padding-left: 52px; }
+.set-sub .set-name { color: var(--text-2); font-weight: 500; }
 
 /* ======================= 2.19.2: a calmer timer page (PC) ======================= */
 /* the session settings as one row of chips, only before a run; the day at a glance under the key */
@@ -2324,3 +2325,29 @@ html.android .when-chip.set { background: linear-gradient(135deg, rgba(79, 139, 
 html.android .stepper button { border-radius: 50%; background: var(--hover); }
 html.android .tab.active { color: var(--text-strong); }
 html.android .tab-blob { background: var(--active); }
+
+/* ---------- 2.19.3: long break rows, the ∞ switch, hints ---------- */
+html.android #view-settings .set.set-sub { padding-left: 56px; }
+.stepper .inf {
+  margin-left: 6px; font-size: 18px; font-weight: 600; line-height: 1;
+}
+.stepper .inf.on { background: var(--pc-grad, linear-gradient(120deg, #3d8bff, #7a5cff 55%, #b05cff)); color: #fff; }
+.stepper.endless .val { color: var(--text-2); }
+.plan-skip.plan-rm:hover { color: var(--danger); }
+.hint-card {
+  position: fixed; left: 50%; bottom: 22px; z-index: 60; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 10px; width: max-content; max-width: min(460px, calc(100vw - 32px));
+  padding: 10px 10px 10px 14px; border-radius: 14px; background: var(--bg-3); color: var(--text-strong);
+  box-shadow: var(--shadow); font-size: 13.5px; line-height: 1.35;
+  animation: hintIn .35s cubic-bezier(.2, .9, .3, 1.15) both;
+}
+.hint-card.out { animation: hintOut .25s var(--ease) both; }
+html.android .hint-card { bottom: calc(86px + env(safe-area-inset-bottom, 0px)); background: var(--block-2); }
+.hc-ico { font-size: 17px; flex: none; }
+.hc-t { flex: 1; }
+.hc-go { flex: none; border: 0; border-radius: 999px; padding: 6px 12px; background: var(--pc-grad, var(--accent)); color: #fff; font-weight: 600; font-size: 13px; }
+.hc-x { flex: none; width: 26px; height: 26px; border: 0; border-radius: 50%; background: none; color: var(--text-2); font-size: 18px; line-height: 1; }
+.hc-x:hover { background: var(--hover); color: var(--text-strong); }
+@keyframes hintIn { from { opacity: 0; transform: translate(-50%, 14px) scale(.97); } }
+@keyframes hintOut { to { opacity: 0; transform: translate(-50%, 10px); } }
+.set.hint-flash { animation: kFlash 1.4s var(--ease); border-radius: 12px; }
