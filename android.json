@@ -1,6 +1,6 @@
 {
-  "versionCode": 2,
-  "versionName": "1.1",
-  "url": "https://github.com/fggtf24-cyber/yaytsa-cloud-android/releases/download/v1.1/YaytsaCloud.apk",
-  "notes": "Чаты без звука: из замученных чатов больше не приходят уведомления."
+  "versionCode": 3,
+  "versionName": "1.2",
+  "url": "https://github.com/fggtf24-cyber/yaytsa-cloud-android/releases/download/v1.2/YaytsaCloud.apk",
+  "notes": "Значок на рабочем столе больше не выглядит увеличенным."
 }
