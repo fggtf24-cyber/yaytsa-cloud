@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app; manifest-src 'self'; worker-src 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Яйцетаймер</title>
+  <link rel="stylesheet" href="style.css"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#191919"><link rel="icon" type="image/png" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes">
+</head>
+<body>
+  <div class="splash" id="splash" data-android aria-hidden="true">
+    <svg viewBox="0 0 1024 1024">
+      <defs><linearGradient id="spG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a8dff"/><stop offset="1" stop-color="#8b5cff"/></linearGradient></defs>
+      <path class="sp-wave l" d="M-30 400Q-110 560 -30 720"/>
+      <path class="sp-wave r" d="M1054 400Q1134 560 1054 720"/>
+      <g class="sp-tile">
+        <rect x="32" y="32" width="960" height="960" rx="228" fill="url(#spG)"/>
+        <g class="sp-egg">
+          <path fill="#fff" fill-rule="evenodd" d="M512 196C384 196 268 392 268 552c0 152 108 276 244 276s244-124 244-276C756 392 640 196 512 196zM512 418a148 148 0 1 1 0 296a148 148 0 1 1 0-296z"/>
+          <circle class="sp-sector" cx="512" cy="566" r="57" pathLength="100"/>
+        </g>
+      </g>
+    </svg>
+  </div>
+  <header class="titlebar" id="titlebar">
+    <div class="tb-edge" data-hit="12"></div>
+    <div class="brand">
+      <span class="brand-logo" aria-hidden="true"><img src="data:image/png;base64,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" alt="" draggable="false"></span>
+      <span class="brand-name" data-i18n="appName">Яйцетаймер</span>
+      <span class="brand-status" id="tbStatus" hidden></span>
+    </div>
+    <div class="win-btns">
+      <button class="win-btn" id="winMin" data-i18n-title="winMin"><svg viewBox="0 0 12 12"><path d="M2 6.5h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+      <button class="win-btn" id="winMax" data-i18n-title="winMax"><svg class="i-max" viewBox="0 0 12 12"><rect x="2" y="2" width="8" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.2"/></svg><svg class="i-restore" viewBox="0 0 12 12"><rect x="1.8" y="3.8" width="6.4" height="6.4" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M4 2.2h4.2A1.8 1.8 0 0 1 10 4v4.2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+      <button class="win-btn close" id="winClose" data-i18n-title="winClose"><svg viewBox="0 0 12 12"><path d="M2.6 2.6l6.8 6.8M9.4 2.6l-6.8 6.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-view="timer" data-i18n-title="tabTimer"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 10v3.5l2.5 1.6M9.5 2.8h5"/></svg><span data-i18n="tabTimer"></span></button>
+    <button class="tab" data-view="projects" data-i18n-title="pickProj"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 7.5a2 2 0 0 1 2-2h3.8l2 2.2h7.2a2 2 0 0 1 2 2v7.8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></svg><span data-i18n="tabProjects"></span></button>
+    <button class="tab" data-view="apps" data-i18n-title="tabApps"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.8"/></svg><span data-i18n="tabApps"></span></button>
+    <button class="tab" data-view="stats" data-i18n-title="tabStats"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 19.5v-7M12 19.5V5M18.5 19.5v-10"/></svg><span data-i18n="tabStats"></span></button>
+    <button class="tab" data-view="plan" data-desktop data-i18n-title="tabPlan"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4M9 14.5l2 2 4-4"/></svg><span data-i18n="tabPlan"></span></button>
+    <button class="tab" data-view="settings" data-i18n-title="tabSettings"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg><span data-i18n="tabSettings"></span></button>
+  </nav>
+
+  <main>
+    <!-- TIMER -->
+    <section class="view active" id="view-timer">
+      <div class="face" id="face">
+        <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">
+          <defs>
+            <linearGradient id="ringWork" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3d8bff"/><stop offset="1" stop-color="#8a5cff"/></linearGradient>
+            <linearGradient id="ringBreak" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2fbf8f"/><stop offset="1" stop-color="#3db7d6"/></linearGradient>
+          </defs>
+          <circle class="ring-track" cx="50" cy="50" r="46"/>
+          <circle class="ring-fill" id="ringFill" cx="50" cy="50" r="46"/>
+        </svg>
+        <div class="phase-row">
+          <span class="tag" id="phaseTag"></span>
+          <span class="muted" id="cycleInfo"></span>
+        </div>
+
+        <div class="time" id="time">25:00</div>
+        <div class="bar"><div class="bar-fill" id="barFill"></div></div>
+        <div class="face-today" id="faceToday" data-android></div>
+      </div>
+
+      <div class="controls">
+        <div class="c-side l">
+          <button class="icon-btn" id="btnReset" data-i18n-title="stop">
+            <svg viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="2.6" fill="currentColor"/></svg>
+          </button>
+        </div>
+        <button class="primary" id="btnStart"></button>
+        <div class="c-side r">
+          <button class="icon-btn" id="btnSkip" data-i18n-title="skip">
+            <svg viewBox="0 0 24 24"><path d="M6 5.2v13.6a.8.8 0 0 0 1.25.66l9.9-6.8a.8.8 0 0 0 0-1.32l-9.9-6.8A.8.8 0 0 0 6 5.2z" fill="currentColor"/><path d="M19 5v14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- simple mode: the day at a glance — today's time towards the goal, and the streak -->
+      <div class="simple-day" id="simpleDay">
+        <div class="sd-top"><span class="sd-done" id="sdDone"></span><span class="sd-streak" id="sdStreak"></span></div>
+        <div class="sd-bar"><i id="sdFill"></i></div>
+      </div>
+
+      <div class="label-wrap" data-c="label">
+        <input class="label-input" id="label" maxlength="120" data-i18n-ph="labelPh" autocomplete="off" spellcheck="false">
+        <button class="label-chev" id="labelChev" type="button" tabindex="-1" data-i18n-title="pickProj"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg></button>
+        <div class="suggest" id="labelSuggest" hidden></div>
+      </div>
+      <div class="label-meta" id="labelMeta" data-c="meta"></div>
+
+      <div class="dials" data-android>
+        <div class="dial" data-key="work">
+          <span class="dial-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="7.5" width="17" height="12" rx="2.6"/><path d="M9 7.5V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5M3.5 12.5h17M12 11.5v2"/></svg></span>
+          <div class="wheel"><div class="wheel-col"></div></div>
+          <span class="dial-unit"></span>
+        </div>
+        <div class="dial" data-key="brk">
+          <span class="dial-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9h11v4.5A4.5 4.5 0 0 1 11.5 18h-2A4.5 4.5 0 0 1 5 13.5z"/><path d="M16 10.5h1.2a2.2 2.2 0 0 1 0 4.4H16M8.5 4v2.5M12 4v2.5"/></svg></span>
+          <div class="wheel"><div class="wheel-col"></div></div>
+          <span class="dial-unit"></span>
+        </div>
+      </div>
+
+      <div class="props">
+        <div class="prop" data-p="work">
+          <div class="prop-key">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6.5" width="14" height="10" rx="2.2"/><path d="M7.5 6.5V5.3a1.6 1.6 0 0 1 1.6-1.6h1.8a1.6 1.6 0 0 1 1.6 1.6v1.2M3 10.5h14"/></svg>
+            <span data-i18n="work"></span>
+          </div>
+          <div class="stepper" data-key="work"></div>
+        </div>
+        <div class="prop" data-p="brk">
+          <div class="prop-key">
+            <svg viewBox="0 0 20 20"><path d="M4 8h9v3.5A3.5 3.5 0 0 1 9.5 15h-2A3.5 3.5 0 0 1 4 11.5z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M13 9h1.2a1.8 1.8 0 0 1 0 3.6H13" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 3.5v2M10 3.5v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span data-i18n="break"></span>
+          </div>
+          <div class="stepper" data-key="brk"></div>
+        </div>
+        <div class="prop" data-p="series">
+          <div class="prop-key">
+            <svg viewBox="0 0 20 20"><path d="M4.5 9.5a5.8 5.8 0 0 1 10-4l1.6 1.6M16.1 3.6v3.5h-3.5M15.5 10.5a5.8 5.8 0 0 1-10 4l-1.6-1.6M3.9 16.4v-3.5h3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span data-i18n="seriesCountL"></span>
+          </div>
+          <div class="stepper" data-key="seriesCount"></div>
+        </div>
+        <div class="prop" data-p="today">
+          <div class="prop-key">
+            <svg viewBox="0 0 20 20"><rect x="3.5" y="4.5" width="13" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 8.5h13M7 3v3M13 3v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span data-i18n="today"></span>
+          </div>
+          <div class="prop-val" id="todayVal"></div>
+        </div>
+        <div class="prop" data-p="when">
+          <div class="prop-key">
+            <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 6.5V10h3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span data-i18n="seriesStart"></span>
+          </div>
+          <div class="when">
+            <label class="when-chip" id="seriesWhen">
+              <svg class="when-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 11.5A8 8 0 1 0 12.5 20"/><path d="M12 7.5V12l2.5 1.5M18 15v6M15 18h6"/></svg>
+              <span id="seriesWhenText"></span>
+              <input type="time" id="seriesTime" class="when-input" aria-label="time">
+            </label>
+            <button class="when-x" id="seriesWhenX" hidden aria-label="×"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="test-row" data-c="test"><button class="ghost small-btn" id="btnTest" data-i18n="test"></button></div>
+    </section>
+
+    <!-- PROJECTS -->
+    <section class="view" id="view-projects">
+      <h1 data-i18n="tabProjects" data-info="projLead"></h1>
+      <form class="add-row" id="projAdd">
+        <input class="text-input" id="projName" maxlength="120" data-i18n-ph="projNewPh" autocomplete="off">
+        <button class="ghost add-btn" type="submit" data-i18n-title="add"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5.5v13M5.5 12h13"/></svg></button>
+      </form>
+      <div id="projList"></div>
+      <div class="arch-row"><button class="arch-link" id="btnArchive"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="4.5" rx="1.5"/><path d="M5.5 9v8.5a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V9M10 13h4"/></svg><span></span></button></div>
+    </section>
+
+    <!-- APPS -->
+    <section class="view" id="view-apps">
+      <h1 data-i18n="tabApps" data-info="appsLead"></h1>
+      <div class="apps-cap"><span class="apps-cap-l" data-i18n="appsActiveL"></span><button class="range-pick" id="appsRange"><span></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg></button></div>
+      <div id="appList"></div>
+      <button class="ghost wide add-app" id="btnAddApp" data-i18n="appsAdd"></button>
+      <div class="picker" id="appPicker" hidden>
+        <div class="picker-head"><h3 data-i18n="appsPickTitle"></h3><button class="ghost" id="btnPickClose" data-i18n="done"></button></div>
+        <label class="search">
+          <svg viewBox="0 0 20 20"><circle cx="8.8" cy="8.8" r="5.3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12.8 12.8l3.7 3.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <input id="appSearch" autocomplete="off" spellcheck="false" data-i18n-ph="appsSearchPh">
+        </label>
+        <div class="cand-list" id="appCandidates"></div>
+        <button class="ghost wide browse" id="btnBrowse" data-i18n="appsBrowse"></button>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <section class="view" id="view-stats">
+      <h1 data-i18n="tabStats"></h1>
+      <div class="goal" id="goalBlock">
+        <div class="goal-head"><span data-i18n="goal"></span><span class="muted" id="goalText"></span></div>
+        <div class="bar"><div class="bar-fill" id="goalFill"></div></div>
+      </div>
+      <div class="goal" id="goalWeekBlock">
+        <div class="goal-head"><span data-i18n="goalWeekL"></span><span class="muted" id="goalWeekText"></span></div>
+        <div class="bar"><div class="bar-fill" id="goalWeekFill"></div></div>
+      </div>
+      <div class="cards">
+        <div class="card"><div class="card-label" data-i18n="today"></div><div class="card-val" id="stToday"></div></div>
+        <div class="card"><div class="card-label" data-i18n="last7"></div><div class="card-val" id="stWeek"></div></div>
+        <div class="card"><div class="card-label" data-i18n="last30"></div><div class="card-val" id="stMonth"></div></div>
+      </div>
+
+      <div class="hist-head">
+        <h2 data-i18n="history"></h2>
+        <div class="btn-row">
+          <button class="ghost with-ico" id="btnAddTime" data-i18n-title="atTitle"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5A8 8 0 1 0 12.5 20"/><path d="M12 7.5V12l2.5 1.5M18 15v6M15 18h6"/></svg><span data-i18n="atSave"></span></button>
+          <button class="ghost with-ico" id="btnImport"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v10.5M7.5 10 12 14.5 16.5 10M5 19.5h14"/></svg><span data-i18n="importCsv"></span></button>
+          <button class="ghost with-ico" id="btnExport"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14.5V4M7.5 8.5 12 4l4.5 4.5M5 19.5h14"/></svg><span data-i18n="exportCsv"></span></button>
+        </div>
+      </div>
+      <div id="history" class="hs-list"></div>
+      <button class="ghost wide" id="btnHistAll" data-i18n="histAll"></button>
+
+      <div class="chart-head">
+        <h2 data-i18n="byDay"></h2>
+        <div class="chart-tools">
+          <div class="seg small" id="chartRange">
+            <button data-range="7">7</button><button data-range="14">14</button><button data-range="30">30</button>
+          </div>
+          <div class="seg small" id="heatRange">
+            <button data-range="13" data-i18n="r3m"></button><button data-range="26" data-i18n="r6m"></button><button data-range="53" data-i18n="r1y"></button>
+          </div>
+          <div class="seg small icons" id="chartMode">
+            <button data-mode="bars" data-i18n-title="modeBars"><svg viewBox="0 0 16 16"><path d="M3 13V8M8 13V3M13 13V6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+            <button data-mode="squares" data-i18n-title="modeSquares"><svg viewBox="0 0 16 16"><rect x="2" y="2" width="5" height="5" rx="1.3" fill="currentColor"/><rect x="9" y="2" width="5" height="5" rx="1.3" fill="currentColor" opacity=".55"/><rect x="2" y="9" width="5" height="5" rx="1.3" fill="currentColor" opacity=".35"/><rect x="9" y="9" width="5" height="5" rx="1.3" fill="currentColor"/></svg></button>
+          </div>
+        </div>
+      </div>
+      <div class="chart" id="chart"></div>
+      <div class="heat" id="heat" hidden></div>
+
+    </section>
+
+    <!-- PLAN (PC; the phone opens the same box as a panel from the timer page) -->
+    <section class="view" id="view-plan" data-desktop>
+      <h1 data-i18n="tabPlan" data-info="planLead"></h1>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="view" id="view-settings">
+      <h1 data-i18n="tabSettings"></h1>
+
+      <div class="group-title" data-i18n="gTimer"></div>
+      <div class="set">
+        <span class="set-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="7.5" width="17" height="12" rx="2.6"/><path d="M9 7.5V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5M3.5 12.5h17M12 11.5v2"/></svg></span><div class="set-text"><div class="set-name" data-i18n="workLen"></div><div class="set-desc" data-i18n="stepDesc"></div></div>
+        <div class="stepper" data-key="work"></div>
+      </div>
+      <div class="set">
+        <span class="set-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9h11v4.5A4.5 4.5 0 0 1 11.5 18h-2A4.5 4.5 0 0 1 5 13.5z"/><path d="M16 10.5h1.2a2.2 2.2 0 0 1 0 4.4H16M8.5 4v2.5M12 4v2.5"/></svg></span><div class="set-text"><div class="set-name" data-i18n="breakLen"></div><div class="set-desc" data-i18n="stepDesc"></div></div>
+        <div class="stepper" data-key="brk"></div>
+      </div>
+      <div class="set">
+        <span class="set-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".9" fill="currentColor"/></svg></span><div class="set-text"><div class="set-name" data-i18n="goalSet"></div><div class="set-desc" data-i18n="goalDesc"></div></div>
+        <div class="stepper" data-key="goal"></div>
+      </div>
+      <div class="set">
+        <span class="set-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span><div class="set-text"><div class="set-name" data-i18n="goalWeek"></div><div class="set-desc" data-i18n="goalWeekDesc"></div></div>
+        <div class="stepper" data-key="goalWeek"></div>
+      </div>
+
+      <div class="group-title" data-i18n="gNotify"></div>
+      <div class="set">
+        <span class="set-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></span><div class="set-text"><div class="set-name" data-i18n="popup"></div><div class="set-desc" data-i18n="popupDesc"></div></div>
+        <button class="toggle" data-key="popup"></button>
+      </div>
+      <div class="set">
+        <span class="set-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 5.5v13l10-6.5z"/></svg></span><div class="set-text"><div class="set-name" data-i18n="trayTest"></div></div>
+        <button class="ghost" id="btnTest2" data-i18n="test"></button>
+      </div>
+      <div class="set">
+        <span class="set-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 9.5h3l4.5-4v13l-4.5-4h-3z"/><path d="M16 9a4.5 4.5 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg></span><div class="set-text"><div class="set-name" data-i18n="sound"></div></div>
+        <button class="toggle" data-key="sound"></button>
+      </div>
+      <div class="set" data-android>
+        <span class="set-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 17.5V6.2l10-2.2v11.3"/><circle cx="6.6" cy="17.5" r="2.4"/><circle cx="16.6" cy="15.3" r="2.4"/></svg></span><div class="set-text"><div class="set-name" data-i18n="alertSound"></div><div class="set-desc" id="soundName"></div></div>
+        <button class="ghost with-ico" id="btnSound"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 17.5V6.2l10-2.2v11.3"/><circle cx="6.6" cy="17.5" r="2.4"/><circle cx="16.6" cy="15.3" r="2.4"/></svg><span data-i18n="choose"></span></button>
+      </div>
+
+      <div class="group-title" data-i18n="gLook"></div>
+      <div class="set">
+        <span class="set-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.4 1.5M9.5 3h5"/></svg></span><div class="set-text"><div class="set-name" data-i18n="simpleL"></div><div class="set-desc" data-i18n="simpleDesc"></div></div>
+        <button class="toggle" data-key="simple"></button>
+      </div>
+      <div class="set">
+        <span class="set-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.6 3.5 5.4 3.5 8.5s-1 5.9-3.5 8.5c-2.5-2.6-3.5-5.4-3.5-8.5s1-5.9 3.5-8.5z"/></svg></span><div class="set-text"><div class="set-name" data-i18n="language"></div></div>
+        <div class="seg" data-key="lang">
+          <button data-val="ru"><span class="full">Русский</span><span class="short">RU</span></button><button data-val="en"><span class="full">English</span><span class="short">EN</span></button>
+        </div>
+      </div>
+      <div class="set">
+        <span class="set-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></span><div class="set-text"><div class="set-name" data-i18n="theme"></div></div>
+        <div class="seg" data-key="theme">
+          <button data-val="dark" data-i18n-title="dark"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 14.6A7.8 7.8 0 0 1 9.4 4.5a7.8 7.8 0 1 0 10.1 10.1z"/></svg></button><button data-val="light" data-i18n-title="light"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.8"/><path d="M12 3v1.8M12 19.2V21M3 12h1.8M19.2 12H21M5.6 5.6l1.3 1.3M17.1 17.1l1.3 1.3M5.6 18.4l1.3-1.3M17.1 6.9l1.3-1.3"/></svg></button>
+        </div>
+      </div>
+      <div class="group-title" data-i18n="gSystem" data-desktop></div>
+      <div class="set" data-desktop>
+        <div class="set-text"><div class="set-name" data-i18n="launchAtStart"></div><div class="set-desc" data-i18n="launchAtStartDesc"></div></div>
+        <button class="toggle" id="autostartToggle"></button>
+      </div>
+      <div class="set" data-desktop>
+        <div class="set-text"><div class="set-name" data-i18n="closeToTray"></div><div class="set-desc" data-i18n="closeToTrayDesc"></div></div>
+        <button class="toggle" data-key="closeToTray"></button>
+      </div>
+      <div class="set" data-desktop>
+        <div class="set-text"><div class="set-name" data-i18n="onTop"></div></div>
+        <button class="toggle" data-key="alwaysOnTop"></button>
+      </div>
+
+      <div class="group-title" id="syncTitle"></div>
+      <div id="syncBox"></div>
+
+      <div class="group-title" data-i18n="gData"></div>
+      <div class="set">
+        <div class="set-text"><div class="set-name" data-i18n="dataName"></div><div class="set-desc" data-i18n="dataDesc"></div></div>
+        <div class="btn-row">
+          <button class="ghost with-ico" id="btnImport2"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v10.5M7.5 10 12 14.5 16.5 10M5 19.5h14"/></svg><span data-i18n="importCsv"></span></button>
+          <button class="ghost with-ico" id="btnExport2"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14.5V4M7.5 8.5 12 4l4.5 4.5M5 19.5h14"/></svg><span data-i18n="exportCsv"></span></button>
+          <button class="ghost" id="btnFolder" data-i18n="openFolder" data-desktop></button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <input type="file" id="csvFile" accept=".csv,text/csv" hidden>
+  <div class="popover cal" id="cal" hidden></div>
+  <div class="popover tp" id="tp" hidden></div>
+  <div class="popover menu" id="menu" hidden></div>
+  <div class="modal" id="modal" hidden>
+    <div class="modal-card">
+      <h3 id="modalTitle"></h3>
+      <p id="modalText"></p>
+      <div class="modal-btns"><button class="ghost" id="modalCancel"></button><button class="danger-btn" id="modalOk"></button></div>
+    </div>
+  </div>
+  <div class="modal" id="addTime" hidden>
+    <form class="modal-card at-card" id="atForm" autocomplete="off">
+      <h3 data-i18n="atTitle"></h3>
+      <input class="text-input" id="atProject" maxlength="120" data-i18n-ph="atProjectPh">
+      <div class="at-chips" id="atChips"></div>
+      <div class="at-row">
+        <span class="at-l" data-i18n="atHow"></span>
+        <div class="stepper at-step"><button type="button" data-step="h" data-d="-1">−</button><span class="val" id="atH"></span><button type="button" data-step="h" data-d="1">+</button></div>
+        <div class="stepper at-step"><button type="button" data-step="m" data-d="-1">−</button><span class="val" id="atM"></span><button type="button" data-step="m" data-d="1">+</button></div>
+      </div>
+      <div class="at-quick" id="atQuick">
+        <button type="button" data-min="15">15 ′</button><button type="button" data-min="30">30 ′</button><button type="button" data-min="60">1 h</button><button type="button" data-min="120">2 h</button><button type="button" data-min="240">4 h</button>
+      </div>
+      <div class="at-row">
+        <span class="at-l" data-i18n="atWhen"></span>
+        <button type="button" class="when-chip" id="atDay"><svg class="when-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M8.5 3v4M15.5 3v4"/></svg><span></span></button>
+      </div>
+      <div class="modal-btns"><button type="button" class="ghost" id="atCancel" data-i18n="cancel"></button><button type="submit" class="danger-btn safe" id="atSave" data-i18n="atSave"></button></div>
+    </form>
+  </div>
+  <div class="modal" id="histAll" hidden>
+    <div class="modal-card hist-card">
+      <div class="ad-head"><h3 data-i18n="history"></h3><button class="when-x" id="histClose" aria-label="×"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg></button></div>
+      <div class="hist-scroll"><div id="historyFull"></div><button class="ghost wide" id="btnMore" data-i18n="showMore"></button></div>
+    </div>
+  </div>
+  <div class="modal" id="archive" hidden>
+    <div class="modal-card hist-card">
+      <div class="ad-head"><h3 data-i18n="archive"></h3><button class="when-x" id="archClose" aria-label="×"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg></button></div>
+      <div class="hist-scroll" id="archList"></div>
+    </div>
+  </div>
+  <div class="modal" id="taskAsk" hidden>
+    <form class="modal-card at-card ta-card" id="taForm" autocomplete="off">
+      <h3 id="taTitle"></h3>
+      <p class="ta-sub" id="taSub"></p>
+      <div class="ta-chips" id="taChips"></div>
+      <input class="text-input" id="taInput" maxlength="120" data-i18n-ph="taNewPh">
+      <div class="modal-btns"><button type="button" class="ghost" id="taLater"></button><button type="submit" class="danger-btn safe" id="taOk" data-i18n="done"></button></div>
+    </form>
+  </div>
+  <div class="modal" id="seriesCard" hidden>
+    <div class="modal-card sc-card">
+      <div class="ad-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11a7 7 0 0 1 12-4.9L19 8M19 4v4h-4M19 13a7 7 0 0 1-12 4.9L5 16M5 20v-4h4"/></svg></span><div class="sc-titles"><h3 id="scName"></h3><div class="sc-sub" id="scSub"></div></div><button class="when-x" id="scClose" aria-label="×"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg></button></div>
+      <div class="ad-main"><b id="scTotal"></b><span id="scCount"></span></div>
+      <button class="sc-task" id="scTask"></button>
+      <div class="sc-list" id="scList"></div>
+    </div>
+  </div>
+  <div class="modal" id="planPanel" hidden>
+    <div class="modal-card plan-card">
+      <div class="ad-head"><h3 data-i18n="tabPlan" data-info="planLead"></h3><button class="when-x" id="planClose" aria-label="×"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg></button></div>
+      <div class="plan-box" id="planBox">
+        <div class="plan-next" id="planNext"></div>
+        <div class="plan-scroll"><div id="planList"></div></div>
+        <button class="danger-btn safe plan-add" id="btnPlanAdd" data-i18n="planAdd"></button>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="planEdit" hidden>
+    <form class="modal-card at-card pe-card" id="peForm" autocomplete="off">
+      <h3 id="peTitle"></h3>
+      <div class="at-row"><span class="at-l" data-i18n="peTimeL"></span><button type="button" class="pe-time" id="peTime"></button></div>
+      <div class="pe-span" id="peSpan"></div>
+      <div class="at-row"><span class="at-l" data-i18n="peRepeatL"></span>
+        <div class="seg small" id="peRepeat"><button type="button" data-v="once" data-i18n="peOnce"></button><button type="button" data-v="daily" data-i18n="everyDay"></button><button type="button" data-v="days" data-i18n="peWeekly"></button></div></div>
+      <div class="pe-days" id="peDaysRow"><div id="peDays"></div></div>
+      <div class="at-row" id="peDateRow"><span class="at-l" data-i18n="atWhen"></span><button type="button" class="when-chip" id="peDate"><svg class="when-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M8.5 3v4M15.5 3v4"/></svg><span></span></button></div>
+      <div class="at-row"><span class="at-l" data-i18n="seriesCountL"></span><div class="stepper at-step"><button type="button" data-step="count" data-d="-1">−</button><span class="val" id="peCount"></span><button type="button" data-step="count" data-d="1">+</button></div></div>
+      <div class="at-row"><span class="at-l" data-i18n="work"></span><div class="stepper at-step"><button type="button" data-step="work" data-d="-1">−</button><span class="val" id="peWork"></span><button type="button" data-step="work" data-d="1">+</button></div></div>
+      <div class="at-row" id="peBrkRow"><span class="at-l" data-i18n="break"></span><div class="stepper at-step"><button type="button" data-step="brk" data-d="-1">−</button><span class="val" id="peBrk"></span><button type="button" data-step="brk" data-d="1">+</button></div></div>
+      <input class="text-input" id="peProject" maxlength="120" data-i18n-ph="atProjectPh">
+      <div class="at-chips" id="peChips"></div>
+      <div class="modal-btns"><button type="button" class="pe-del" id="peDelete" data-i18n="delete"></button><button type="button" class="ghost" id="peCancel" data-i18n="cancel"></button><button type="submit" class="danger-btn safe" id="peSave" data-i18n="planSave"></button></div>
+    </form>
+  </div>
+  <div class="modal" id="appDetail" hidden>
+    <div class="modal-card ad-card">
+      <div class="ad-head"><span id="adIco"></span><h3 id="adName"></h3><button class="when-x" id="adClose" aria-label="×"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg></button></div>
+      <div class="seg small" id="adRange"><button data-r="1" data-i18n="adToday"></button><button data-r="7" data-i18n="ad7"></button><button data-r="30" data-i18n="ad30"></button><button data-r="90" data-i18n="ad90"></button><button data-r="0" data-i18n="adAll"></button></div>
+      <div class="ad-main"><b id="adActive"></b><span data-i18n="adActiveL"></span></div>
+      <div class="ad-nums">
+        <div><b id="adOpen"></b><span data-i18n="adOpenL"></span></div>
+      </div>
+      <div class="ad-chart lc" id="adChart"></div>
+      <div class="ad-span" id="adSpan"></div>
+      <button class="ad-untrack" id="adUntrack" data-desktop data-i18n="stopTrack"></button>
+    </div>
+  </div>
+  <div class="sheet-wrap" id="timeSheet" hidden>
+    <div class="sheet ts">
+      <h3 data-i18n="seriesStart"></h3>
+      <div class="ts-cols">
+        <div class="ts-band"></div>
+        <div class="ts-col" id="tsH"></div>
+        <span class="ts-sep">:</span>
+        <div class="ts-col" id="tsM"></div>
+      </div>
+      <button class="ts-extra" id="tsExtra" hidden></button>
+      <div class="ts-btns"><button class="ghost" id="tsNow" data-i18n="seriesNow"></button><button class="danger-btn safe" id="tsOk" data-i18n="done"></button></div>
+    </div>
+  </div>
+  <div class="sheet-wrap" id="sheet" hidden>
+    <div class="sheet"><h3 id="sheetTitle"></h3><div id="sheetItems"></div><button class="sheet-cancel" id="sheetCancel" data-i18n="cancel"></button></div>
+  </div>
+  <div class="banner" id="syncBanner" hidden>
+    <span class="banner-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18.5h9.5a4 4 0 0 0 .6-7.95A5.5 5.5 0 0 0 6.3 9.6 4.5 4.5 0 0 0 7 18.5z"/><path d="M4 4l16 16"/></svg></span>
+    <span class="banner-text" id="syncBannerText"></span>
+    <button class="banner-go" id="syncBannerGo"></button>
+    <button class="banner-x" id="syncBannerX" aria-label="×"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg></button>
+  </div>
+  <div class="toast" id="toast"><span></span><button hidden></button></div>
+  <div class="update" id="update" hidden><span></span><button></button></div>
+
+  <script src="webapi.js"></script><script src="sync.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

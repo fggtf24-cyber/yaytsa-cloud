@@ -1,0 +1,2248 @@
+/* Яйца Таймер — Notion-inspired, airy, soft */
+:root {
+  --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-display: "Segoe UI Variable Display", "Segoe UI", ui-sans-serif, sans-serif;
+
+  --bg: #191919;
+  --bg-2: #202020;
+  --bg-3: #262626;
+  --panel: #202020;
+  --hover: rgba(255, 255, 255, 0.055);
+  --active: rgba(255, 255, 255, 0.09);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.13);
+  --text: rgba(255, 255, 255, 0.82);
+  --text-strong: rgba(255, 255, 255, 0.93);
+  --text-2: rgba(255, 255, 255, 0.5);
+  --text-3: rgba(255, 255, 255, 0.3);
+  --accent: #2383e2;
+  --accent-hover: #1b74cc;
+  --accent-soft: rgba(35, 131, 226, 0.16);
+  --track: rgba(255, 255, 255, 0.07);
+
+  --tag-blue-bg: rgba(35, 131, 226, 0.22);
+  --tag-blue-fg: #8cc3f5;
+  --tag-green-bg: rgba(77, 171, 154, 0.2);
+  --tag-green-fg: #7fd1bf;
+  --break: #4dab9a;
+  --danger: #e16259;
+  --warn: #d9730d;
+
+  /* activity squares: 0 = no work (neutral, never red) */
+  --l0: rgba(255, 255, 255, 0.055);
+  --l1: #0e4429;
+  --l2: #006d32;
+  --l3: #26a641;
+  --l4: #39d353;
+
+  --r-s: 8px;
+  --r: 10px;
+  --r-l: 14px;
+  --shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 10px 30px rgba(0,0,0,0.45);
+  --shadow-soft: 0 1px 2px rgba(0,0,0,0.25);
+  --ease: cubic-bezier(.2, .8, .2, 1);
+}
+
+:root[data-theme="light"] {
+  --bg: #ffffff;
+  --bg-2: #f7f7f5;
+  --bg-3: #f1f1ef;
+  --panel: #fbfbfa;
+  --hover: rgba(55, 53, 47, 0.06);
+  --active: rgba(55, 53, 47, 0.1);
+  --border: rgba(55, 53, 47, 0.09);
+  --border-strong: rgba(55, 53, 47, 0.16);
+  --text: rgb(55, 53, 47);
+  --text-strong: rgb(37, 35, 30);
+  --text-2: rgba(55, 53, 47, 0.62);
+  --text-3: rgba(55, 53, 47, 0.4);
+  --accent-soft: rgba(35, 131, 226, 0.1);
+  --track: rgba(55, 53, 47, 0.08);
+  --tag-blue-bg: rgb(221, 235, 241);
+  --tag-blue-fg: rgb(24, 51, 71);
+  --tag-green-bg: rgb(221, 237, 234);
+  --tag-green-fg: rgb(28, 56, 41);
+  --break: #448361;
+  --l0: rgba(55, 53, 47, 0.07);
+  --l1: #9be9a8;
+  --l2: #40c463;
+  --l3: #30a14e;
+  --l4: #216e39;
+  --shadow: 0 0 0 1px rgba(15,15,15,0.05), 0 10px 30px rgba(15,15,15,0.12);
+  --shadow-soft: 0 1px 2px rgba(15,15,15,0.08);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  overflow: hidden;
+}
+body { transition: background-color .25s var(--ease), color .25s var(--ease); }
+
+button { font-family: inherit; font-size: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+svg { display: block; }
+[hidden] { display: none !important; }
+
+/* ---------- Title bar (drawn by the page; Windows keeps borders, shadow and snapping) ---------- */
+.titlebar {
+  position: relative;
+  height: 46px; flex: none;
+  display: flex; align-items: center; justify-content: space-between;
+  padding-left: 16px;
+  background: var(--bg);
+  cursor: default;
+}
+.tb-edge { position: absolute; left: 0; right: 0; top: 0; height: 5px; cursor: n-resize; z-index: 2; }
+html.maxed .tb-edge { display: none; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; pointer-events: none; }
+.brand-logo {
+  width: 26px; height: 26px; flex: none;
+  display: grid; place-items: center;
+  border-radius: 8px;
+  background: linear-gradient(150deg, #3a2a20, #24170f);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), 0 1px 2px rgba(0,0,0,.3);
+}
+:root[data-theme="light"] .brand-logo { background: linear-gradient(150deg, #fbe6cf, #f3cfa9); box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); }
+.brand-logo svg { width: 20px; height: 20px; }
+.brand-name { font-family: var(--font-display); font-size: 15px; font-weight: 650; letter-spacing: -0.01em; color: var(--text-strong); white-space: nowrap; }
+.brand-status {
+  font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums;
+  padding: 2px 8px; border-radius: 6px;
+  background: var(--tag-blue-bg); color: var(--tag-blue-fg);
+  animation: rise .25s var(--ease);
+}
+.brand-status.break { background: var(--tag-green-bg); color: var(--tag-green-fg); }
+.brand-status.paused { background: var(--hover); color: var(--text-2); }
+.win-btns { display: flex; height: 100%; }
+.win-btn {
+  width: 46px; height: 100%;
+  display: grid; place-items: center;
+  border: 0; background: transparent; color: var(--text-2);
+  transition: background .15s var(--ease), color .15s var(--ease);
+}
+.win-btn svg { width: 12px; height: 12px; }
+.win-btn:hover { background: var(--hover); color: var(--text-strong); }
+.win-btn:active { background: var(--active); }
+.win-btn.close:hover { background: #e5484d; color: #fff; }
+.win-btn.close:active { background: #c93c40; color: #fff; }
+.win-btn .i-restore, html.maxed .win-btn .i-max { display: none; }
+html.maxed .win-btn .i-restore { display: block; }
+
+/* ---------- Tabs ---------- */
+.tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  position: relative; flex: none;
+  background: none; border: 0;
+  padding: 8px 10px 11px;
+  color: var(--text-2);
+  font-size: 15px; font-weight: 500;
+  border-radius: var(--r-s) var(--r-s) 0 0;
+  transition: color .18s var(--ease);
+}
+.tab:hover { color: var(--text); }
+.tab::after {
+  content: "";
+  position: absolute;
+  left: 10px; right: 10px; bottom: -1px;
+  height: 2px; border-radius: 2px;
+  background: var(--text-strong);
+  transform: scaleX(0);
+  transition: transform .25s var(--ease);
+}
+.tab.active { color: var(--text-strong); }
+.tab.active::after { transform: scaleX(1); }
+
+/* ---------- Layout ---------- */
+main { height: calc(100% - 46px - 46px); overflow-y: auto; overflow-x: hidden; scroll-behavior: smooth; }
+main::-webkit-scrollbar { width: 12px; }
+main::-webkit-scrollbar-thumb { background: var(--track); border-radius: 12px; border: 4px solid var(--bg); }
+main::-webkit-scrollbar-thumb:hover { background: var(--active); }
+.view { display: none; padding: 34px 32px 40px; max-width: 640px; margin: 0 auto; }
+.view.active { display: block; animation: viewIn .32s var(--ease); }
+@keyframes viewIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes pop { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: none; } }
+@keyframes dropIn { from { opacity: 0; transform: translateY(-6px) scale(.985); } to { opacity: 1; transform: none; } }
+
+h1 { font-family: var(--font-display); font-size: 34px; font-weight: 700; line-height: 1.15; margin: 4px 0 10px; color: var(--text-strong); letter-spacing: -0.015em; }
+h2 { font-size: 17px; font-weight: 600; margin: 0; color: var(--text-strong); }
+h3 { font-size: 16px; font-weight: 600; margin: 0; color: var(--text-strong); }
+.muted { color: var(--text-2); }
+.lead { color: var(--text-2); font-size: 14px; line-height: 1.6; margin: 0 0 24px; max-width: 520px; }
+#view-stats h1, #view-settings h1 { margin-bottom: 26px; }
+
+/* ---------- Timer ---------- */
+#view-timer { padding-top: 40px; }
+.phase-row { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 14px; }
+.tag {
+  display: inline-flex; align-items: center;
+  height: 24px; padding: 0 10px;
+  border-radius: 6px;
+  font-size: 13px; font-weight: 600;
+  background: var(--tag-blue-bg); color: var(--tag-blue-fg);
+  transition: background .3s var(--ease), color .3s var(--ease);
+}
+.tag.break { background: var(--tag-green-bg); color: var(--tag-green-fg); }
+.tag.mini { height: 20px; font-size: 11.5px; padding: 0 7px; border-radius: 5px; }
+
+.time {
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 104px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  margin: 30px 0 30px;
+  color: var(--text-strong);
+  transition: color .3s var(--ease);
+}
+.time.paused { color: var(--text-2); }
+
+.bar { height: 5px; border-radius: 5px; background: var(--track); overflow: hidden; }
+.bar-fill { height: 100%; width: 0%; background: var(--accent); border-radius: 5px; transition: width .4s linear, background .3s var(--ease); }
+.bar-fill.break { background: var(--break); }
+#view-timer .bar { max-width: 340px; margin: 0 auto; }
+
+.controls { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 34px 0 28px; }
+.primary {
+  min-width: 140px; height: 42px;
+  border: 0; border-radius: var(--r);
+  background: var(--accent); color: #fff;
+  font-size: 16px; font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.12);
+  transition: background .18s var(--ease), transform .12s var(--ease), box-shadow .18s var(--ease);
+}
+.primary:hover { background: var(--accent-hover); }
+.primary:active { transform: scale(.97); }
+.primary.secondary { background: var(--hover); color: var(--text-strong); box-shadow: inset 0 0 0 1px var(--border-strong); }
+.primary.secondary:hover { background: var(--active); }
+.icon-btn {
+  width: 42px; height: 42px;
+  display: grid; place-items: center;
+  border: 0; border-radius: var(--r);
+  background: transparent; color: var(--text-2);
+  transition: background .18s var(--ease), color .18s var(--ease), transform .12s var(--ease);
+}
+.icon-btn:hover { background: var(--hover); color: var(--text); }
+.icon-btn:active { transform: scale(.92); }
+.icon-btn svg { width: 20px; height: 20px; }
+.icon-btn.sm { width: 28px; height: 28px; border-radius: var(--r-s); }
+.icon-btn.sm svg { width: 16px; height: 16px; }
+
+.label-input {
+  display: block; width: 100%;
+  border: 0; outline: 0;
+  background: transparent;
+  color: var(--text-strong);
+  font: inherit; font-size: 18px; font-weight: 500;
+  text-align: center;
+  padding: 10px 12px;
+  border-radius: var(--r);
+  user-select: text;
+  transition: background .18s var(--ease), box-shadow .18s var(--ease);
+}
+.label-input::placeholder { color: var(--text-3); font-weight: 400; }
+.label-input:hover { background: var(--hover); }
+.label-input:focus { background: var(--hover); box-shadow: inset 0 0 0 1px var(--border-strong); }
+.label-meta { min-height: 21px; margin-top: 4px; text-align: center; font-size: 13px; color: var(--text-2); animation: rise .3s var(--ease); }
+.dl-text.soon { color: var(--warn); }
+.dl-text.over { color: var(--danger); }
+
+.props { margin-top: 26px; border-top: 1px solid var(--border); padding-top: 14px; }
+.prop { display: flex; align-items: center; justify-content: center; min-height: 42px; }
+.prop-key { width: 160px; display: flex; align-items: center; gap: 10px; color: var(--text-2); font-size: 15px; }
+.prop-key svg { width: 18px; height: 18px; flex: none; }
+.prop-val { width: 140px; text-align: center; padding: 4px 0; color: var(--text); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.prop .stepper { width: 140px; justify-content: center; }
+
+.test-row { display: flex; justify-content: center; margin-top: 12px; }
+.small-btn { font-size: 13px; padding: 4px 10px; color: var(--text-3); box-shadow: none; }
+.small-btn:hover { color: var(--text-2); }
+
+/* ---------- Stepper ---------- */
+.stepper { display: inline-flex; align-items: center; gap: 2px; }
+.stepper button {
+  width: 30px; height: 30px; border: 0; border-radius: var(--r-s);
+  background: transparent; color: var(--text-2);
+  display: grid; place-items: center;
+  font-size: 17px; line-height: 1;
+  transition: background .15s var(--ease), color .15s var(--ease), transform .1s var(--ease);
+}
+.stepper button:hover:not(:disabled) { background: var(--hover); color: var(--text); }
+.stepper button:active:not(:disabled) { transform: scale(.9); }
+.stepper button:disabled { opacity: .3; cursor: default; }
+.stepper .val { min-width: 78px; text-align: center; font-variant-numeric: tabular-nums; color: var(--text); }
+
+/* ---------- Segmented ---------- */
+.seg { display: inline-flex; padding: 3px; border-radius: var(--r); background: var(--hover); gap: 2px; }
+.seg button {
+  border: 0; background: transparent;
+  padding: 4px 12px; border-radius: 7px;
+  font-size: 13.5px; color: var(--text-2);
+  transition: background .2s var(--ease), color .2s var(--ease), box-shadow .2s var(--ease);
+}
+.seg button:hover { color: var(--text); }
+.seg button.on { background: var(--bg-3); color: var(--text-strong); box-shadow: var(--shadow-soft), inset 0 0 0 1px var(--border); }
+:root[data-theme="light"] .seg button.on { background: #fff; }
+.seg.small button { padding: 2px 9px; font-size: 12.5px; }
+.seg.icons button { padding: 3px 7px; }
+.seg.icons svg { width: 15px; height: 15px; }
+
+/* ---------- Toggle ---------- */
+.toggle {
+  width: 36px; height: 21px; flex: none;
+  border: 0; border-radius: 12px; padding: 0;
+  background: var(--track);
+  position: relative;
+  transition: background .2s var(--ease), box-shadow .2s var(--ease);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+.toggle::after {
+  content: ""; position: absolute; top: 2.5px; left: 2.5px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,.3);
+  transition: transform .22s var(--ease);
+}
+.toggle.on { background: var(--accent); box-shadow: none; }
+.toggle.on::after { transform: translateX(15px); }
+
+/* ---------- Buttons ---------- */
+.ghost {
+  border: 0; border-radius: var(--r-s);
+  background: transparent; color: var(--text-2);
+  padding: 6px 12px; font-size: 14px;
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  transition: background .15s var(--ease), color .15s var(--ease), transform .1s var(--ease);
+}
+.ghost:hover { background: var(--hover); color: var(--text); }
+.ghost:active { transform: scale(.98); }
+.ghost:disabled { opacity: .6; cursor: default; }
+.ghost.wide { display: block; width: 100%; margin-top: 12px; box-shadow: none; padding: 9px 12px; border-radius: var(--r); }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+/* ---------- Stats ---------- */
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.card {
+  background: var(--panel); border-radius: var(--r-l); padding: 16px 18px;
+  box-shadow: inset 0 0 0 1px var(--border);
+  animation: rise .35s var(--ease) both;
+}
+.card:nth-child(2) { animation-delay: .04s; }
+.card:nth-child(3) { animation-delay: .08s; }
+.card-label { color: var(--text-2); font-size: 13px; }
+.card-val { font-size: 22px; font-weight: 650; color: var(--text-strong); font-variant-numeric: tabular-nums; margin-top: 4px; white-space: nowrap; letter-spacing: -0.01em; }
+
+.goal { margin-top: 22px; }
+.goal-head { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 9px; }
+
+.chart-head, .hist-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 38px 0 16px; }
+.chart-tools { display: flex; align-items: center; gap: 8px; }
+.chart {
+  height: 170px;
+  display: flex; align-items: flex-end; gap: 5px;
+  padding-bottom: 22px;
+  position: relative;
+  border-bottom: 1px solid var(--border);
+}
+.chart .col { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative; min-width: 0; }
+.chart .b {
+  width: 100%; max-width: 36px;
+  background: var(--accent); opacity: .82;
+  border-radius: 6px 6px 2px 2px;
+  transform-origin: bottom;
+  animation: none;
+  transition: opacity .15s var(--ease);
+}
+@keyframes grow { from { transform: scaleY(0); } to { transform: none; } }
+.chart .b.zero { background: var(--track); opacity: 1; height: 3px !important; border-radius: 2px; animation: none; }
+.chart .col:hover .b { opacity: 1; }
+.chart .col.today .b:not(.zero) { opacity: 1; }
+.chart .lbl { position: absolute; bottom: -21px; font-size: 12px; color: var(--text-3); white-space: nowrap; }
+.chart .col.today .lbl { color: var(--text); font-weight: 500; }
+.chart .tip, .heat-tip {
+  background: var(--bg-3); color: var(--text-strong);
+  font-size: 12.5px; padding: 5px 9px; border-radius: var(--r-s);
+  box-shadow: var(--shadow); white-space: nowrap; z-index: 5;
+  pointer-events: none;
+}
+.chart .tip { position: absolute; bottom: calc(100% + 6px); display: none; }
+.chart .col:hover .tip { display: block; animation: rise .15s var(--ease); }
+.chart .goal-line { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--text-3); pointer-events: none; }
+
+/* ---------- Activity squares ---------- */
+.heat { --cell: 13px; --gap: 3px; animation: rise .3s var(--ease); }
+.hc {
+  display: block; width: var(--cell); height: var(--cell);
+  border-radius: calc(var(--cell) * 0.28);
+  background: var(--l0);
+  animation: none;
+  animation-delay: calc(min(var(--d, 0), 380) * 1.4ms);
+  transition: transform .12s var(--ease), box-shadow .12s var(--ease);
+}
+.hc.l1 { background: var(--l1); }
+.hc.l2 { background: var(--l2); }
+.hc.l3 { background: var(--l3); }
+.hc.l4 { background: var(--l4); }
+.hc.future { background: transparent; animation: none; }
+.hc.today { box-shadow: 0 0 0 1.5px var(--text-2); }
+.hc[data-tip]:hover { transform: scale(1.25); box-shadow: 0 0 0 1.5px var(--text-strong); position: relative; z-index: 1; }
+.heat-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 12px; font-size: 13px; }
+.heat-legend { display: inline-flex; align-items: center; gap: 4px; color: var(--text-3); font-size: 12px; }
+.heat-legend .hc { --cell: 11px; animation: none; margin: 0 1px; }
+.heat-tip { position: fixed; left: 0; top: 0; opacity: 0; transition: opacity .12s var(--ease); }
+.heat-tip.show { opacity: 1; }
+
+/* ---------- History ---------- */
+.day-head {
+  display: flex; justify-content: space-between;
+  font-size: 13px; font-weight: 600; color: var(--text-2);
+  padding: 18px 8px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.row {
+  display: grid; grid-template-columns: 100px 1fr auto 28px;
+  align-items: center; gap: 10px;
+  min-height: 42px; padding: 0 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 15px;
+  border-radius: var(--r-s);
+  transition: background .15s var(--ease);
+}
+.row:hover { background: var(--hover); }
+.row .r-time { color: var(--text-2); font-variant-numeric: tabular-nums; font-size: 13.5px; }
+.row .r-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .r-label.empty { color: var(--text-3); }
+.row .r-dur { font-variant-numeric: tabular-nums; color: var(--text); }
+.row .del, .app .del {
+  opacity: 0;
+  width: 26px; height: 26px; border: 0; border-radius: var(--r-s);
+  background: transparent; color: var(--text-3);
+  display: grid; place-items: center;
+  transition: opacity .15s var(--ease), background .15s var(--ease), color .15s var(--ease);
+}
+.row:hover .del, .app:hover .del { opacity: 1; }
+.row .del:hover, .app .del:hover { background: var(--hover); color: var(--danger); }
+.empty-state { color: var(--text-3); text-align: center; padding: 40px 16px; font-size: 14.5px; line-height: 1.6; }
+
+/* ---------- Settings ---------- */
+.group-title {
+  font-size: 13px; font-weight: 600; color: var(--text-2);
+  padding-bottom: 10px; margin: 34px 0 6px;
+  border-bottom: 1px solid var(--border);
+}
+.group-title:first-of-type { margin-top: 0; }
+.set { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 13px 0; }
+.set-name { color: var(--text-strong); font-size: 15px; }
+.set-desc { color: var(--text-2); font-size: 13px; margin-top: 2px; }
+
+/* ---------- Projects ---------- */
+.text-input {
+  flex: 1; min-width: 0;
+  border: 0; outline: 0; border-radius: var(--r);
+  background: var(--hover); color: var(--text-strong);
+  font: inherit; font-size: 15px; padding: 9px 14px;
+  box-shadow: inset 0 0 0 1px var(--border);
+  user-select: text;
+  transition: box-shadow .18s var(--ease), background .18s var(--ease);
+}
+.text-input::placeholder { color: var(--text-3); }
+.text-input:focus { box-shadow: inset 0 0 0 1.5px var(--accent); background: transparent; }
+.text-input.inline { padding: 2px 8px; font-weight: 500; border-radius: var(--r-s); flex: 1; }
+.add-row { display: flex; gap: 8px; margin-bottom: 18px; }
+.add-row .ghost { padding: 0 18px; border-radius: var(--r); }
+
+.proj {
+  padding: 14px 14px 12px; margin-bottom: 8px;
+  background: var(--panel);
+  border-radius: var(--r-l);
+  box-shadow: inset 0 0 0 1px var(--border);
+  position: relative;
+  animation: none;
+  transition: box-shadow .18s var(--ease), background .18s var(--ease), transform .18s var(--ease);
+}
+.proj:nth-child(2) { animation-delay: .03s; } .proj:nth-child(3) { animation-delay: .06s; }
+.proj:nth-child(4) { animation-delay: .09s; } .proj:nth-child(5) { animation-delay: .12s; }
+.proj:nth-child(n+6) { animation-delay: .15s; }
+.proj:hover { box-shadow: inset 0 0 0 1px var(--border-strong), var(--shadow-soft); }
+.proj.current { box-shadow: inset 0 0 0 1px rgba(35, 131, 226, 0.45); }
+.proj.hidden { opacity: .6; }
+.proj-top { display: flex; align-items: center; gap: 12px; }
+.proj-name { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; color: var(--text-strong); }
+.proj-name .pn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.proj-total { font-size: 16px; font-weight: 650; color: var(--text-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.proj-acts { display: flex; gap: 2px; opacity: 0; transform: translateX(4px); transition: opacity .18s var(--ease), transform .18s var(--ease); }
+.proj:hover .proj-acts { opacity: 1; transform: none; }
+
+.chip {
+  display: inline-flex; align-items: center; flex: none;
+  height: 28px; border-radius: var(--r-s);
+  background: var(--hover); color: var(--text);
+  font-size: 13px; white-space: nowrap;
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.chip button { border: 0; background: transparent; color: inherit; height: 100%; display: inline-flex; align-items: center; }
+.chip .chip-main { gap: 6px; padding: 0 6px 0 9px; }
+.chip .chip-main svg { width: 14px; height: 14px; }
+.chip .chip-x { padding: 0 8px 0 3px; opacity: .55; transition: opacity .15s; }
+.chip .chip-x:hover { opacity: 1; }
+.chip.soon { color: var(--warn); background: rgba(217, 115, 13, 0.13); box-shadow: none; }
+.chip.over { color: var(--danger); background: rgba(225, 98, 89, 0.14); box-shadow: none; }
+button.chip.add { border: 0; padding: 0 10px; color: var(--text-2); background: transparent; box-shadow: none; opacity: 0; transition: opacity .18s var(--ease), background .15s; }
+.proj:hover button.chip.add { opacity: 1; }
+button.chip.add:hover { color: var(--text); background: var(--hover); }
+
+/* ---------- Apps ---------- */
+.app {
+  display: grid; grid-template-columns: 38px 1fr auto 28px;
+  align-items: center; gap: 12px;
+  padding: 12px 12px; margin-bottom: 8px;
+  background: var(--panel);
+  border-radius: var(--r-l);
+  box-shadow: inset 0 0 0 1px var(--border);
+  animation: none;
+  transition: box-shadow .18s var(--ease);
+}
+.app:nth-child(2) { animation-delay: .03s; } .app:nth-child(3) { animation-delay: .06s; } .app:nth-child(n+4) { animation-delay: .09s; }
+.app:hover { box-shadow: inset 0 0 0 1px var(--border-strong), var(--shadow-soft); }
+.app-ico {
+  width: 38px; height: 38px; border-radius: 11px;
+  display: grid; place-items: center;
+  font-weight: 650; font-size: 16px; color: #fff;
+  background: linear-gradient(145deg, hsl(var(--h) 55% 52%), hsl(var(--h) 50% 38%));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18);
+}
+.app-main { min-width: 0; }
+.app-name { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15.5px; color: var(--text-strong); }
+.app-name span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-sub { color: var(--text-2); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-total { text-align: right; font-weight: 650; font-size: 16px; color: var(--text-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.app-total-sub { font-weight: 400; font-size: 12.5px; color: var(--text-2); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #4dab6f; flex: none; box-shadow: 0 0 0 3px rgba(77,171,111,.18); animation: pulse 2.4s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 5px rgba(77,171,111,.06); } }
+.add-app { margin-top: 14px; box-shadow: inset 0 0 0 1px var(--border-strong) !important; }
+
+.picker {
+  margin-top: 16px; padding: 16px;
+  border-radius: 18px;
+  background: var(--panel);
+  box-shadow: inset 0 0 0 1px var(--border), var(--shadow-soft);
+  animation: dropIn .28s var(--ease);
+}
+.picker-head { display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 14px; }
+.picker-head h3 { font-size: 17px; }
+.search {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 14px; height: 44px;
+  border-radius: 14px;
+  background: var(--hover);
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--text-3);
+  transition: box-shadow .18s var(--ease), background .18s var(--ease);
+  cursor: text;
+}
+.search:focus-within { box-shadow: inset 0 0 0 1.5px var(--accent); background: transparent; color: var(--text-2); }
+.search svg { width: 18px; height: 18px; flex: none; }
+.search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text-strong); font: inherit; font-size: 15.5px; user-select: text; }
+.search input::placeholder { color: var(--text-3); }
+.cand-list { max-height: 360px; overflow-y: auto; margin: 10px -4px 0; padding: 0 4px; }
+.cand-list::-webkit-scrollbar { width: 10px; }
+.cand-list::-webkit-scrollbar-thumb { background: var(--track); border-radius: 10px; border: 3px solid var(--panel); }
+.cand-group { font-size: 13px; font-weight: 600; color: var(--text-2); padding: 14px 8px 6px; }
+.cand {
+  width: 100%; display: grid; grid-template-columns: 34px 1fr 28px; align-items: center; gap: 12px;
+  border: 0; background: transparent; border-radius: 12px; padding: 7px 8px; text-align: left;
+  transition: background .15s var(--ease);
+  animation: rise .25s var(--ease) both;
+}
+.cand .app-ico { width: 34px; height: 34px; border-radius: 10px; font-size: 15px; }
+.cand:hover { background: var(--hover); }
+.cand-text { min-width: 0; display: flex; flex-direction: column; }
+.cand-name { color: var(--text-strong); font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cand-exe { color: var(--text-3); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cand-add {
+  width: 28px; height: 28px; border-radius: var(--r-s);
+  display: grid; place-items: center;
+  color: var(--accent); font-size: 20px; line-height: 1;
+  opacity: 0; transition: opacity .15s var(--ease), background .15s var(--ease);
+}
+.cand:hover .cand-add { opacity: 1; background: var(--accent-soft); }
+.cand-loading { height: 80px; margin: 10px 4px; border-radius: 12px; background: linear-gradient(90deg, var(--hover), var(--active), var(--hover)); background-size: 200% 100%; animation: shimmer 1.1s linear infinite; }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.browse { margin-top: 10px !important; box-shadow: inset 0 0 0 1px var(--border) !important; border-radius: 12px !important; }
+
+/* ---------- Toast & update ---------- */
+.toast {
+  position: fixed; left: 50%; bottom: 22px;
+  transform: translate(-50%, 12px) scale(.98);
+  background: var(--bg-3); color: var(--text-strong);
+  box-shadow: var(--shadow);
+  font-size: 14px; padding: 9px 15px; border-radius: var(--r);
+  opacity: 0; pointer-events: none;
+  transition: opacity .22s var(--ease), transform .22s var(--ease);
+  z-index: 10;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.update {
+  position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg-3); color: var(--text-strong);
+  box-shadow: var(--shadow); border-radius: var(--r-l);
+  padding: 7px 7px 7px 15px; font-size: 14px; white-space: nowrap;
+  animation: rise .35s var(--ease);
+}
+.update button { border: 0; border-radius: var(--r-s); background: var(--accent); color: #fff; padding: 5px 12px; font-size: 14px; font-weight: 500; }
+.update button:hover { background: var(--accent-hover); }
+
+@media (max-width: 440px) {
+  .time { font-size: 84px; }
+  .view { padding-left: 20px; padding-right: 20px; }
+  .card-val { font-size: 18px; }
+  .prop-key { width: 130px; }
+  .cards { gap: 8px; }
+  .card { padding: 13px 13px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* Native (WebView2) build: Windows draws the title bar */
+
+/* Entrance animations only right after a view opens (lists refresh in place every few seconds) */
+.anim .chart .b:not(.zero) { animation: grow .5s var(--ease) both; }
+.anim .hc:not(.future) { animation: pop .35s var(--ease) both; animation-delay: calc(min(var(--d, 0), 380) * 1.4ms); }
+.anim .proj, .anim .app { animation: rise .32s var(--ease) both; }
+.heat-legend .hc { animation: none !important; }
+
+.toast { white-space: nowrap; max-width: calc(100% - 32px); overflow: hidden; text-overflow: ellipsis; }
+
+/* ================= 2.2 ================= */
+
+/* Window skeleton: title bar + tabs + scrolling page */
+body { display: flex; flex-direction: column; }
+.tabs { flex: none; }
+main { flex: 1 1 auto; height: auto !important; min-height: 0; }
+
+/* ---------- Project suggestions under the task field ---------- */
+.label-wrap { position: relative; max-width: 460px; width: 100%; margin: 0 auto; }
+.suggest {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 20;
+  padding: 6px;
+  background: var(--bg-3);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  animation: dropIn .18s var(--ease);
+  max-height: 260px; overflow-y: auto;
+}
+.sug {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  border: 0; background: transparent; border-radius: 10px;
+  padding: 9px 12px; text-align: left;
+  transition: background .12s var(--ease);
+}
+.sug:hover, .sug.on { background: var(--hover); }
+.sug-name { color: var(--text-strong); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sug-meta { color: var(--text-3); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* ---------- Calendar popover ---------- */
+.popover {
+  position: fixed; z-index: 40;
+  background: var(--bg-3);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  animation: dropIn .2s var(--ease);
+}
+.cal { width: 286px; padding: 14px; }
+.cal-head { display: flex; align-items: center; gap: 2px; margin-bottom: 10px; padding-left: 6px; }
+.cal-title { flex: 1; font-weight: 650; font-size: 15px; color: var(--text-strong); }
+.cal-wd, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.cal-wd span { text-align: center; font-size: 11.5px; font-weight: 600; color: var(--text-3); padding: 2px 0 6px; }
+.cd {
+  height: 34px; border: 0; border-radius: 10px;
+  background: transparent; color: var(--text);
+  font-size: 13.5px; font-variant-numeric: tabular-nums;
+  transition: background .12s var(--ease), color .12s var(--ease), transform .1s var(--ease);
+}
+.cd:hover { background: var(--hover); color: var(--text-strong); }
+.cd:active { transform: scale(.92); }
+.cd.we { color: var(--text-2); }
+.cd.out { color: var(--text-3); opacity: .55; }
+.cd.today { box-shadow: inset 0 0 0 1.5px var(--accent); color: var(--text-strong); font-weight: 600; }
+.cd.sel { background: var(--accent); color: #fff; font-weight: 600; box-shadow: none; }
+.cal-foot { display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.cal-foot .ghost { box-shadow: none; padding: 5px 10px; border-radius: 8px; }
+.cal-foot .ghost[data-act="today"] { color: var(--accent); }
+
+/* ---------- Confirm dialog ---------- */
+.modal {
+  position: fixed; inset: 0; z-index: 50;
+  display: grid; place-items: center; padding: 20px;
+  background: rgba(0, 0, 0, .45);
+  animation: fadeIn .18s var(--ease);
+}
+:root[data-theme="light"] .modal { background: rgba(15, 15, 15, .25); }
+@keyframes fadeIn { from { opacity: 0; } }
+.modal-card {
+  width: min(380px, 100%);
+  padding: 22px 22px 18px;
+  background: var(--bg-3); border-radius: 18px; box-shadow: var(--shadow);
+  animation: dropIn .22s var(--ease);
+}
+.modal-card h3 { font-size: 17px; line-height: 1.35; overflow-wrap: anywhere; }
+.modal-card p { margin: 8px 0 20px; color: var(--text-2); font-size: 14px; line-height: 1.55; }
+.modal-btns { display: flex; justify-content: flex-end; gap: 8px; }
+.modal-btns .ghost { padding: 7px 14px; border-radius: 10px; }
+.danger-btn {
+  border: 0; border-radius: 10px; padding: 7px 16px;
+  background: var(--danger); color: #fff; font-weight: 600; font-size: 14px;
+  transition: filter .15s var(--ease), transform .1s var(--ease);
+}
+.danger-btn:hover { filter: brightness(1.08); }
+.danger-btn:active { transform: scale(.97); }
+
+/* ---------- Projects ---------- */
+.proj-acts { display: flex; gap: 2px; flex: none; opacity: 0; transform: translateX(4px); transition: opacity .18s var(--ease), transform .18s var(--ease); }
+.proj:hover .proj-acts, .proj:focus-within .proj-acts { opacity: 1; transform: none; }
+.icon-btn.sm.danger:hover { color: var(--danger); background: rgba(225, 98, 89, .12); }
+.proj-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 8px; font-size: 13px; color: var(--text); }
+.ps { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ps-l { color: var(--text-3); }
+.proj-stats .chip { margin-left: auto; }
+button.chip.add { gap: 6px; }
+button.chip.add svg { width: 14px; height: 14px; }
+
+/* ---------- Activity squares: columns are 1fr, cells square -> always fits, never scrolls ---------- */
+.heat { --gap: 4px; }
+.heat.dense { --gap: 2px; }
+.heat-months, .heat-grid {
+  display: grid;
+  grid-template-columns: 26px repeat(var(--weeks), minmax(0, 1fr));
+  column-gap: var(--gap);
+}
+.heat-months { height: 20px; font-size: 11.5px; color: var(--text-3); }
+.heat-months span { white-space: nowrap; overflow: visible; }
+.heat-grid { row-gap: var(--gap); align-items: center; }
+.heat-grid .hd { grid-column: 1; font-size: 11px; color: var(--text-3); line-height: 1; }
+.hc {
+  display: block; width: 100%; aspect-ratio: 1;
+  border-radius: 28%;
+  background: var(--l0);
+  transition: transform .12s var(--ease), box-shadow .12s var(--ease);
+}
+.heat.dense .hc { border-radius: 22%; }
+.hc.l1 { background: var(--l1); }
+.hc.l2 { background: var(--l2); }
+.hc.l3 { background: var(--l3); }
+.hc.l4 { background: var(--l4); }
+.hc.future { background: transparent; }
+.hc.today { box-shadow: 0 0 0 1.5px var(--text-2); }
+.hc[data-tip]:hover { transform: scale(1.3); box-shadow: 0 0 0 1.5px var(--text-strong); position: relative; z-index: 1; }
+.heat-legend .hc { width: 11px; height: 11px; aspect-ratio: auto; border-radius: 3px; display: inline-block; }
+.heat-foot { margin-top: 14px; }
+
+/* ---------- Responsive timer (height) ----------
+   fitTimer() adds fit-* classes in a fixed order; hidden parts never come back while shrinking. */
+#view-timer.active { display: flex; flex-direction: column; }
+#view-timer > * { flex: none; }
+#view-timer.fit-test [data-c="test"],
+#view-timer.fit-meta [data-c="meta"],
+#view-timer.fit-today .prop[data-p="today"],
+#view-timer.fit-brk .prop[data-p="brk"],
+#view-timer.fit-work .props,
+#view-timer.fit-label .label-wrap,
+#view-timer.fit-phase .phase-row { display: none; }
+#view-timer.fit-t-md { padding-top: 22px; }
+#view-timer.fit-t-md .time { font-size: 80px; margin: 18px 0; }
+#view-timer.fit-t-md .controls { margin: 22px 0 18px; }
+#view-timer.fit-t-sm .time { font-size: 60px; margin: 12px 0; }
+#view-timer.fit-t-sm .controls { margin: 16px 0 6px; }
+#view-timer.fit-label .controls { margin-bottom: 0; }
+
+/* ---------- Responsive width ---------- */
+@media (max-width: 520px) {
+  .view { padding: 26px 22px 32px; }
+  h1 { font-size: 30px; }
+}
+@media (max-width: 440px) {
+  .view { padding: 22px 16px 28px; }
+  h1 { font-size: 27px; }
+  .time { font-size: 84px; }
+  .prop-key { width: 120px; }
+  .row { grid-template-columns: 88px 1fr auto 26px; }
+  .brand-name { font-size: 14px; }
+  .win-btn { width: 40px; }
+}
+@media (max-width: 380px) {
+  .time { font-size: 70px; }
+  .tab { padding-left: 8px; padding-right: 8px; font-size: 14px; }
+  .set { flex-wrap: wrap; }
+  .proj-total { font-size: 15px; }
+}
+@media (min-width: 760px) {
+  .view { max-width: 720px; }
+  .time { font-size: 120px; }
+}
+
+#view-timer .bar { width: 100%; max-width: 340px; }
+
+/* real program icons */
+.app-ico.has-img { background: none; box-shadow: none; }
+.app-ico.has-img img { width: 100%; height: 100%; object-fit: contain; display: block; -webkit-user-drag: none; }
+
+
+/* ---------- Sync (settings) ---------- */
+.sync-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: -4px 0 12px; }
+.sync-form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; max-width: 420px; }
+.sync-form .btn-row { justify-content: flex-start; align-items: center; margin-top: 2px; }
+.sync-form .ghost.on { background: var(--accent); color: #fff; box-shadow: none; }
+.sync-form .ghost.on:hover { background: var(--accent-hover); }
+.sync-forgot { margin-right: auto; font-size: 13px; color: var(--text-3); text-decoration: none; }
+.sync-forgot:hover { color: var(--text-2); }
+.sync-msg { margin: 0 0 12px; font-size: 13px; color: var(--text-2); }
+.sync-status.ok { color: var(--break, #4dab9a); }
+.sync-status.denied, .sync-status.nodb { color: #e5534b; }
+
+/* ---------- Icons in shared markup (desktop shows text; the phone shows icons) ---------- */
+.tab .ico, .seg .ico { display: none; }
+[data-android] { display: none !important; }
+.add-btn { display: grid; place-items: center; padding: 0 12px; }
+.add-btn .ico { width: 18px; height: 18px; }
+.with-ico { display: inline-flex; align-items: center; gap: 7px; }
+.with-ico .ico { width: 15px; height: 15px; flex: none; }
+.modal-btns .safe { background: var(--accent); }
+
+/* Action sheet (phone) */
+.sheet-wrap {
+  position: fixed; inset: 0; z-index: 60;
+  display: flex; align-items: flex-end; justify-content: center;
+  background: rgba(0, 0, 0, .45);
+  animation: fadeIn .18s var(--ease);
+}
+:root[data-theme="light"] .sheet-wrap { background: rgba(15, 15, 15, .25); }
+.sheet {
+  width: min(480px, 100%);
+  margin: 0 10px 10px; padding: 18px 10px 10px;
+  background: var(--bg-3); border-radius: 24px; box-shadow: var(--shadow);
+  animation: sheetUp .26s var(--ease);
+}
+@keyframes sheetUp { from { transform: translateY(40px); opacity: 0; } }
+.sheet h3 { padding: 0 12px 10px; font-size: 16px; }
+.sheet-item, .sheet-cancel {
+  display: flex; align-items: center; gap: 14px; width: 100%;
+  min-height: 54px; padding: 0 14px;
+  border: 0; border-radius: 16px; background: transparent;
+  color: var(--text-strong); font-size: 16px; text-align: left;
+}
+.sheet-item:active, .sheet-cancel:active { background: var(--hover); }
+.sheet-item .ico { width: 22px; height: 22px; color: var(--text-2); flex: none; }
+.sheet-item.on .ico { color: var(--accent); }
+.sheet-cancel { justify-content: center; color: var(--text-2); margin-top: 4px; }
+
+/* ---------- Android: thumb-first layout ---------- */
+html.android .titlebar, html.android [data-desktop] { display: none !important; }
+html.android [data-android] { display: flex !important; }
+html.android { -webkit-tap-highlight-color: transparent; }
+html.android button, html.android .tab { touch-action: manipulation; }
+html.android body { display: flex; flex-direction: column; }
+html.android main { order: 1; flex: 1; height: auto; min-height: 0; overscroll-behavior: contain; }
+
+/* Bottom bar: icons only, centered, big targets */
+html.android .tabs {
+  order: 2; flex: none;
+  justify-content: center; gap: 6px;
+  padding: 8px 12px 10px;
+  border-bottom: 0; border-top: 1px solid var(--border);
+  background: var(--bg); overflow: visible;
+}
+html.android .tab {
+  flex: 1; max-width: 84px; height: 52px; padding: 0;
+  display: grid; place-items: center;
+  border-radius: 18px; color: var(--text-3);
+  transition: color .2s var(--ease), background .25s var(--ease);
+}
+html.android .tab span { display: none; }
+html.android .tab::after { display: none; }
+html.android .tab .ico { display: block; width: 26px; height: 26px; transition: transform .25s var(--ease); }
+html.android .tab.active { color: var(--text-strong); background: var(--hover); }
+html.android .tab.active .ico { transform: scale(1.08); }
+html.android .tab:active .ico { transform: scale(.9); }
+
+/* Pages */
+html.android .view { padding: 22px 18px 28px; }
+html.android h1 { font-size: 28px; margin-bottom: 14px; }
+html.android #view-stats h1, html.android #view-settings h1 { margin-bottom: 18px; }
+html.android #view-timer .test-row { display: none; }
+html.android .label-input { font-size: 18px; padding: 13px 14px; background: var(--hover); border-radius: 16px; }
+html.android #btnStart { height: 64px; min-width: 168px; border-radius: 22px; font-size: 18px; }
+html.android #view-timer .icon-btn { width: 58px; height: 58px; border-radius: 20px; background: var(--hover); color: var(--text); }
+html.android #view-timer .icon-btn svg { width: 24px; height: 24px; }
+html.android .prop { justify-content: space-between; min-height: 50px; max-width: 420px; margin: 0 auto; }
+html.android .prop-key { width: auto; }
+html.android .prop-val, html.android .prop .stepper { width: auto; }
+html.android .prop-val { padding-right: 14px; }
+
+/* Bigger touch targets everywhere */
+html.android .stepper button { width: 42px; height: 42px; border-radius: 14px; font-size: 20px; }
+html.android .stepper .val { min-width: 70px; }
+html.android .toggle { width: 50px; height: 30px; border-radius: 16px; }
+html.android .toggle::after { width: 24px; height: 24px; top: 3px; left: 3px; }
+html.android .toggle.on::after { transform: translateX(20px); }
+html.android .set { min-height: 60px; padding: 10px 0; gap: 14px; }
+html.android .set-name { font-size: 16px; }
+html.android .seg { padding: 4px; border-radius: 14px; }
+html.android .seg button { min-height: 38px; padding: 0 14px; border-radius: 11px; font-size: 14px; }
+html.android .seg[data-key="theme"] button { display: grid; place-items: center; width: 50px; padding: 0; }
+html.android .seg[data-key="theme"] button span { display: none; }
+html.android .seg .ico { display: block; width: 20px; height: 20px; }
+html.android .ghost { min-height: 42px; padding: 0 16px; border-radius: 14px; font-size: 15px; }
+html.android .ghost.wide { min-height: 48px; }
+html.android .with-ico .ico { width: 18px; height: 18px; }
+html.android .add-btn { width: 50px; padding: 0; border-radius: 14px; }
+html.android .add-btn .ico { width: 22px; height: 22px; }
+html.android .text-input { min-height: 48px; border-radius: 14px; font-size: 16px; }
+html.android .btn-row { justify-content: flex-start; }
+html.android .set:has(.btn-row) { flex-direction: column; align-items: stretch; }
+html.android .chart-head, html.android .hist-head { flex-wrap: wrap; gap: 10px; }
+html.android .seg.small button { min-height: 32px; padding: 0 11px; font-size: 13px; }
+html.android .seg.icons button { width: 40px; display: grid; place-items: center; padding: 0; }
+html.android .toast { bottom: 84px; }
+html.android .update { bottom: 84px; }
+html.android .modal { align-items: end; padding: 10px; }
+html.android .modal-card { width: 100%; max-width: 480px; border-radius: 24px; padding: 22px 20px 16px; animation: sheetUp .26s var(--ease); }
+html.android .modal-btns button { min-height: 48px; flex: 1; border-radius: 14px; font-size: 15px; }
+html.android .sync-actions .ghost, html.android .sync-form .ghost { min-height: 46px; }
+
+/* Settings row icons (phone only) */
+.set-ico { display: none; }
+html.android .set-ico {
+  display: grid; place-items: center; flex: none;
+  width: 38px; height: 38px; border-radius: 12px;
+  background: var(--hover); color: var(--text-2);
+}
+html.android .set-ico svg { width: 20px; height: 20px; }
+html.android .set-text { flex: 1; min-width: 0; }
+/* No hover on a phone: project actions are always visible and finger-sized */
+html.android .proj-acts { opacity: 1; transform: none; }
+html.android button.chip.add { opacity: 1; }
+html.android .proj-acts .icon-btn.sm { width: 38px; height: 38px; border-radius: 12px; }
+html.android .proj-acts .icon-btn.sm svg { width: 19px; height: 19px; }
+
+/* ======================= 2.7: phone pager, timer face, motion ======================= */
+.face { display: contents; }
+.ring { display: none; }
+
+/* Pager: pages side by side, the strip moves as one piece */
+html.android main { display: flex; width: 100%; overflow: visible; scroll-behavior: auto; will-change: transform; }
+html.android .view {
+  display: block !important; flex: 0 0 100%; width: 100%; max-width: none; height: 100%; margin: 0;
+  overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; touch-action: pan-y;
+  animation: none !important;
+}
+html.android #view-apps { display: none !important; }
+html.android .view::-webkit-scrollbar { display: none; }
+
+/* Bottom bar: icon in a pill + a small label */
+html.android .tabs { padding: 4px 6px 8px; gap: 0; }
+html.android .tab {
+  position: relative; flex: 1; max-width: 96px; height: auto; padding: 5px 0 2px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: none !important; border-radius: 0; color: var(--text-strong);
+}
+html.android .tab::before {
+  content: ""; position: absolute; top: 2px; left: 50%; width: 58px; height: 32px; margin-left: -29px;
+  border-radius: 16px; background: var(--hover);
+  opacity: 0; transform: scaleX(.45);
+  transition: opacity .25s var(--ease), transform .4s cubic-bezier(.2, .9, .3, 1.25);
+}
+html.android .tab.active::before { opacity: 1; transform: none; }
+html.android .tab .ico { position: relative; width: 24px; height: 24px; margin-top: 2px; opacity: .45; transform: none; transition: opacity .25s var(--ease); }
+html.android .tab span { display: block; position: relative; font-size: 11px; font-weight: 600; letter-spacing: .01em; line-height: 1.2; opacity: .5; transition: opacity .25s var(--ease); }
+html.android .tab.active .ico, html.android .tab.active span { opacity: 1; transform: none; }
+html.android .tab.pop .ico { animation: kPop .42s var(--ease); }
+@keyframes kPop { 35% { transform: scale(.8); } 70% { transform: scale(1.12); } }
+
+/* Icons: solid colour + opacity on the whole icon, so overlapping strokes never show through */
+html.android .set-ico { color: var(--text-strong); }
+html.android .set-ico svg { opacity: .6; }
+html.android .seg .ico { color: var(--text-strong); }
+
+/* Timer page: one centred column — ring, task, lengths, buttons */
+html.android #view-timer {
+  display: flex !important; flex-direction: column; align-items: center; justify-content: center;
+  padding: 10px 20px 18px; min-height: 0;
+}
+html.android #view-timer > * { order: 0; }
+html.android .face {
+  position: relative; flex: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: min(74vw, 40vh, 320px); aspect-ratio: 1;
+}
+html.android .ring { display: block; position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+.ring-track { fill: none; stroke: var(--track); stroke-width: 3; }
+.ring-fill {
+  fill: none; stroke: var(--accent); stroke-width: 3.6; stroke-linecap: round;
+  stroke-dasharray: 289.03; stroke-dashoffset: 289.03;
+  transition: stroke-dashoffset .6s linear, stroke .4s var(--ease), opacity .3s var(--ease);
+}
+.ring-fill.break { stroke: var(--break); }
+.ring-fill.empty { opacity: 0; }
+html.android #view-timer .phase-row { margin: 0; position: relative; }
+html.android #view-timer .time { position: relative; font-size: clamp(52px, 16.5vw, 76px); margin: 8px 0 6px; }
+html.android #view-timer .bar { display: none; }
+html.android .face-today { position: relative; font-size: 13px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+html.android #view-timer .label-wrap { margin-top: 26px; padding-top: 0; width: 100%; max-width: 420px; }
+html.android #view-timer .label-meta { min-height: 18px; }
+html.android #view-timer .props { display: none; }
+html.android #view-timer .controls { margin: 20px 0 0; gap: 26px; }
+
+/* Start: a round button whose triangle flows into two bars */
+html.android #btnStart {
+  width: 78px; height: 78px; min-width: 0; padding: 0; border-radius: 50%;
+  display: grid; place-items: center;
+  box-shadow: 0 8px 22px rgba(35, 131, 226, .32);
+  transition: background .3s var(--ease), box-shadow .3s var(--ease), transform .15s var(--ease);
+}
+html.android #btnStart.secondary { box-shadow: none; }
+.pp { width: 34px; height: 34px; }
+.pp path { fill: currentColor; stroke: currentColor; stroke-width: 1.4; stroke-linejoin: round; transition: d .42s cubic-bezier(.4, 0, .15, 1); }
+.pp-a { d: path("M7.5 5 L13 8.5 L13 15.5 L7.5 19 Z"); }
+.pp-b { d: path("M13 8.5 L18.5 12 L18.5 12 L13 15.5 Z"); }
+.is-running .pp-a { d: path("M6.5 5 L10.5 5 L10.5 19 L6.5 19 Z"); }
+.is-running .pp-b { d: path("M13.5 5 L17.5 5 L17.5 19 L13.5 19 Z"); }
+html.android #view-timer .icon-btn { width: 56px; height: 56px; border-radius: 50%; }
+html.android #btnStart.press { animation: kPress .32s var(--ease); }
+@keyframes kPress { 40% { transform: scale(.88); } 75% { transform: scale(1.05); } }
+html.android .icon-btn.spin svg { animation: kSpin .6s cubic-bezier(.3, .7, .2, 1); }
+@keyframes kSpin { to { transform: rotate(-360deg); } }
+html.android .icon-btn.nudge svg { animation: kNudge .38s var(--ease); }
+@keyframes kNudge { 45% { transform: translateX(7px); } }
+
+/* Lengths: drag a dial sideways */
+html.android .dials { display: flex !important; gap: 12px; width: 100%; max-width: 420px; margin-top: 12px; }
+.dial {
+  flex: 1; position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  height: 64px; padding: 0 12px 6px; border-radius: 18px;
+  background: var(--hover); touch-action: none; cursor: ew-resize;
+  transition: background .2s var(--ease), transform .2s var(--ease);
+}
+.dial.drag { background: var(--active); transform: scale(1.03); }
+.dial-ico { width: 22px; height: 22px; color: var(--accent); flex: none; }
+.dial[data-key="brk"] .dial-ico { color: var(--break); }
+.dial-ico svg { width: 100%; height: 100%; }
+.dial-val { white-space: nowrap; }
+.dial-val b { display: inline-block; min-width: 1.4em; text-align: right; font-size: 25px; font-weight: 650; color: var(--text-strong); font-variant-numeric: tabular-nums; }
+.dial-val small { margin-left: 4px; font-size: 13px; color: var(--text-2); }
+.dial-val b.up { animation: kUp .22s var(--ease); }
+.dial-val b.down { animation: kDown .22s var(--ease); }
+@keyframes kUp { from { transform: translateY(9px); opacity: .2; } }
+@keyframes kDown { from { transform: translateY(-9px); opacity: .2; } }
+.dial-ruler {
+  position: absolute; left: 0; right: 0; bottom: 7px; height: 7px;
+  background-image: repeating-linear-gradient(90deg, var(--text-strong) 0 1.5px, transparent 1.5px 13px);
+  opacity: .16; transition: opacity .2s var(--ease);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
+}
+.dial.drag .dial-ruler { opacity: .45; }
+
+/* Theme: light and dark only on the phone; the icon swings when chosen */
+html.android .seg[data-key="theme"] button[data-val="system"] { display: none; }
+html.android .seg button.swing .ico { animation: kSwing .5s var(--ease); }
+@keyframes kSwing { 30% { transform: rotate(-28deg) scale(1.15); } 70% { transform: rotate(10deg); } }
+html.android .toggle.press { animation: kPress .3s var(--ease); }
+
+/* Liquid tab highlight (positions come from drawBlob in app.js) */
+html.android .tabs { position: relative; }
+html.android .tab::before { display: none; }
+html.android .tab { z-index: 1; }
+html.android .tab .ico, html.android .tab span { opacity: var(--lit, .45) !important; transition: none; }
+.tab-blob {
+  position: absolute; left: 0; top: 4px; bottom: 6px; width: 0;
+  border-radius: 20px;
+  background: var(--hover);
+  box-shadow: inset 0 0 0 1px var(--border);
+  transform-origin: 50% 50%;
+  pointer-events: none; will-change: transform, width;
+}
+
+/* Launch splash (phone): the egg timer ticks round once, rings, and melts away */
+.splash {
+  position: fixed; inset: 0; z-index: 100;
+  align-items: center; justify-content: center;
+  background: var(--bg);
+  animation: spOut .34s cubic-bezier(.4, 0, .2, 1) 1.12s both;
+  pointer-events: none;
+}
+.splash svg { width: 132px; height: 132px; overflow: visible; animation: spIn .32s cubic-bezier(.2, .9, .3, 1.2) both, spLift .34s cubic-bezier(.4, 0, .2, 1) 1.12s both; }
+.sp-egg { transform-origin: 128px 222px; animation: spRing .34s ease-in-out .8s both; }
+.sp-cap { transform-origin: 128px 46px; animation: spPress .34s ease-in-out .8s both; }
+.sp-sector { fill: none; stroke: #D97757; stroke-width: 44; stroke-dasharray: 100; stroke-dashoffset: 100;
+  transform: rotate(-90deg); transform-origin: 128px 152px;
+  animation: spFill .62s cubic-bezier(.45, .05, .35, 1) .16s forwards; }
+.sp-hand { transform-origin: 128px 152px; animation: spHand .62s cubic-bezier(.45, .05, .35, 1) .16s both; }
+.sp-wave { fill: none; stroke: #D97757; stroke-width: 9; stroke-linecap: round; opacity: 0; animation: spWave .42s ease-out .82s both; }
+.sp-wave.r { animation-delay: .86s; }
+@keyframes spIn { from { transform: scale(.82); opacity: 0; } }
+@keyframes spFill { to { stroke-dashoffset: 0; } }
+@keyframes spHand { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes spRing { 20% { transform: rotate(-7deg); } 45% { transform: rotate(6deg); } 70% { transform: rotate(-3deg); } }
+@keyframes spPress { 30% { transform: translateY(6px); } }
+@keyframes spWave { 0% { opacity: 0; transform: scale(.8); } 35% { opacity: .9; } 100% { opacity: 0; transform: scale(1.15); } }
+@keyframes spOut { to { opacity: 0; visibility: hidden; } }
+@keyframes spLift { to { transform: scale(1.08); } }
+@media (prefers-reduced-motion: reduce) { .splash { display: none !important; } }
+
+/* ======================= 2.8: quiet, blocky, flat phone UI ======================= */
+html.android {
+  --block: #222222;
+  --block-2: #2b2b2b;
+  --grad: linear-gradient(135deg, #3d8bff, #8a5cff);
+}
+html.android[data-theme="light"] {
+  --block: #f2f2f0;
+  --block-2: #e8e8e5;
+}
+
+/* Every button gives way under the finger: a short, soft press, no shadows */
+html.android button { transition: transform .14s var(--ease), background .2s var(--ease), color .2s var(--ease), opacity .2s var(--ease); }
+html.android button:active:not(:disabled) { transform: scale(.94); }
+html.android .tab:active { transform: none; }
+html.android .ghost, html.android .add-btn, html.android .stepper button, html.android #view-timer .icon-btn {
+  border-radius: 999px; background: var(--block-2); color: var(--text-strong); box-shadow: none;
+}
+html.android .ghost:active, html.android .add-btn:active, html.android #view-timer .icon-btn:active { background: var(--active); }
+
+/* Segmented controls and toggles: flat pills */
+html.android .seg { border-radius: 999px; background: var(--block-2); box-shadow: none; padding: 4px; }
+html.android .seg button { border-radius: 999px; }
+html.android .seg button.on { background: var(--bg); box-shadow: none; color: var(--text-strong); }
+html.android[data-theme="light"] .seg button.on { background: #fff; }
+html.android .toggle { box-shadow: none; background: var(--block-2); }
+html.android .toggle.on { background: var(--grad); }
+html.android .toggle::after { box-shadow: none; }
+
+/* Fewer small words */
+html.android #cycleInfo, html.android #view-timer .label-meta, html.android .lead,
+html.android .set-desc:not(#soundName):not(.sync-status), html.android .ps + .ps { display: none !important; }
+html.android .hist-head .with-ico span { display: none; }
+html.android .hist-head .with-ico { width: 44px; padding: 0; justify-content: center; }
+html.android h1 { font-size: 26px; letter-spacing: -.02em; margin: 2px 0 16px; }
+
+/* Settings as blocks: each group is one rounded card of rows */
+html.android .group-title { border: 0; padding: 0 6px 8px; margin: 26px 0 0; font-size: 14px; font-weight: 650; color: var(--text-strong); }
+html.android .group-title:empty { display: none; }
+html.android #view-settings .set { background: var(--block); margin: 0; padding: 10px 14px; border-radius: 0; box-shadow: none; }
+html.android #view-settings .group-title + .set,
+html.android #view-settings .group-title + #syncBox .set:first-child { border-radius: 20px 20px 0 0; }
+html.android #view-settings .set:has(+ .group-title), html.android #view-settings .set:last-child,
+html.android #view-settings .set:has(+ [data-desktop]) { border-radius: 0 0 20px 20px; }
+html.android #view-settings .group-title + .set:has(+ .group-title),
+html.android #view-settings .group-title + .set:last-child { border-radius: 20px; }
+html.android #view-settings .set + .set:not([data-desktop]) { box-shadow: inset 0 1px 0 var(--border); }
+html.android #syncBox .sync-actions, html.android #syncBox .sync-form, html.android #syncBox .sync-msg { background: var(--block); margin: 0; padding: 4px 14px 14px; }
+html.android #syncBox > :last-child:not([hidden]) { border-radius: 0 0 20px 20px; }
+html.android #syncBox > .set:only-child { border-radius: 20px; }
+html.android #syncBox:has(> .sync-msg[hidden]) > .sync-actions:not(:has(~ .sync-form)) { border-radius: 0 0 20px 20px; }
+html.android #syncBox.flash { animation: kFlash 1.2s var(--ease); border-radius: 20px; }
+@keyframes kFlash { 20%, 60% { box-shadow: 0 0 0 3px rgba(61, 139, 255, .55); } }
+html.android .set-ico { background: var(--block-2); }
+
+/* Stats and projects: flat cards */
+html.android .card, html.android .proj { background: var(--block); border: 0; border-radius: 20px; box-shadow: none; }
+html.android .proj.current { box-shadow: inset 0 0 0 1.5px rgba(61, 139, 255, .55); }
+
+/* Projects: the name gets the whole first line and may wrap; actions sit on their own row */
+html.android .proj { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "name total" "stats stats" "acts acts"; gap: 6px 12px; padding: 16px; }
+html.android .proj-top { display: contents; }
+html.android .proj-name { grid-area: name; align-items: flex-start; }
+html.android .proj-name .pn { white-space: normal; overflow: visible; overflow-wrap: anywhere; line-height: 1.3; font-size: 17px; }
+html.android .proj-total { grid-area: total; align-self: start; padding-top: 1px; }
+html.android .proj-stats { grid-area: stats; margin-top: 0; }
+html.android .proj-acts { grid-area: acts; gap: 8px; margin-top: 6px; }
+html.android .proj-acts .icon-btn.sm { width: 40px; height: 40px; border-radius: 999px; background: var(--block-2); color: var(--text-strong); }
+html.android .proj-acts .icon-btn.sm.danger { margin-left: auto; color: var(--danger); }
+html.android .proj-acts .icon-btn.sm svg { width: 18px; height: 18px; }
+
+/* Timer: a flat disc behind the ring, a solid start key, wheels in flat blocks */
+html.android .face::before { content: ""; position: absolute; inset: 7%; border-radius: 50%; background: var(--block); }
+html.android .ring-track { stroke: var(--block-2); stroke-width: 4.2; }
+html.android .ring-fill { stroke: url(#ringWork); stroke-width: 4.2; }
+html.android .ring-fill.break { stroke: url(#ringBreak); }
+html.android #view-timer .tag { border-radius: 999px; padding: 0 12px; }
+html.android #btnStart { width: 84px; height: 84px; background: var(--grad); color: #fff; box-shadow: none; }
+html.android #btnStart.secondary { background: var(--block-2); color: var(--text-strong); }
+html.android #btnStart.press { animation: kPress .32s var(--ease); }
+html.android #view-timer .label-input { background: var(--block); border-radius: 999px; box-shadow: none; }
+
+/* Wheels */
+html.android .dials { gap: 14px; margin-top: 16px; }
+html.android .dial {
+  height: 104px; padding: 0 16px; gap: 6px; justify-content: space-between;
+  background: var(--block); box-shadow: none; border-radius: 24px; cursor: ns-resize; touch-action: none;
+}
+html.android .dial.drag { background: var(--block-2); transform: none; }
+html.android .dial-ico { width: 24px; height: 24px; }
+.wheel {
+  position: relative; flex: 1; height: 90px; overflow: hidden;
+  -webkit-mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent);
+  mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent);
+}
+.wheel-col { position: absolute; left: 0; right: 0; top: 50%; margin-top: -85px; will-change: transform; }
+.wr {
+  display: block; height: 34px; line-height: 34px; text-align: center;
+  font-size: 17px; font-weight: 600; color: var(--text-3); font-variant-numeric: tabular-nums;
+}
+.wr.cur { font-size: 30px; font-weight: 700; color: var(--text-strong); }
+html.android .dial-unit { font-size: 12px; color: var(--text-2); width: 26px; text-align: left; }
+
+/* Bottom bar: the drop is a soft gradient tint */
+html.android .tab-blob { background: linear-gradient(135deg, rgba(61, 139, 255, .2), rgba(138, 92, 255, .2)); box-shadow: none; }
+
+/* "Sync is off" banner, drops in from the top */
+.banner {
+  position: fixed; left: 50%; top: 14px; z-index: 40;
+  display: flex; align-items: center; gap: 10px;
+  width: min(440px, calc(100% - 24px)); padding: 8px 8px 8px 14px;
+  transform: translateX(-50%);
+  background: var(--bg-3); color: var(--text-strong);
+  border-radius: 999px; box-shadow: var(--shadow);
+  animation: bannerIn .5s cubic-bezier(.3, 1.5, .5, 1) both;
+}
+html:not(.android) .banner { top: 56px; }
+.banner.out { animation: bannerOut .26s var(--ease) both; }
+@keyframes bannerIn { from { transform: translate(-50%, -140%); opacity: 0; } }
+@keyframes bannerOut { to { transform: translate(-50%, -140%); opacity: 0; } }
+.banner-ico { width: 22px; height: 22px; color: var(--text-2); flex: none; }
+.banner-ico svg { width: 100%; height: 100%; }
+.banner-text { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.banner-go { border: 0; border-radius: 999px; padding: 8px 14px; background: linear-gradient(135deg, #3d8bff, #8a5cff); color: #fff; font-size: 14px; font-weight: 600; flex: none; }
+.banner-go:active { transform: scale(.96); }
+.banner-x { border: 0; background: transparent; color: var(--text-2); width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; flex: none; }
+.banner-x svg { width: 18px; height: 18px; }
+
+/* ---------- 2.8: the timer as an object — matte, with a scale and a roller window ---------- */
+/* Matte disc: a faint light from the top left, an edge that catches it, no gloss */
+html.android .face::before {
+  background: radial-gradient(120% 120% at 30% 20%, var(--block-2), var(--block) 60%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05), inset 0 -10px 24px rgba(0,0,0,.12);
+}
+html.android[data-theme="light"] .face::before { box-shadow: inset 0 1px 0 #fff, inset 0 -10px 24px rgba(0,0,0,.04); }
+/* Start key: matte colour with a thin lit rim, sinks a little when pressed */
+html.android #btnStart { box-shadow: inset 0 0 0 1px rgba(255,255,255,.18), inset 0 -6px 14px rgba(0,0,0,.14); }
+html.android #btnStart.secondary { box-shadow: inset 0 0 0 1px var(--border), inset 0 -6px 14px rgba(0,0,0,.1); }
+html.android #view-timer .icon-btn { box-shadow: inset 0 0 0 1px var(--border); }
+/* Wheels: a roller drum seen through a window with two hairlines */
+.wheel::before, .wheel::after { content: ""; position: absolute; left: 10%; right: 10%; height: 1px; background: var(--border-strong); z-index: 1; }
+.wheel::before { top: calc(50% - 17px); }
+.wheel::after { top: calc(50% + 17px); }
+html.android .dial { box-shadow: inset 0 0 0 1px var(--border); }
+/* Cards and settings blocks: a hairline edge instead of shadows */
+html.android .card, html.android .proj, html.android .dial { box-shadow: inset 0 0 0 1px var(--border); }
+
+/* Disc, minimal: matte surface lit from the top, one fine inner rim, nothing printed on it */
+html.android .face::before {
+  background: radial-gradient(110% 110% at 35% 15%, var(--block-2), var(--block) 65%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), inset 0 -14px 28px rgba(0,0,0,.14);
+}
+html.android .face::after {
+  content: ""; position: absolute; inset: 15%; border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.035);
+  pointer-events: none;
+}
+html.android[data-theme="light"] .face::before { box-shadow: inset 0 1px 0 #fff, inset 0 -14px 28px rgba(0,0,0,.05); }
+html.android[data-theme="light"] .face::after { box-shadow: inset 0 0 0 1px rgba(0,0,0,.04); }
+
+/* Wheel lens: every number is drawn at full size and scaled by its distance to the middle (app.js) */
+.wr, .wr.cur { font-size: 30px; font-weight: 700; color: var(--text-strong); transform-origin: 50% 50%; will-change: transform, opacity; }
+.wheel {
+  background: linear-gradient(transparent calc(50% - 17px), rgba(255,255,255,.045) calc(50% - 17px), rgba(255,255,255,.045) calc(50% + 17px), transparent calc(50% + 17px));
+}
+html.android[data-theme="light"] .wheel {
+  background: linear-gradient(transparent calc(50% - 17px), rgba(0,0,0,.035) calc(50% - 17px), rgba(0,0,0,.035) calc(50% + 17px), transparent calc(50% + 17px));
+}
+
+/* 2.8.1: the wheel window is a soft capsule instead of two hairlines */
+.wheel { background: none; }
+html.android[data-theme="light"] .wheel { background: none; }
+.wheel::after { display: none; }
+.wheel::before {
+  top: calc(50% - 20px); left: 4px; right: 4px; height: 40px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .06);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07);
+  z-index: 0;
+}
+html.android[data-theme="light"] .wheel::before { background: rgba(0, 0, 0, .045); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .05); }
+.wheel-col { z-index: 1; }
+html.android .dial { border-radius: 28px; }
+
+/* 2.8.1: the disc gets the start key's light — a faint blue-violet tint and a rim lit from the top left */
+html.android .face::before {
+  border: 1.5px solid transparent;
+  background:
+    radial-gradient(120% 120% at 30% 15%, rgba(90, 120, 255, .16), rgba(138, 92, 255, .05) 45%, transparent 70%) padding-box,
+    radial-gradient(110% 110% at 35% 15%, var(--block-2), var(--block) 65%) padding-box,
+    linear-gradient(150deg, rgba(120, 160, 255, .55), rgba(255, 255, 255, .03) 38%, rgba(255, 255, 255, .02) 62%, rgba(138, 92, 255, .4)) border-box;
+  box-shadow: inset 0 -14px 28px rgba(0, 0, 0, .16), 0 10px 30px rgba(70, 90, 255, .08);
+}
+html.android[data-theme="light"] .face::before {
+  background:
+    radial-gradient(120% 120% at 30% 15%, rgba(90, 120, 255, .1), transparent 60%) padding-box,
+    radial-gradient(110% 110% at 35% 15%, #fff, var(--block) 70%) padding-box,
+    linear-gradient(150deg, rgba(61, 139, 255, .45), rgba(0, 0, 0, .03) 40%, rgba(0, 0, 0, .02) 60%, rgba(138, 92, 255, .35)) border-box;
+  box-shadow: inset 0 -14px 28px rgba(0, 0, 0, .04), 0 10px 30px rgba(70, 90, 255, .08);
+}
+html.android .face::after { display: none; }
+
+/* ======================= 2.8.2: no disc — a ring on a soft glow, gentle gradients ======================= */
+html.android .face::before {
+  inset: 14%; border: 0; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, rgba(61, 139, 255, .30), rgba(138, 92, 255, .16) 45%, transparent 72%);
+  box-shadow: none; filter: blur(22px); opacity: .55;
+  transition: opacity .6s var(--ease), background .6s var(--ease);
+}
+html.android .face.running::before { opacity: 1; }
+html.android .face.break::before { background: radial-gradient(circle at 40% 35%, rgba(47, 191, 143, .30), rgba(61, 183, 214, .16) 45%, transparent 72%); }
+html.android[data-theme="light"] .face::before { opacity: .4; box-shadow: none; }
+html.android[data-theme="light"] .face.running::before { opacity: .75; }
+html.android .face::after { display: none; }
+html.android .ring-track { stroke: var(--block-2); stroke-width: 5; }
+html.android .ring-fill { stroke-width: 5; }
+
+/* Soft gradients on the surfaces */
+html.android .card, html.android .proj, html.android #view-settings .set, html.android #syncBox .sync-actions,
+html.android #syncBox .sync-form, html.android #syncBox .sync-msg {
+  background: linear-gradient(165deg, var(--block-2), var(--block) 55%);
+}
+html.android #view-timer .label-input { background: linear-gradient(165deg, var(--block-2), var(--block) 60%); }
+html.android .dial[data-key="work"] { background: linear-gradient(160deg, rgba(61, 139, 255, .13), rgba(138, 92, 255, .05) 50%, var(--block) 80%); }
+html.android .dial[data-key="brk"] { background: linear-gradient(160deg, rgba(47, 191, 143, .13), rgba(61, 183, 214, .05) 50%, var(--block) 80%); }
+html.android #view-timer .icon-btn { background: linear-gradient(165deg, var(--block-2), var(--block)); }
+html.android .tag { background: linear-gradient(135deg, rgba(61, 139, 255, .22), rgba(138, 92, 255, .18)); color: var(--text-strong); }
+html.android .tag.break { background: linear-gradient(135deg, rgba(47, 191, 143, .22), rgba(61, 183, 214, .18)); }
+
+/* ======================= 2.9: MIUI-inspired phone UI + series ======================= */
+/* PC: series rows only while nothing runs */
+#view-timer:not(.idle) .prop[data-p="series"], #view-timer:not(.idle) .prop[data-p="when"] { display: none; }
+.when { display: inline-flex; align-items: center; gap: 4px; }
+.when-chip {
+  position: relative; display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 12px; border-radius: 999px; cursor: pointer;
+  color: var(--text); background: var(--hover); font-size: 14px; font-variant-numeric: tabular-nums;
+}
+.when-chip.set { color: #fff; background: linear-gradient(135deg, #4f8bff, #8a5cff); }
+.when-ico { width: 15px; height: 15px; flex: none; }
+.when-input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; border: 0; padding: 0; cursor: pointer; }
+.when-x { width: 26px; height: 26px; border: 0; border-radius: 50%; background: transparent; color: var(--text-2); display: grid; place-items: center; }
+.when-x svg { width: 14px; height: 14px; }
+
+/* Palette: MIUI greys — a light page with white groups, or near-black with dark groups */
+html.android { --bg: #0e0e0f; --block: #1c1c1e; --block-2: #2a2a2d; --accent-grad: linear-gradient(135deg, #4f8bff, #8a5cff); }
+html.android[data-theme="light"] { --bg: #f5f5f7; --block: #ffffff; --block-2: #efeff1; --text-strong: #111; }
+
+/* No grey gradients anywhere: flat surfaces; colour only where it means something */
+html.android .card, html.android .proj, html.android #view-settings .set, html.android #syncBox .sync-actions,
+html.android #syncBox .sync-form, html.android #syncBox .sync-msg, html.android #view-timer .label-input,
+html.android #view-timer .icon-btn, html.android .ghost, html.android .add-btn, html.android .dial {
+  background: var(--block); background-image: none;
+}
+html.android .card, html.android .proj, html.android .dial { box-shadow: none; }
+html.android #view-settings .set + .set:not([data-desktop]) { box-shadow: none; }
+html.android .set-ico { background: none; }
+html.android .tag, html.android .tag.break { background: none; padding: 0; color: var(--text-2); font-weight: 500; font-size: 14px; }
+
+/* Type: light, large numbers like the MIUI clock */
+html.android #view-timer .time { font-weight: 300; letter-spacing: -0.02em; font-size: clamp(56px, 18vw, 80px); }
+html.android h1 { font-weight: 500; font-size: 30px; letter-spacing: -0.01em; }
+html.android .card-val, html.android .proj-total { font-weight: 500; }
+html.android .group-title { color: var(--text-2); font-weight: 500; font-size: 13px; }
+
+/* Timer page */
+html.android #view-timer { justify-content: center; gap: 0; }
+html.android .face::before { display: none; }
+html.android .ring-track { stroke: var(--block-2); stroke-width: 2.2; }
+html.android .ring-fill { stroke-width: 3; }
+html.android #view-timer.idle .face { display: none; }
+html.android #view-timer:not(.idle) .dials { display: none !important; }
+html.android #view-timer .label-wrap { order: 3; margin-top: 22px; }
+html.android #view-timer .dials { order: 1; }
+html.android #view-timer .props { order: 2; display: flex !important; justify-content: center; margin: 14px 0 0; padding: 0; border: 0; }
+html.android #view-timer .props .prop { display: none; }
+html.android #view-timer.idle .props .prop[data-p="when"] { display: flex; min-height: 0; }
+html.android #view-timer .props .prop[data-p="when"] .prop-key { display: none; }
+html.android .when-chip { padding: 9px 16px; font-size: 15px; background: var(--block); color: var(--text-strong); }
+html.android .when-chip.set { background: var(--accent-grad); color: #fff; }
+html.android .when-x { width: 36px; height: 36px; background: var(--block); }
+html.android #view-timer .controls { order: 4; margin: 26px 0 0; gap: 40px; }
+html.android .face { order: 0; }
+
+/* Play: a white (or dark) disc with a violet triangle, soft violet shadow — the MIUI key */
+html.android #btnStart, html.android #btnStart.secondary {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: var(--block); color: #6f6bff;
+  box-shadow: 0 10px 28px rgba(92, 96, 255, .22), 0 1px 0 rgba(255, 255, 255, .04) inset;
+}
+html.android[data-theme="light"] #btnStart { box-shadow: 0 10px 26px rgba(92, 110, 255, .2); }
+.pp path { fill: url(#ppG); stroke: url(#ppG); }
+html.android .pp { width: 36px; height: 36px; }
+html.android #view-timer .icon-btn { width: 60px; height: 60px; background: var(--block); color: var(--text-2); }
+html.android #view-timer .icon-btn svg { width: 22px; height: 22px; }
+
+/* Wheels: three columns divided by hairlines, light numbers, label underneath */
+html.android .dials { width: 100%; max-width: 440px; gap: 0; margin: 0; }
+html.android .dial {
+  flex: 1; height: auto; padding: 0; border-radius: 0; background: none !important;
+  flex-direction: column; justify-content: center; gap: 6px; cursor: ns-resize;
+}
+html.android .dial + .dial { box-shadow: -1px 0 0 var(--border); }
+html.android .dial-ico { display: none; }
+html.android .wheel { flex: none; width: 100%; height: 300px; }
+html.android .wheel::before, html.android .wheel::after { display: none; }
+html.android .wheel-col { margin-top: -150px; }
+html.android .wr, html.android .wr.cur { height: 60px; line-height: 60px; font-size: 50px; font-weight: 300; letter-spacing: -0.02em; color: var(--text-strong); }
+html.android .dial-unit { width: auto; text-align: center; font-size: 13px; color: var(--text-3); }
+
+/* Bottom bar: MIUI-like — grey icons, the current one in the accent colour */
+html.android .tab { color: var(--text-strong); }
+html.android .tab.active { color: #6f6bff; }
+html.android .tab-blob { background: rgba(111, 107, 255, .12); }
+html.android .tabs { border-top: 0; background: var(--bg); }
+
+/* Settings and lists: white groups on a grey page, no lines */
+html.android #view-settings .set { padding: 12px 16px; }
+html.android .toggle.on { background: var(--accent-grad); }
+html.android .seg { background: var(--block-2); }
+html.android .seg button.on { background: var(--block); color: var(--text-strong); }
+html.android .proj-acts .icon-btn.sm { background: var(--block-2); }
+html.android .banner { background: var(--block); }
+
+.prop .when { width: 140px; justify-content: center; }
+
+/* Start-time picker (PC), same look as the calendar */
+html:not(.android) .when-input { pointer-events: none; }
+.tp { width: 220px; padding: 14px; }
+.tp-head { font-weight: 650; font-size: 15px; color: var(--text-strong); padding: 0 6px 10px; }
+.tp-cols { display: flex; align-items: stretch; gap: 6px; height: 196px; }
+.tp-sep { align-self: center; color: var(--text-3); font-weight: 600; }
+.tp-col { flex: 1; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 2px; padding: 2px; }
+.tp-col::-webkit-scrollbar { display: none; }
+.tp-c {
+  flex: none; height: 34px; border: 0; border-radius: 10px;
+  background: transparent; color: var(--text); font-size: 14px; font-variant-numeric: tabular-nums;
+  transition: background .12s var(--ease), color .12s var(--ease);
+}
+.tp-c:hover { background: var(--hover); color: var(--text-strong); }
+.tp-c.sel { background: var(--accent); color: #fff; font-weight: 600; }
+.tp .tp-ok { color: var(--accent); }
+
+/* Title bar logo: the liquid-glass app icon itself */
+.brand-logo, :root[data-theme="light"] .brand-logo { background: none; box-shadow: none; border-radius: 0; width: 28px; height: 28px; }
+.brand-logo img { width: 28px; height: 28px; display: block; }
+
+/* Add time by hand */
+#cal, #tp { z-index: 70; }
+.at-card { width: min(400px, 100%); display: flex; flex-direction: column; gap: 12px; }
+.at-card h3 { margin-bottom: 2px; }
+.at-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.at-chips:empty { display: none; }
+.at-chip, .at-quick button {
+  border: 0; border-radius: 999px; padding: 5px 12px; font-size: 13.5px;
+  background: var(--hover); color: var(--text); max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  transition: background .15s var(--ease), color .15s var(--ease);
+}
+.at-chip:hover, .at-quick button:hover { color: var(--text-strong); }
+.at-chip.on, .at-quick button.on { background: linear-gradient(135deg, #4f8bff, #8a5cff); color: #fff; }
+.at-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.at-l { flex: 1; min-width: 70px; color: var(--text-2); font-size: 14px; }
+.at-step .val { min-width: 62px; }
+.at-quick { display: flex; flex-wrap: wrap; gap: 6px; }
+.at-card .modal-btns { margin-top: 6px; }
+.at-card .danger-btn:disabled { opacity: .45; cursor: default; }
+.r-man { font-size: 11.5px; color: var(--text-3); margin-left: 4px; }
+html.android .at-card { gap: 14px; }
+html.android .at-chip, html.android .at-quick button { padding: 9px 14px; font-size: 14.5px; background: var(--block-2); }
+html.android .at-chip.on, html.android .at-quick button.on { background: linear-gradient(135deg, #4f8bff, #8a5cff); }
+html.android #atProject { background: var(--block-2); }
+
+/* Series: the start key turns into a stop square */
+.is-stop .pp-a { d: path("M6.5 6.5 L12 6.5 L12 17.5 L6.5 17.5 Z"); }
+.is-stop .pp-b { d: path("M12 6.5 L17.5 6.5 L17.5 17.5 L12 17.5 Z"); }
+
+/* 2.11: no blue frame around the current project; it keeps its "now" tag */
+.proj.current, html.android .proj.current { box-shadow: none; }
+html.android .proj.current { box-shadow: none; }
+.app-total-l { font-size: 12px; font-weight: 500; color: var(--text-2); }
+.seg .short { display: none; }
+html.android .seg .full { display: none; }
+html.android .seg .short { display: inline; font-weight: 600; letter-spacing: .02em; }
+
+/* Launch animation in the new brand: the violet tile pops in, its dial fills like a running timer,
+   the egg rings, and it all melts away. The tile reads on light and dark backgrounds alike. */
+.splash svg { width: 120px; height: 120px; }
+.sp-tile { transform-origin: 512px 512px; animation: spRing .36s ease-in-out .82s both; }
+.sp-egg { transform-origin: 512px 828px; animation: none; }
+.sp-sector { fill: none; stroke: #fff; stroke-width: 114; stroke-dasharray: 100; stroke-dashoffset: 100;
+  transform: rotate(-90deg); transform-origin: 512px 566px;
+  animation: spFill .62s cubic-bezier(.45, .05, .35, 1) .16s forwards; }
+.sp-wave { stroke: #7d6bff; stroke-width: 34; }
+@keyframes spRing { 20% { transform: rotate(-6deg) scale(1.03); } 45% { transform: rotate(5deg); } 70% { transform: rotate(-2deg); } }
+
+/* Theme switch: a circle of the new theme grows over the old one (see setThemeAnimated) */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+
+/* Numbers roll to their new value; other changed text fades in */
+.roll-up { display: inline-block; animation: kUp .28s cubic-bezier(.2, .9, .3, 1.2); }
+.roll-down { display: inline-block; animation: kDown .28s cubic-bezier(.2, .9, .3, 1.2); }
+.swap { animation: kSwap .32s var(--ease); }
+@keyframes kSwap { from { opacity: 0; transform: translateY(5px); } }
+
+/* Phone: secondary actions are real buttons, not grey words */
+html.android .ghost, html.android #view-settings .ghost, html.android .add-btn {
+  background: var(--block-2); color: var(--text-strong); font-weight: 600;
+  min-height: 42px; padding: 0 18px; border-radius: 999px; box-shadow: none;
+}
+html.android .ghost:active, html.android .add-btn:active { background: var(--active); }
+html.android .ghost.wide { width: 100%; }
+
+/* Phone timer, idle: two wheels (work, break); under them one row with the sessions stepper and the start time */
+html.android #view-timer .dials { max-width: 320px; }
+html.android #view-timer.idle .props { display: flex !important; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; margin-top: 18px; }
+html.android #view-timer.idle .props .prop[data-p="series"],
+html.android #view-timer.idle .props .prop[data-p="when"] { display: flex; min-height: 0; max-width: none; margin: 0; }
+html.android #view-timer .props .prop[data-p="series"] .prop-key { display: none; }
+html.android .prop[data-p="series"] .stepper {
+  width: auto; gap: 2px; padding: 3px; border-radius: 999px; background: var(--block);
+}
+html.android .prop[data-p="series"] .stepper button { width: 38px; height: 38px; background: var(--block-2); }
+html.android .prop[data-p="series"] .stepper .val { min-width: 96px; font-size: 15px; font-weight: 600; color: var(--text-strong); }
+
+/* 2.11: activity squares are real squares of one size; the frame opens smoothly between ranges */
+.heat-wrap { overflow: hidden; display: flex; justify-content: flex-end; max-width: 100%; transition: width .5s cubic-bezier(.22, .9, .3, 1); }
+.heat-inner { flex: none; }
+.heat-months, .heat-grid { grid-template-columns: 26px repeat(var(--weeks), var(--cell)); }
+.heat-grid { grid-auto-rows: var(--cell); }
+.hc { width: var(--cell); height: var(--cell); aspect-ratio: auto; }
+
+/* Finished session: a "+50 min" chip rises from the ring, the ring glows once */
+.plus-chip {
+  position: absolute; left: 50%; top: 18%; z-index: 2;
+  padding: 6px 14px; border-radius: 999px;
+  background: linear-gradient(135deg, #4f8bff, #8a5cff); color: #fff; font-weight: 700; font-size: 16px;
+  transform: translateX(-50%); pointer-events: none;
+  animation: plusUp 1.8s cubic-bezier(.2, .8, .3, 1) forwards;
+}
+@keyframes plusUp {
+  0% { opacity: 0; transform: translate(-50%, 30px) scale(.6); }
+  18% { opacity: 1; transform: translate(-50%, 0) scale(1.08); }
+  30% { transform: translate(-50%, 0) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -46px); }
+}
+html.android .face.done-pulse .ring { animation: ringGlow 1.1s ease-out; }
+@keyframes ringGlow { 30% { filter: drop-shadow(0 0 14px rgba(111, 107, 255, .8)); transform: rotate(-90deg) scale(1.03); } }
+
+/* 2.12: squares unfold from the top row down instead of the frame sliding sideways */
+.heat-wrap { transition: none; }
+.heat.unfold .hc:not(.future) {
+  transform-origin: 50% 0;
+  animation: unfold .42s cubic-bezier(.2, .9, .3, 1.15) both;
+  animation-delay: calc(var(--r, 0) * 55ms + var(--c, 0) * 5ms);
+}
+@keyframes unfold { from { opacity: 0; transform: translateY(-8px) scaleY(.2); } }
+
+/* no orange "soon" on deadlines — it only adds stress; overdue stays quietly red */
+.chip.soon, html.android .chip.soon { color: inherit; background: var(--hover); }
+.dl-text.soon { color: inherit; }
+
+/* Apps: one quiet line per program — name, today if any; active time on the right, "of" the open time under it */
+.app-main { display: flex; flex-direction: column; justify-content: center; gap: 1px; }
+.app-name { font-size: 15px; }
+.app-sub { font-size: 12.5px; color: var(--text-3); }
+.app-total > div:first-child { font-size: 16px; font-weight: 600; }
+.app-total-sub { font-size: 12px; color: var(--text-3); }
+
+/* Setup <-> running on the phone timer */
+.appear { animation: appear .5s cubic-bezier(.2, .9, .3, 1.1) both; }
+@keyframes appear { from { opacity: 0; transform: scale(.9); } }
+html.android #view-timer .controls, html.android #view-timer .label-wrap { transition: transform .45s cubic-bezier(.2, .9, .3, 1); }
+
+/* Phone start-time chip: just a clock with a plus; the time appears once set */
+html.android .when-chip { min-width: 44px; height: 44px; justify-content: center; padding: 0 14px; }
+html.android .when-chip:not(.set) { width: 44px; padding: 0; }
+html.android .when-chip .when-ico { width: 20px; height: 20px; }
+html.android .when-chip:not(.set) #seriesWhenText { display: none; }
+
+/* Phone start-time sheet: two number wheels */
+.ts-cols { position: relative; display: flex; align-items: center; justify-content: center; gap: 4px; height: 260px; margin: 6px 0 14px; }
+.ts-band { position: absolute; left: 14%; right: 14%; top: calc(50% - 26px); height: 52px; border-radius: 16px; background: var(--block-2, var(--hover)); }
+.ts-col {
+  position: relative; width: 96px; height: 260px; overflow-y: scroll; scrollbar-width: none;
+  scroll-snap-type: y mandatory; overscroll-behavior: contain;
+  -webkit-mask-image: linear-gradient(transparent, #000 28%, #000 72%, transparent);
+  mask-image: linear-gradient(transparent, #000 28%, #000 72%, transparent);
+}
+.ts-col::-webkit-scrollbar { display: none; }
+.ts-pad { height: 104px; }
+.ts-item {
+  height: 52px; line-height: 52px; text-align: center; scroll-snap-align: center;
+  font-size: 40px; font-weight: 300; color: var(--text-strong); font-variant-numeric: tabular-nums;
+  will-change: transform, opacity;
+}
+.ts-sep { position: relative; font-size: 34px; font-weight: 300; color: var(--text-2); }
+.ts-btns { display: flex; gap: 10px; }
+.ts-btns button { flex: 1; min-height: 48px; border-radius: 14px; font-size: 15px; }
+
+/* the hidden native time input never takes taps now (own pickers on both platforms) */
+.when-input { pointer-events: none; }
+.danger-btn.safe { background: linear-gradient(135deg, #4f8bff, #8a5cff); }
+
+/* 2.13: squares fill the width; rows run down in time (newest on top); a longer range adds rows */
+.heat-head, .heat-grid { display: grid; grid-template-columns: var(--lw) repeat(var(--cols), var(--cell)); column-gap: var(--gap); }
+.heat-grid { grid-auto-rows: var(--cell); row-gap: var(--gap); align-items: stretch; }
+.heat-head { margin-bottom: 6px; font-size: 10.5px; line-height: 1; color: var(--text-3); }
+.heat-head span { text-align: center; white-space: nowrap; overflow: visible; }
+.heat-grid .hm { grid-column: 1; font-size: 11px; color: var(--text-3); align-self: center; white-space: nowrap; }
+.heat-wrap { display: block; width: auto !important; overflow: hidden; transition: height .5s cubic-bezier(.22, .9, .3, 1); }
+.heat .hc { width: var(--cell); height: var(--cell); }
+.heat.unfold .hc:not(.future) { animation-delay: calc(var(--r, 0) * 40ms + var(--c, 0) * 4ms); }
+.heat .heat-legend .hc { width: 11px; height: 11px; }
+
+/* Program detail card */
+.app { cursor: pointer; }
+.ad-card { width: min(440px, 100%); display: flex; flex-direction: column; gap: 14px; }
+.ad-head { display: flex; align-items: center; gap: 12px; }
+.ad-head h3 { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ad-head .app-ico { width: 36px; height: 36px; }
+#adRange { align-self: flex-start; }
+.ad-nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.ad-nums div { display: flex; flex-direction: column; gap: 2px; }
+.ad-nums b { font-size: 20px; font-weight: 650; color: var(--text-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ad-nums span { font-size: 12px; color: var(--text-3); }
+.ad-bar { height: 6px; border-radius: 6px; background: var(--track); overflow: hidden; }
+.ad-bar i { display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, #4f8bff, #8a5cff); transition: width .5s cubic-bezier(.22, .9, .3, 1); }
+.ad-chart { display: flex; align-items: flex-end; gap: 3px; height: 120px; }
+.adc { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.adc-bar { position: relative; flex: 1; width: 100%; max-width: 26px; }
+.adc-bar i { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 4px; transition: height .45s cubic-bezier(.22, .9, .3, 1); }
+.adc-bar .o { background: var(--hover); box-shadow: inset 0 0 0 1px var(--border); }
+.adc-bar .a { background: linear-gradient(180deg, #8a5cff, #4f8bff); }
+.adc span { font-size: 10.5px; color: var(--text-3); height: 12px; }
+.adc.today span { color: var(--text-strong); font-weight: 600; }
+
+/* Phone: programs come from the PC — show them, nothing to add or remove here */
+html.android #view-apps { display: block !important; }
+html.android #btnAddApp, html.android #appPicker, html.android .app .del { display: none !important; }
+html.android .app { padding: 12px 14px; border-radius: 18px; background: var(--block); margin-bottom: 8px; }
+html.android .ad-card { border-radius: 24px; }
+
+.apps-cap { font-size: 12.5px; color: var(--text-3); margin: 0 2px 8px; text-align: right; }
+.app-total.none > div { color: var(--text-3); font-weight: 400; }
+
+/* 2.13.1: fluid square columns — they always fill the width exactly, whatever the window does */
+.heat-head, .heat-grid { grid-template-columns: var(--lw) repeat(var(--cols), minmax(0, 1fr)); }
+.heat-grid { grid-auto-rows: auto; }
+.heat .heat-grid .hc { width: 100%; height: auto; aspect-ratio: 1; }
+.heat .heat-legend .hc { width: 11px; height: 11px; aspect-ratio: auto; }
+.heat-wrap { width: 100% !important; }
+
+/* Program card: active time is the headline; the rest is quieter */
+.ad-main { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
+.ad-main b {
+  font-size: 40px; font-weight: 700; line-height: 1.05; letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+  background: linear-gradient(135deg, #5a8dff, #8b5cff); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.ad-main span { font-size: 13px; color: var(--text-2); }
+.ad-nums { grid-template-columns: repeat(2, auto); justify-content: start; column-gap: 28px; opacity: .6; }
+.ad-nums b { font-size: 15px; font-weight: 600; }
+.ad-chart { transition: height .42s cubic-bezier(.22, .9, .3, 1), opacity .3s var(--ease), margin .42s cubic-bezier(.22, .9, .3, 1); overflow: hidden; }
+.ad-chart.folded { height: 0; opacity: 0; margin-top: -14px; }
+
+/* just squares: no label column */
+.heat-grid { grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); }
+.heat-head { display: none; }
+
+/* 2.14: squares get room — no clipping of the "today" ring or the hover zoom (clip only while unfolding) */
+.heat-wrap { overflow: visible; padding: 4px 3px; margin: -4px -3px; }
+.heat.unfold .heat-wrap { overflow: hidden; }
+
+/* Stats: history first, three entries (a series is one), the full list in a card */
+.hs-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.hs { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; background: var(--hover); animation: rise .3s var(--ease) both; }
+.hs-ico { width: 28px; height: 28px; flex: none; display: grid; place-items: center; border-radius: 50%; color: var(--text-3); }
+.hs-ico svg { width: 16px; height: 16px; }
+.hs.series .hs-ico { color: #fff; background: linear-gradient(135deg, #4f8bff, #8a5cff); }
+.hs-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.hs-title { color: var(--text-strong); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hs-sub { font-size: 12.5px; color: var(--text-3); }
+.hs-dur { font-weight: 650; color: var(--text-strong); white-space: nowrap; font-variant-numeric: tabular-nums; }
+#btnHistAll { margin: 0 0 26px; }
+.hist-card { width: min(520px, 100%); max-height: min(80vh, 720px); display: flex; flex-direction: column; gap: 10px; }
+.hist-scroll { overflow-y: auto; margin: 0 -6px; padding: 0 6px; }
+html.android .hs { background: var(--block); }
+html.android .hist-card { border-radius: 24px; }
+
+/* entering Stats no longer pops every square one by one (that was the lag); ranges still unfold */
+.anim .hc:not(.future) { animation: none; }
+
+/* ======================= 2.15 ======================= */
+/* Apps: one header line — "Active time" on the left, the period on the right, right above the numbers */
+.apps-cap { display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left; margin: 0 0 8px; padding: 0 14px 0 12px; }
+.apps-cap-l { font-size: 12.5px; color: var(--text-3); }
+.range-pick {
+  display: inline-flex; align-items: center; gap: 2px;
+  margin-right: -8px; padding: 3px 4px 3px 8px; border: 0; border-radius: 8px;
+  background: transparent; color: var(--text-2); font-size: 13px; font-weight: 500;
+  transition: background .15s var(--ease), color .15s var(--ease);
+}
+.range-pick svg { width: 14px; height: 14px; opacity: 0; transform: translateY(-1px); transition: opacity .15s var(--ease), transform .2s var(--ease); }
+.range-pick:hover, .range-pick.open { background: var(--hover); color: var(--text-strong); }
+.range-pick:hover svg, .range-pick.open svg { opacity: .8; transform: none; }
+.range-pick.open svg { transform: rotate(180deg); }
+html.android .range-pick svg { opacity: .7; }
+.app { grid-template-columns: 38px 1fr auto; padding: 12px 14px 12px 12px; }
+.app-total { font-size: 15.5px; font-weight: 600; text-align: right; min-width: 64px; }
+.app-total.none { font-weight: 400; color: var(--text-3); }
+.menu { min-width: 150px; padding: 5px; }
+.menu-i {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  border: 0; background: transparent; border-radius: 9px; padding: 7px 10px;
+  font-size: 13.5px; color: var(--text); text-align: left; white-space: nowrap;
+  transition: background .12s var(--ease);
+}
+.menu-i:hover { background: var(--hover); color: var(--text-strong); }
+.menu-i.on { color: var(--text-strong); font-weight: 600; }
+.menu-i svg { width: 15px; height: 15px; color: var(--accent); }
+.ad-nums { opacity: .7; }
+.ad-untrack { align-self: flex-start; border: 0; background: transparent; color: var(--text-3); font-size: 13px; padding: 4px 0; }
+.ad-untrack:hover { color: var(--danger); }
+
+/* Stats cards never clip: the numbers scale with the room they have, and below a narrow width
+   the three cards become three rows (container query on the page, not the window) */
+#view-stats { container-type: inline-size; container-name: stats; }
+.cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.card { min-width: 0; padding: 14px 14px; }
+.card-val { font-size: clamp(14px, calc((100cqw - 104px) / 17.5), 22px); overflow: hidden; text-overflow: ellipsis; }
+@container stats (max-width: 390px) {
+  .cards { grid-template-columns: 1fr; gap: 6px; }
+  .card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; }
+  .card-val { margin-top: 0; font-size: 18px; }
+}
+
+/* Settings: theme as two icons, language as RU / EN */
+.seg[data-key="theme"] .ico { display: block; width: 17px; height: 17px; }
+.seg[data-key="theme"] button { display: grid; place-items: center; padding: 5px 13px; }
+.seg[data-key="lang"] .full { display: none; }
+.seg[data-key="lang"] .short { display: inline; font-weight: 600; letter-spacing: .02em; }
+
+/* Confirm "finish early?": keeping on is the big friendly key, giving up is small and quiet */
+.modal-btns:has(.keep) { flex-direction: row-reverse; justify-content: space-between; }
+.modal-btns .ghost.keep { background: linear-gradient(135deg, #4f8bff, #8a5cff); color: #fff; box-shadow: none; font-weight: 600; padding: 7px 18px; }
+.modal-btns .ghost.keep:hover { filter: brightness(1.08); }
+.danger-btn.quiet { background: transparent; color: var(--text-3); font-weight: 500; padding-left: 4px; padding-right: 4px; }
+.danger-btn.quiet:hover { color: var(--danger); filter: none; }
+html.android .danger-btn.quiet { flex: 0 0 auto; padding: 0 14px; }
+
+
+.controls { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: center; margin: 34px 0 28px; }
+.c-side { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.c-side.l { justify-content: flex-end; }
+.c-side.r { justify-content: flex-start; }
+html.android .c-side { display: contents; }
+html.android .controls { display: flex; }
+#btnReset svg { width: 18px !important; height: 18px !important; }
+
+/* Task field = project picker: a chevron on hover says "there is a list here" */
+
+/* ---------- Projects: a tick sends a project to the archive ---------- */
+.proj { overflow: hidden; }
+.pcheck {
+  flex: none; width: 22px; height: 22px; padding: 0; border-radius: 50%;
+  display: grid; place-items: center;
+  border: 1.8px solid var(--text-3); background: transparent; color: transparent;
+  transition: border-color .15s var(--ease), background .2s var(--ease), color .2s var(--ease), transform .12s var(--ease);
+}
+.pcheck svg { width: 14px; height: 14px; }
+.pcheck path { stroke-dasharray: 1 2; stroke-dashoffset: 1.01; opacity: 0; transition: stroke-dashoffset .35s var(--ease), opacity .2s var(--ease); }
+.pcheck:hover { border-color: #6f8cff; color: #6f8cff; }
+.pcheck:hover path { stroke-dashoffset: 0; opacity: .5; }
+.pcheck:active { transform: scale(.88); }
+.proj.checking .pcheck { background: linear-gradient(135deg, #4f8bff, #8a5cff); border-color: transparent; color: #fff; }
+.proj.checking .pcheck path { stroke-dashoffset: 0; opacity: 1; }
+.proj.checking .pn { text-decoration: line-through; text-decoration-color: var(--text-3); color: var(--text-2); }
+.proj.checking { animation: projOut .38s .34s cubic-bezier(.4, 0, .2, 1) forwards; }
+@keyframes projOut { to { opacity: 0; height: 0; padding-top: 0; padding-bottom: 0; margin-bottom: 0; transform: translateX(14px); } }
+html.android .proj { grid-template-columns: auto 1fr auto; grid-template-areas: "check name total" "stats stats stats" "acts acts acts"; }
+html.android .pcheck { grid-area: check; width: 26px; height: 26px; margin-top: 1px; }
+.arch-row { display: flex; justify-content: center; margin-top: 16px; }
+.arch-link {
+  display: inline-flex; align-items: center; gap: 7px;
+  border: 0; background: transparent; color: var(--text-3); font-size: 13px;
+  padding: 6px 10px; border-radius: 8px;
+  transition: background .15s var(--ease), color .15s var(--ease);
+}
+.arch-link svg { width: 15px; height: 15px; }
+.arch-link:hover { color: var(--text-2); background: var(--hover); }
+.arch-item { display: flex; align-items: center; gap: 12px; padding: 9px 8px; border-radius: 12px; transition: background .12s var(--ease); }
+.arch-item:hover { background: var(--hover); }
+.arch-check { width: 24px; height: 24px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--hover); color: var(--text-2); }
+.arch-check svg { width: 14px; height: 14px; }
+.arch-item .pn { color: var(--text-2); }
+.arch-acts { display: flex; gap: 2px; opacity: 0; transition: opacity .15s var(--ease); }
+.arch-item:hover .arch-acts { opacity: 1; }
+html.android .arch-acts { opacity: 1; }
+
+
+/* the start time is the last row again, just a bigger clock-with-plus until a time is picked */
+html:not(.android) .prop[data-p="when"] .when-chip:not(.set) { width: 38px; height: 38px; padding: 0; justify-content: center; }
+html:not(.android) .prop[data-p="when"] .when-chip:not(.set) .when-ico { width: 22px; height: 22px; }
+html:not(.android) .prop[data-p="when"] .when-chip.set .when-ico { display: none; }
+html:not(.android) .prop[data-p="when"] .when-chip.set { padding: 6px 14px; font-weight: 600; }
+html:not(.android) .prop[data-p="when"] .when { position: relative; }
+html:not(.android) .prop[data-p="when"] .when-x { position: absolute; right: -6px; }
+
+/* toast with an Undo key */
+.toast { display: flex; align-items: center; gap: 12px; }
+.toast button { border: 0; background: transparent; color: var(--accent); font-weight: 600; font-size: 14px; padding: 0; }
+.toast.act { pointer-events: auto; }
+
+/* short history: a quiet × at the side of each entry */
+.hs .hs-del { width: 26px; height: 26px; flex: none; border: 0; border-radius: 8px; background: transparent; color: var(--text-3); display: grid; place-items: center; opacity: 0; transition: opacity .15s var(--ease), color .15s var(--ease), background .15s var(--ease); margin-right: -4px; }
+.hs:hover .hs-del { opacity: .7; }
+.hs .hs-del:hover { opacity: 1; color: var(--danger); background: var(--hover); }
+html.android .hs .hs-del { opacity: .5; }
+#view-stats .goal { margin-top: 0; margin-bottom: 14px; }
+#view-stats .cards { margin-bottom: 4px; }
+/* the empty time label took a gap and pushed the clock off-centre */
+.when-chip #seriesWhenText:empty { display: none; }
+html:not(.android) .prop[data-p="when"] .when-chip:not(.set) { gap: 0; }
+
+/* history: series rows open a card */
+.hs.series { cursor: pointer; }
+.hs-num { width: 20px; height: 20px; flex: none; display: grid; place-items: center; border-radius: 50%; font-size: 11px; font-weight: 700; color: var(--text-3); background: var(--hover); font-variant-numeric: tabular-nums; }
+
+/* Task field: a quiet pill; typing just renames, the chevron opens the project list */
+.label-wrap { position: relative; }
+.label-input { padding-left: 44px; padding-right: 44px; border-radius: 999px; }
+.label-input:focus, .label-input:focus-visible { outline: none; background: var(--hover); box-shadow: 0 0 0 1px var(--border), 0 6px 22px -12px rgba(0,0,0,.35); }
+.label-chev:focus-visible { outline: none; }
+.label-chev {
+  position: absolute; right: 6px; top: 50%; width: 32px; height: 32px; margin-top: -16px; padding: 0;
+  border: 0; border-radius: 50%; background: transparent; color: var(--text-3);
+  display: grid; place-items: center; cursor: pointer; opacity: .55;
+  transition: opacity .15s var(--ease), background .15s var(--ease), color .15s var(--ease);
+}
+.label-chev svg { width: 18px; height: 18px; transition: transform .28s cubic-bezier(.3, 1.4, .5, 1); }
+.label-wrap:hover .label-chev, .label-input:focus ~ .label-chev { opacity: 1; }
+.label-chev:hover { background: var(--hover); color: var(--text); }
+.label-wrap.open .label-chev { opacity: 1; color: var(--text); background: var(--hover); }
+.label-wrap.open .label-chev svg { transform: rotate(180deg); }
+html.android .label-chev { right: 10px; opacity: .7; }
+.suggest { padding: 6px; border-radius: 18px; border: 1px solid var(--border); box-shadow: 0 18px 40px -18px rgba(0,0,0,.45); transform-origin: top center; animation: sugIn .22s cubic-bezier(.2, .9, .3, 1.1); }
+@keyframes sugIn { from { opacity: 0; transform: translateY(-6px) scale(.97); } }
+.sug { padding: 9px 10px; gap: 10px; border-radius: 12px; justify-content: flex-start; }
+.sug .sug-name { flex: 1; min-width: 0; }
+.sug:hover, .sug.on { background: var(--hover); }
+.sug-dot { width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--text-3); opacity: .45; }
+.sug.cur .sug-dot { background: linear-gradient(135deg, #ffb347, #ff6a4a); opacity: 1; }
+.sug.cur .sug-name { color: var(--text-strong); font-weight: 600; }
+.sug-tick { width: 16px; height: 16px; flex: none; color: var(--text-2); }
+.sug-tick svg { width: 16px; height: 16px; display: block; }
+.sug-empty { padding: 12px; text-align: center; color: var(--text-3); font-size: 13px; }
+
+/* ================= PC polish (2.16): a living face, a better start key ================= */
+html:not(.android) {
+  --pc-grad: linear-gradient(120deg, #3d8bff, #7a5cff 55%, #b05cff);
+  --pc-grad-break: linear-gradient(120deg, #22b38a, #2fb5c9 60%, #3d8bff);
+}
+/* the start key: a gradient pill with a soft glow */
+html:not(.android) #btnStart {
+  position: relative; overflow: hidden; isolation: isolate;
+  min-width: 168px; height: 48px; padding: 0 28px; border-radius: 999px;
+  background: var(--pc-grad); color: #fff; font-size: 16px; font-weight: 650; letter-spacing: .01em;
+  box-shadow: 0 10px 28px -10px rgba(98, 92, 255, .75), inset 0 1px 0 rgba(255,255,255,.25);
+  transition: transform .25s cubic-bezier(.3, 1.4, .5, 1), box-shadow .25s var(--ease), filter .2s var(--ease), background .3s var(--ease);
+}
+html:not(.android) #btnStart:hover { transform: translateY(-1px); box-shadow: 0 14px 34px -10px rgba(98, 92, 255, .9), inset 0 1px 0 rgba(255,255,255,.3); }
+html:not(.android) #btnStart:active { transform: scale(.96); transition-duration: .08s; }
+html:not(.android) .face.break ~ .controls #btnStart:not(.secondary) { background: var(--pc-grad-break); box-shadow: 0 10px 28px -10px rgba(34, 179, 138, .7), inset 0 1px 0 rgba(255,255,255,.25); }
+/* while it runs the key steps back: glass with a thin border */
+html:not(.android) #btnStart.secondary {
+  background: var(--hover); color: var(--text-strong);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+html:not(.android) #btnStart.secondary:hover { background: var(--active); box-shadow: inset 0 0 0 1px var(--border-strong), 0 8px 22px -14px rgba(0,0,0,.5); }
+html:not(.android) .icon-btn { border-radius: 50%; transition: background .18s var(--ease), color .18s var(--ease), transform .25s cubic-bezier(.3, 1.4, .5, 1); }
+html:not(.android) .icon-btn:hover { transform: translateY(-1px); }
+
+/* the time: an aurora breathes behind the digits while the timer runs */
+html:not(.android) #view-timer .time { position: relative; isolation: isolate; transition: color .3s var(--ease), transform .5s cubic-bezier(.2, .9, .3, 1.2); }
+html:not(.android) #view-timer .time::before {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 420px; height: 150px; margin: -75px 0 0 -210px; z-index: -1;
+  border-radius: 50%; pointer-events: none;
+  background:
+    radial-gradient(closest-side at 30% 50%, rgba(61, 139, 255, .55), transparent),
+    radial-gradient(closest-side at 70% 50%, rgba(160, 92, 255, .5), transparent);
+  filter: blur(34px); opacity: 0; transform: scale(.7);
+  transition: opacity .9s var(--ease), transform .9s var(--ease);
+}
+html:not(.android) #view-timer .face.running .time::before { opacity: .55; transform: scale(1); animation: aurora 9s ease-in-out infinite; }
+html:not(.android) #view-timer .face.running.break .time::before {
+  background:
+    radial-gradient(closest-side at 30% 50%, rgba(34, 179, 138, .55), transparent),
+    radial-gradient(closest-side at 70% 50%, rgba(61, 183, 214, .5), transparent);
+}
+html[data-theme="light"]:not(.android) #view-timer .face.running .time::before { opacity: .32; }
+@keyframes aurora {
+  0%, 100% { transform: scale(1) translateX(0) rotate(0deg); }
+  33% { transform: scale(1.12, .92) translateX(18px) rotate(4deg); }
+  66% { transform: scale(.94, 1.08) translateX(-16px) rotate(-3deg); }
+}
+/* the digits themselves catch a slow light while running */
+html:not(.android) .face.running .time {
+  background: linear-gradient(100deg, var(--text-strong) 0%, var(--text-strong) 40%, #b9c8ff 50%, var(--text-strong) 60%, var(--text-strong) 100%);
+  background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: digitsLight 6s linear infinite;
+}
+html:not(.android) .face.running.break .time { background-image: linear-gradient(100deg, var(--text-strong) 0%, var(--text-strong) 40%, #b6f0dc 50%, var(--text-strong) 60%, var(--text-strong) 100%); }
+html[data-theme="light"]:not(.android) .face.running .time { background-image: linear-gradient(100deg, var(--text-strong) 0%, var(--text-strong) 40%, #6b7dff 50%, var(--text-strong) 60%, var(--text-strong) 100%); }
+@keyframes digitsLight { from { background-position: 150% 0; } to { background-position: -150% 0; } }
+
+/* the progress bar: a flowing gradient with a light running along it */
+html:not(.android) #view-timer .bar { height: 6px; border-radius: 6px; position: relative; }
+html:not(.android) #view-timer .bar-fill {
+  position: relative; border-radius: 6px; overflow: hidden;
+  background: linear-gradient(90deg, #3d8bff, #8a5cff, #3d8bff); background-size: 200% 100%;
+}
+html:not(.android) #view-timer .bar-fill.break { background: linear-gradient(90deg, #22b38a, #3db7d6, #22b38a); background-size: 200% 100%; }
+html:not(.android) .face.running .bar-fill { animation: barFlow 3s linear infinite; box-shadow: 0 0 14px rgba(110, 110, 255, .55); }
+html:not(.android) .face.running .bar-fill.break { box-shadow: 0 0 14px rgba(40, 190, 160, .5); }
+html:not(.android) .face.running .bar-fill::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 60px; left: -60px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.7), transparent);
+  animation: barGlint 2.4s ease-in-out infinite;
+}
+@keyframes barFlow { from { background-position: 0 0; } to { background-position: -200% 0; } }
+@keyframes barGlint { from { left: -60px; } to { left: 100%; } }
+
+/* the phase tag: a pill, with a breathing dot while running */
+html:not(.android) .phase-row .tag { border-radius: 999px; padding: 0 12px; gap: 7px; }
+html:not(.android) .phase-row .tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .5; }
+html:not(.android) .face.running .phase-row .tag::before { opacity: 1; animation: tagDot 1.6s ease-in-out infinite; }
+@keyframes tagDot { 50% { transform: scale(.55); opacity: .45; } }
+
+@media (prefers-reduced-motion: reduce) {
+  html:not(.android) .face.running .time, html:not(.android) .face.running .time::before,
+  html:not(.android) .face.running .bar-fill, html:not(.android) .face.running .bar-fill::after { animation: none; }
+}
+
+/* the start-time key: no circle until the pointer is on it */
+html:not(.android) .prop[data-p="when"] .when-chip:not(.set) { background: transparent; color: var(--text-2); transition: background .15s var(--ease), color .15s var(--ease); }
+html:not(.android) .prop[data-p="when"] .when-chip:not(.set):hover { background: var(--hover); color: var(--text); }
+
+/* History: a series row shows the full task name; the session count sits in the line below */
+.hs-n { display: inline-flex; align-items: center; height: 18px; padding: 0 7px; margin-right: 6px; border-radius: 999px; font-size: 11.5px; font-weight: 600; color: var(--text-2); background: var(--hover); vertical-align: 1px; }
+.hs.series .hs-title { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.hs.series:hover { background: var(--active); }
+html.android .hs.series:active { transform: scale(.985); }
+.hs { transition: background .15s var(--ease), transform .15s var(--ease); }
+
+/* the series card */
+.sc-card { width: min(440px, 100%); display: flex; flex-direction: column; gap: 14px; }
+.sc-ico { width: 36px; height: 36px; flex: none; display: grid; place-items: center; border-radius: 50%; color: #fff; background: linear-gradient(135deg, #4f8bff, #8a5cff); }
+.sc-ico svg { width: 18px; height: 18px; }
+.sc-titles { flex: 1; min-width: 0; }
+.sc-titles h3 { margin: 0; overflow-wrap: anywhere; white-space: normal; }
+.sc-sub { font-size: 13px; color: var(--text-3); margin-top: 2px; }
+.sc-list { display: flex; flex-direction: column; gap: 4px; max-height: 60vh; overflow-y: auto; scrollbar-width: thin; }
+.sc-row { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 12px; background: var(--hover); }
+.sc-time { flex: 1; color: var(--text-strong); font-variant-numeric: tabular-nums; }
+.sc-dur { font-weight: 650; color: var(--text-strong); font-variant-numeric: tabular-nums; }
+.sc-row .hs-del { width: 26px; height: 26px; flex: none; border: 0; border-radius: 8px; background: transparent; color: var(--text-3); display: grid; place-items: center; opacity: .6; transition: opacity .15s var(--ease), color .15s var(--ease), background .15s var(--ease); margin-right: -4px; }
+.sc-row .hs-del:hover { opacity: 1; color: var(--danger); background: var(--active); }
+html.android .sc-card { border-radius: 24px; }
+html.android .sc-row { background: var(--block); padding: 12px 12px; }
+html.android .sc-row .hs-del { width: 34px; height: 34px; }
+
+/* Program card: line charts (today hour by hour, periods day by day) instead of bars */
+.ad-chart.lc { display: block; height: auto; overflow: visible; }
+.lc-plot { position: relative; height: 130px; margin-left: 46px; touch-action: pan-y; cursor: crosshair; }
+.lc-plot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.lc-grid { fill: none; stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; stroke-dasharray: 3 4; }
+.lc-run { fill: var(--hover); }
+.lc-area { fill: url(#lcFill); }
+.lc-line { fill: none; stroke: url(#lcLine); stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.lc-y { position: absolute; left: -46px; width: 40px; text-align: right; transform: translateY(-50%); font-size: 10.5px; color: var(--text-3); white-space: nowrap; }
+.lc-x { position: relative; height: 16px; margin: 6px 0 0 46px; }
+.lc-x span { position: absolute; transform: translateX(-50%); font-size: 10.5px; color: var(--text-3); white-space: nowrap; }
+.lc-guide { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--border-strong); pointer-events: none; }
+.lc-dot { position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: #8a5cff; box-shadow: 0 0 0 3px var(--bg-3); pointer-events: none; }
+.lc-tip { position: absolute; bottom: calc(100% + 6px); padding: 5px 9px; border-radius: 8px; background: var(--bg); color: var(--text-strong); font-size: 12px; white-space: nowrap; box-shadow: var(--shadow); pointer-events: none; }
+.ad-span { font-size: 12.5px; color: var(--text-2); margin-top: -4px; }
+.ad-span:empty { display: none; }
+
+/* crash note: one fact per line */
+#modalText { white-space: pre-line; }
+
+/* ======================= 2.19: Plan ======================= */
+.plan-next { font-size: 14px; color: var(--text-2); margin: -6px 0 16px; }
+.plan-next b { color: var(--text-strong); font-weight: 600; }
+.plan {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px;
+  padding: 14px 16px; margin-bottom: 8px; border-radius: var(--r-l);
+  background: var(--panel); box-shadow: inset 0 0 0 1px var(--border); cursor: pointer;
+  transition: box-shadow .18s var(--ease), opacity .2s var(--ease);
+}
+.plan:hover { box-shadow: inset 0 0 0 1px var(--border-strong), var(--shadow-soft); }
+.plan.off { opacity: .5; }
+.plan-time { font-family: var(--font-display); font-size: 30px; font-weight: 600; letter-spacing: -0.02em; color: var(--text-strong); font-variant-numeric: tabular-nums; line-height: 1; }
+.plan-main { min-width: 0; }
+.plan-days { font-weight: 600; color: var(--text-strong); }
+.plan-sub { font-size: 13px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html.android .plan { background: var(--block); box-shadow: none; border-radius: 20px; }
+.pe-card { width: min(420px, 100%); }
+.pe-time {
+  border: 0; border-radius: 12px; padding: 4px 14px; background: var(--hover); color: var(--text-strong);
+  font-family: var(--font-display); font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.pe-time:hover { background: var(--active); }
+#peDays { display: flex; gap: 4px; flex-wrap: wrap; }
+.pe-day { flex: 1; min-width: 38px; border: 0; border-radius: 10px; padding: 7px 0; background: var(--hover); color: var(--text-2); font-size: 13px; font-weight: 600; }
+.pe-day.on { background: linear-gradient(135deg, #4f8bff, #8a5cff); color: #fff; }
+.pe-del { margin-right: auto; border: 0; background: transparent; color: var(--text-3); font-size: 14px; padding: 7px 4px; }
+.pe-del:hover { color: var(--danger); }
+.pe-card .danger-btn:disabled { opacity: .45; cursor: default; }
+html.android .pe-day { min-height: 40px; }
+html.android .pe-card .modal-btns .pe-del { flex: 0 0 auto; }
+/* "start later" set for another day: a little "+1" mark on the chip */
+.when-chip.set.later::after { content: attr(data-day); font-size: 10px; font-weight: 700; margin-left: 3px; opacity: .8; }
+.tabs.tight { gap: 0; padding: 0 8px; }
+.tabs.tight .tab { padding-left: 7px; padding-right: 7px; }
+.tabs.tight .tab::after { left: 7px; right: 7px; }
+.tabs.tighter .tab { font-size: 13.5px; padding-left: 5px; padding-right: 5px; }
+.tabs.tighter .tab::after { left: 5px; right: 5px; }
+html:not(.android) .tabs.icons .tab { padding: 9px 9px 11px; }
+html:not(.android) .tabs.icons .tab span { display: none; }
+html:not(.android) .tabs.icons .tab .ico { display: block; width: 19px; height: 19px; }
+.plan-days::first-letter { text-transform: uppercase; }
+/* six tabs on the phone: labels a touch smaller so they never touch */
+html.android .tab span { font-size: 10px; letter-spacing: 0; }
+
+/* Plan as a panel opened from the timer page */
+.plan-card { width: min(460px, 100%); max-height: min(86vh, 760px); display: flex; flex-direction: column; gap: 12px; }
+.plan-lead { margin: -4px 0 0 !important; font-size: 13px !important; color: var(--text-2); }
+.plan-card .plan-next { margin: 0; }
+.plan-scroll { flex: 1; min-height: 0; overflow-y: auto; margin: 0 -6px; padding: 0 6px; }
+.plan-scroll .plan:last-child { margin-bottom: 0; }
+.plan-add { width: 100%; padding: 11px 16px; border-radius: 12px; font-size: 15px; }
+html.android .plan-card { border-radius: 24px; }
+html.android .plan-add { min-height: 50px; border-radius: 16px; }
+.plan-time { white-space: nowrap; }
+.plan-end { font-size: 17px; font-weight: 500; color: var(--text-2); margin-left: 2px; letter-spacing: 0; }
+.pe-span { margin-top: -6px; text-align: right; font-size: 13px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+/* The plan chip on the timer page: bolder figures, room around the icon and the "+1" mark */
+.when-chip { font-weight: 600; font-variant-numeric: tabular-nums; }
+.when-chip.set { gap: 8px; padding: 6px 14px 6px 12px; letter-spacing: .01em; }
+.when-chip.set .when-ico { display: block !important; width: 18px !important; height: 18px !important; }
+.when-chip.set.later::after {
+  content: attr(data-day); margin: 0; padding: 2px 7px; border-radius: 999px;
+  background: rgba(255, 255, 255, .24); font-size: 11px; font-weight: 700; opacity: 1; line-height: 1.3;
+}
+html.android .when-chip.set { height: 44px; padding: 0 16px 0 14px; gap: 8px; font-size: 15.5px; }
+html.android .when-chip.set .when-ico { width: 19px !important; height: 19px !important; }
+html.android .when-x { flex: none; }
+html.android #view-timer .props .when { gap: 8px; }
+.plan-time { display: flex; flex-direction: column; align-items: flex-start; min-width: 76px; }
+.plan-end { display: block; margin: 4px 0 0; font-size: 12.5px; font-weight: 500; font-family: var(--font); color: var(--text-2); }
+.when-chip { flex-wrap: nowrap; white-space: nowrap; }
+
+/* Plan card 2.19: "07:21 ——— 09:11", both times in one size, the line between them */
+.plan { grid-template-columns: 1fr auto; grid-template-areas: "span tog" "info info"; gap: 8px 14px; }
+.plan-span { grid-area: span; display: flex; align-items: center; gap: 12px; min-width: 0; }
+.plan .toggle { grid-area: tog; }
+.plan .pt { font-family: var(--font-display); font-size: 28px; font-weight: 600; letter-spacing: -0.02em; line-height: 1; color: var(--text-strong); font-variant-numeric: tabular-nums; }
+.plan .pt.inf { font-size: 26px; color: var(--text-2); }
+.plan-line { position: relative; flex: 1; max-width: 120px; min-width: 28px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, #4f8bff, #8a5cff); }
+.plan-line::before, .plan-line::after { content: ""; position: absolute; top: 50%; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%; background: #4f8bff; }
+.plan-line::before { left: -3px; }
+.plan-line::after { right: -3px; background: #8a5cff; }
+.plan.off .plan-line { background: var(--text-3); }
+.plan.off .plan-line::before, .plan.off .plan-line::after { background: var(--text-3); }
+.plan-info { grid-area: info; font-size: 13px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plan-info .plan-days { color: var(--text-strong); font-weight: 600; }
+.plan-info .plan-days::first-letter { text-transform: uppercase; }
+.plan-next { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.plan-skip { border: 0; background: transparent; color: var(--text-3); font-size: 12.5px; padding: 2px 0; }
+.plan-skip:hover { color: var(--text); }
+
+/* the plan chip stands alone now (no ×): a round clock, or a pill with the time */
+html:not(.android) .prop[data-p="when"] .when { width: 140px; justify-content: center; } /* same column as the other rows */
+html:not(.android) .prop[data-p="when"] .when-chip.set { padding: 6px 14px 6px 12px; }
+
+/* one session has no break: its length setting steps aside */
+#view-timer.no-brk .prop[data-p="brk"], html.android #view-timer.no-brk .dial[data-key="brk"] { display: none !important; }
+.lc-cap { margin: 2px 0 0 46px; font-size: 11.5px; color: var(--text-3); }
+#modal { z-index: 65; } /* a question may come from inside another card */
+.row[data-id], .hs:not(.series) { cursor: pointer; }
+#addTime { z-index: 62; } /* editing an entry opens over the full history */
+.plan-info .plan-days { display: inline-block; }
+
+/* Chart zoom and selection (2.19) */
+.ad-chart.lc { position: relative; }
+.lc-zoom, .lc-tools { position: absolute; top: -30px; display: flex; gap: 2px; z-index: 2; }
+.lc-zoom { right: 0; }
+.lc-tools { right: 64px; }
+.lc-b {
+  width: 26px; height: 24px; border: 0; border-radius: 7px; padding: 0;
+  background: var(--hover); color: var(--text-2); font-size: 15px; line-height: 1;
+  transition: background .12s var(--ease), color .12s var(--ease);
+}
+.lc-b:hover:not(:disabled) { background: var(--active); color: var(--text-strong); }
+.lc-b:disabled { opacity: .35; cursor: default; }
+.lc-plot { user-select: none; touch-action: pan-y; }
+.lc-plot svg { overflow: hidden; }
+.lc-sel { position: absolute; top: 0; bottom: 0; border-radius: 6px; background: rgba(111, 107, 255, .18); box-shadow: inset 0 0 0 1px rgba(138, 92, 255, .55); pointer-events: none; }
+.ad-chart.lc { margin-top: 26px; }
+/* Plan on the PC: a page of its own */
+#view-plan .plan-box { display: flex; flex-direction: column; gap: 12px; }
+#view-plan .plan-lead { margin: -14px 0 4px !important; font-size: 14px !important; }
+#view-plan .plan-scroll { overflow: visible; margin: 0; padding: 0; }
+#view-plan .plan-add { align-self: stretch; }
+/* card, second line: the days (and task) on the left, a quiet "skip today" on the right */
+.plan { grid-template-areas: "span tog" "info act"; }
+.plan-act { grid-area: act; justify-self: end; }
+.plan-act .plan-skip { font-size: 12px; color: var(--text-3); opacity: 0; transition: opacity .15s var(--ease), color .15s var(--ease); white-space: nowrap; }
+.plan:hover .plan-act .plan-skip, .plan-act .plan-skip[data-act="unskip"] { opacity: 1; }
+.plan-act .plan-skip:hover { color: var(--text); text-decoration: underline; text-underline-offset: 2px; }
+html.android .plan-act .plan-skip { opacity: .8; }
+.plan-next { display: block; }
+
+/* "What are you working on?" and naming a series afterwards */
+#taskAsk { z-index: 64; }
+.ta-card { width: min(400px, 100%); }
+.ta-sub { margin: -4px 0 2px !important; font-size: 13.5px; color: var(--text-2); }
+.ta-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ta-chips:empty { display: none; }
+html.android .ta-chips .at-chip { padding: 10px 15px; font-size: 15px; background: var(--block-2); }
+.sc-task {
+  display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
+  border: 0; border-radius: 10px; padding: 6px 10px; margin: -4px 0 2px;
+  background: var(--hover); color: var(--text-2); font-size: 13.5px;
+}
+.sc-task b { color: var(--text-strong); font-weight: 600; }
+.sc-task svg { width: 14px; height: 14px; opacity: .6; }
+.sc-task:hover { background: var(--active); }
+.plan .toggle { justify-self: end; }
+
+/* The small "i": explanations on demand instead of on the page */
+.head-i { display: flex; align-items: center; gap: 10px; }
+.head-i > h1, .head-i > h3 { margin-right: 0; }
+#view-projects .head-i, #view-apps .head-i, #view-plan .head-i { margin-bottom: 18px; }
+.head-i > h1 { margin-bottom: 0 !important; }
+.ad-head .head-i { flex: 1; min-width: 0; }
+.info-i {
+  flex: none; width: 20px; height: 20px; padding: 0; border-radius: 50%;
+  display: inline-grid; place-items: center; vertical-align: middle;
+  border: 1.4px solid var(--text-3); background: transparent; color: var(--text-3);
+  font: italic 600 12px/1 Georgia, "Times New Roman", serif;
+  transition: color .15s var(--ease), border-color .15s var(--ease), background .15s var(--ease);
+}
+.info-i:hover, .info-i.on { color: var(--text-strong); border-color: var(--text-2); background: var(--hover); }
+.info-i.sm { width: 16px; height: 16px; font-size: 10.5px; margin-left: 4px; }
+.info-tip {
+  position: fixed; z-index: 80; max-width: min(320px, calc(100vw - 20px));
+  padding: 10px 13px; border-radius: 12px;
+  background: var(--bg-3); color: var(--text); box-shadow: var(--shadow);
+  font-size: 13.5px; line-height: 1.5;
+  animation: dropIn .16s var(--ease);
+}
+html.android .info-i { width: 24px; height: 24px; font-size: 13px; }
+/* time picker: "Remove" and "Full plan…" on the left, Done on the right */
+.tp-left { display: flex; gap: 2px; }
+.tp .tp-extra { color: var(--text-3); }
+.tp .tp-extra:hover { color: var(--text); }
+.tp { width: 240px; }
+.ts-extra { display: block; margin: -4px auto 12px; border: 0; background: transparent; color: var(--text-2); font-size: 14px; padding: 6px 10px; }
+.tp { width: 270px; }
+.tp .cal-foot .ghost { white-space: nowrap; }
+
+/* ======================= Just a timer (simple mode) ======================= */
+.simple-day { display: none; }
+html.simple .tab[data-view="projects"], html.simple .tab[data-view="apps"], html.simple .tab[data-view="plan"] { display: none !important; }
+html.android.simple #view-projects, html.android.simple #view-apps { display: none !important; }
+html.simple #view-timer .label-wrap, html.simple #view-timer .label-meta, html.simple #view-timer .test-row,
+html.simple #view-timer .props .prop:not([data-p="work"]):not([data-p="brk"]),
+html.simple.android #view-timer .props { display: none !important; }
+html.simple #view-timer .props { border-top: 0; margin-top: 4px; }
+/* the day at a glance: today towards the goal, the streak, a bar that fills with every session */
+html.simple .simple-day {
+  display: block; position: relative; width: 100%; max-width: 360px; margin: 6px auto 22px;
+}
+.sd-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+.sd-done { font-size: 15px; font-weight: 600; color: var(--text-strong); font-variant-numeric: tabular-nums; }
+.sd-streak { font-size: 13px; font-weight: 600; color: #ff9a4d; }
+.sd-streak:not(:empty)::before { content: ""; display: inline-block; width: 11px; height: 14px; margin-right: 5px; vertical-align: -2px;
+  background: linear-gradient(180deg, #ffcf5a, #ff6a3d); clip-path: path("M5.5 0C6.5 3 11 5 11 9.2C11 12 8.6 14 5.5 14S0 12 0 9.2C0 7 1.4 5.6 2.6 4.6C2.6 6.4 3.6 7.4 4.6 7.4C4.6 4.6 3.6 2.6 5.5 0Z"); }
+.sd-bar { height: 10px; border-radius: 999px; background: var(--track); overflow: hidden; }
+.sd-bar i { display: block; height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, #4f8bff, #8a5cff); transition: width .8s cubic-bezier(.22, .9, .3, 1); }
+.simple-day.no-goal .sd-bar { display: none; }
+.simple-day .plus-chip { top: -30px; }
+.simple-day.done-pulse .sd-bar i { animation: sdPulse 1.1s ease-out; }
+@keyframes sdPulse { 30% { filter: brightness(1.5) drop-shadow(0 0 8px rgba(138, 92, 255, .9)); } }
+.simple-day.win .sd-bar i { animation: sdWin 1.6s ease-out; background: linear-gradient(90deg, #2fbf8f, #3db7d6, #8a5cff); }
+@keyframes sdWin { 0% { filter: none; } 20% { filter: brightness(1.7) drop-shadow(0 0 12px rgba(47, 191, 143, .9)); } 100% { filter: none; } }
+.simple-day.win .sd-done { animation: kPop .5s var(--ease); }
+html.simple.android .simple-day { max-width: 320px; margin: 18px auto 0; order: 3; }
+
+/* the task list: "Create a new project" at the very bottom, apart from the projects */
+.sug-foot { margin: 4px -6px -6px; padding: 6px; border-top: 1px solid var(--border); }
+.sug-create {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  border: 0; border-radius: 10px; padding: 8px 10px; background: transparent;
+  color: var(--accent); font-weight: 600; text-align: left;
+  transition: background .12s var(--ease);
+}
+.sug-create:hover { background: var(--accent-soft); }
+.sug-plus-ico { width: 26px; height: 26px; flex: none; display: grid; place-items: center; border-radius: 8px; background: linear-gradient(135deg, #4f8bff, #8a5cff); color: #fff; }
+.sug-plus-ico svg { width: 16px; height: 16px; }
+.sug-new-row { display: flex; gap: 6px; padding: 2px; }
+.sug-new-in { flex: 1; min-width: 0; border: 0; outline: 0; border-radius: 10px; padding: 8px 12px; font: inherit; background: var(--hover); color: var(--text-strong); box-shadow: inset 0 0 0 1.5px var(--accent); user-select: text; }
+.sug-new-ok { width: 38px; border: 0; border-radius: 10px; background: linear-gradient(135deg, #4f8bff, #8a5cff); color: #fff; display: grid; place-items: center; }
+.sug-new-ok svg { width: 16px; height: 16px; }
+/* "Create …" in the task list: quiet grey, like a secondary line, not a call to action */
+.sug-create { color: var(--text-2); font-weight: 500; }
+.sug-create:hover, .sug-create.on { background: var(--hover); color: var(--text); }
+.sug-create .sug-plus-ico { background: var(--hover); color: var(--text-2); }
+.sug-create:hover .sug-plus-ico, .sug-create.on .sug-plus-ico { background: var(--active); color: var(--text); }
+.sug-create.typed { color: var(--text); }
+.sug-create span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sug-foot.alone { margin-top: -6px; border-top: 0; }
+
+/* ======================= Web app (browser, Mac) ======================= */
+/* the browser draws its own window: no title bar; nothing that needs the Windows host */
+html.web .titlebar, html.web #btnAddApp, html.web #appPicker, html.web .app .del, html.web #adUntrack,
+html.web .group-title[data-i18n="gSystem"], html.web .set:has(#autostartToggle), html.web .set:has([data-key="closeToTray"]),
+html.web .set:has([data-key="alwaysOnTop"]), html.web .set:has([data-key="popup"]), html.web #btnFolder { display: none !important; }
+html.web .tabs { padding-top: 6px; }

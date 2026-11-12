@@ -115,6 +115,7 @@ export const EN = {
   'Скачать {name}': 'Download {name}',
   'Скачать для Windows': 'Download for Windows',
   'Скачать для Mac': 'Download for Mac',
+  'Открыть веб-версию': 'Open the web version',
   'Скачать для Linux': 'Download for Linux',
   'Только для Windows и Linux': 'Windows and Linux only',
   'Скачать для Android': 'Download for Android',

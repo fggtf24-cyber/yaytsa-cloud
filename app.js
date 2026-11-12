@@ -240,6 +240,7 @@ const APPS = [
     descEn: 'A pomodoro timer that tracks your work hours. Projects with deadlines, Steam-like time in your programs, an activity heatmap and a reminder on top of every window.',
     file: 'https://github.com/brlk33/Yaytsa-Timer/raw/main/YaytsaTimer-Setup.exe',
     androidFile: 'https://github.com/brlk33/Yaytsa-Timer/raw/main/YaytsaTimer.apk',
+    webApp: 'timer/', // веб-версия на этом сайте: для Mac и любого компьютера с браузером
     size: '3 МБ',
     sizeEn: '3 MB',
     repo: 'https://github.com/brlk33/Yaytsa-Timer',
@@ -263,6 +264,7 @@ const APPS = [
       'Обновляется сама: новая версия скачивается в фоне, установка по кнопке «Перезапустить»',
       'Синхронизация ПК и телефона через аккаунт Яйца Cloud: запустили таймер на телефоне — он идёт и на ПК. История, проекты и настройки одинаковые везде',
       'Есть версия для Android, сделанная под большой палец: вкладки-иконки внизу, переход свайпом, крупные кнопки внизу экрана. Обратный отсчёт в шторке, сигнал в конце захода даже при закрытом приложении, свой звук сигнала',
+      'Для Mac и любого компьютера — веб-версия прямо на сайте: открывается в браузере, работает офлайн, ставится в Dock (Safari: Файл → Добавить в Dock) или как приложение в Chrome. Синхронизируется с тем же аккаунтом',
     ],
     needs: [
       'Windows 10 или 11, 64-бит',
@@ -291,6 +293,7 @@ const APPS = [
       'Updates itself: the new version downloads in the background and installs with one "Restart" click',
       'Sync between PC and phone with your Яйца Cloud account: start the timer on the phone and it runs on the PC too. History, projects and settings match everywhere',
       'An Android version made for your thumb: icon tabs at the bottom, swipe between them, big buttons low on the screen. A countdown in the notification shade, an alert at the end of a session even when the app is closed, your own alert sound',
+      'For Mac and any computer: a web version right on the site. It opens in the browser, works offline and installs to the Dock (Safari: File → Add to Dock) or as an app in Chrome. It syncs with the same account',
     ],
     needsEn: [
       'Windows 10 or 11, 64-bit',
@@ -508,7 +511,7 @@ const OS_ICON = {
   Linux: 'M12 2C9.5 2 8 4 8 7c0 1.5-.5 2.5-1.5 4S4 14.5 5 17c.5 1.3 2 2 3 3 1 .8 2.3 2 4 2s3-1.2 4-2c1-1 2.5-1.7 3-3 1-2.5-.5-4.5-1.5-6S16 8.5 16 7c0-3-1.5-5-4-5z',
   Android: 'M6 18v-8h12v8a1 1 0 0 1-1 1h-1v2.5a1.5 1.5 0 0 1-3 0V19h-2v2.5a1.5 1.5 0 0 1-3 0V19H7a1 1 0 0 1-1-1zM3.5 10A1.5 1.5 0 0 1 5 11.5v5a1.5 1.5 0 0 1-3 0v-5A1.5 1.5 0 0 1 3.5 10zm17 0a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1-3 0v-5a1.5 1.5 0 0 1 1.5-1.5zM6 9a6 6 0 0 1 12 0z',
 };
-const platform = a => `<span class="platforms">${['Windows', a.macInstall && 'macOS', a.linuxFile && 'Linux', a.androidFile && 'Android'].filter(Boolean)
+const platform = a => `<span class="platforms">${['Windows', (a.macInstall || a.webApp) && 'macOS', a.linuxFile && 'Linux', a.androidFile && 'Android'].filter(Boolean)
   .map(os => `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" role="img" aria-label="${os}"><title>${os}</title><path d="${OS_ICON[os]}"/></svg>`).join('')}</span>`;
 const isMac = /Macintosh/.test(navigator.userAgent);
 const isLinux = /Linux/.test(navigator.userAgent) && !/Android/.test(navigator.userAgent);
@@ -743,6 +746,8 @@ const linuxButton = (a, cls = 'btn') => `<a class="${cls} dl-linux" data-id="${e
 // Внутри Android-приложения само приложение скачивать незачем.
 const androidButton = (a, cls = 'btn') => android && a.id === 'yaytsa-cloud' ? '' : `<a class="${cls} dl-android" data-id="${esc(a.id)}" href="${safeUrl(a.androidFile)}">${T('Скачать для Android')}</a>`;
 const iosButton = (cls = 'btn') => `<button type="button" class="${cls} ios-install">${T('Установить на iPhone')}</button>`;
+// Веб-версия программы на этом же сайте (например, Яйцетаймер для Mac): только свой путь, без внешних ссылок
+const webButton = (a, cls = 'btn') => (/^[a-z-]+\/$/.test(a.webApp || '') ? `<a class="${cls} dl-web" href="${esc(a.webApp)}" target="_blank" rel="noopener">${T('Открыть веб-версию')}</a>` : '');
 const macButton = (a, cls = 'btn') => `<button type="button" class="${cls} dl-mac" data-id="${esc(a.id)}">${T('Скачать для Mac')}</button>`;
 const siteLink = a => (safeUrl(a.site) ? `<a class="link" href="${safeUrl(a.site)}" target="_blank" rel="noopener">${T('Сайт')}</a>` : '');
 const editLink = (kind, a) => (isAdmin ? `<a class="link" href="#edit/${kind}/${esc(a.id)}" aria-label="${T('Изменить {name}', { name: esc(nm(a)) })}">${T('Изменить')}</a>` : '');
@@ -786,7 +791,7 @@ const card = a => `
       <a class="link" href="#app/${esc(a.id)}" aria-label="${T('Подробнее о {name}', { name: esc(nm(a)) })}">${T('Подробнее')}</a>
       ${siteLink(a)}
       ${editLink('apps', a)}
-      ${isAndroid && a.androidFile ? androidButton(a) : isLinux && a.linuxFile ? linuxButton(a) : isMac && a.macInstall ? macButton(a) : download(a)}
+      ${isAndroid && a.androidFile ? androidButton(a) : isLinux && a.linuxFile ? linuxButton(a) : isMac && a.macInstall ? macButton(a) : isMac && a.webApp ? webButton(a) : download(a)}
     </div>
   </article>`;
 
@@ -924,12 +929,13 @@ function renderApp(a) {
         </div>
         <p class="app-desc">${esc(tr(a, 'desc'))}</p>
         <ul class="app-meta">
-          <li>${isWindows || (isMac && a.macInstall) || (isLinux && a.linuxFile) || (isAndroid && a.androidFile) || (ios && isIOS) ? `${metaIcon('ok')}${T('Работает на этом устройстве')}` : `${metaIcon('warn')}${T(a.macInstall ? 'Только для Windows и Mac' : a.linuxFile ? 'Только для Windows и Linux' : a.androidFile ? 'Только для Windows и Android' : 'Только для Windows')}`}</li>
+          <li>${isWindows || (isMac && (a.macInstall || a.webApp)) || (isLinux && a.linuxFile) || (isAndroid && a.androidFile) || (ios && isIOS) ? `${metaIcon('ok')}${T('Работает на этом устройстве')}` : `${metaIcon('warn')}${T(a.macInstall ? 'Только для Windows и Mac' : a.linuxFile ? 'Только для Windows и Linux' : a.androidFile ? 'Только для Windows и Android' : 'Только для Windows')}`}</li>
           ${size ? `<li>${metaIcon('down')}${T(a.portable ? '{size}, установка не нужна' : '{size} после установки', { size: esc(size) })}</li>` : ''}
           ${authorText(a) ? `<li>${metaIcon('at')}<span>${authorText(a)}</span></li>` : ''}
           ${a.community ? `<li>${metaIcon('warn')}${T('Программу добавил участник. Админ проверил заявку, но файл вы скачиваете на свой риск.')}</li>` : ''}
         </ul>
         ${ios && isIOS ? iosButton('btn primary') + download(a) + androidButton(a) : (a.androidFile ? (isAndroid ? androidButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + androidButton(a)) : a.linuxFile ? (isLinux ? linuxButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + linuxButton(a)) : !a.macInstall ? download(a, 'btn primary') : isMac ? macButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + macButton(a)) + (ios ? iosButton() : '')}
+        ${a.webApp ? webButton(a, isMac ? 'btn primary' : 'btn') : ''}
         ${desktop ? removeButton(a) : ''}
         ${a.community ? `<figure id="author-selfie" class="author-selfie" data-app="${esc(a.id)}" hidden></figure>` : ''}
         ${authorName(a) ? `<a class="btn report-link" href="#report/${esc(a.id)}">${T('Сообщить о баге или идее')}</a>` : ''}
@@ -2319,12 +2325,14 @@ function timerTarget(r) {
   if (!/^[0-9a-f]{16,64}$/.test(r.state || '')) return null;
   const rt = encodeURIComponent(user.refreshToken);
   if (r.target === 'a') return `yaytsa://auth?state=${r.state}&rt=${rt}`;
+  // веб-версия Яйцетаймера живёт на этом же сайте (timer/): её страница auth.html передаст сессию открытой вкладке таймера
+  if (r.target === 'w') return new URL(`timer/auth.html#state=${r.state}&rt=${rt}`, location.href.split('#')[0]).href;
   const port = /^p(\d{2,5})$/.exec(r.target || '');
   return port ? `http://127.0.0.1:${port[1]}/cb#state=${r.state}&rt=${rt}` : null;
 }
 
 function renderTimerLogin(r) {
-  const valid = /^(a|p\d{2,5})$/.test(r.target || '') && /^[0-9a-f]{16,64}$/.test(r.state || '');
+  const valid = /^(a|w|p\d{2,5})$/.test(r.target || '') && /^[0-9a-f]{16,64}$/.test(r.state || '');
   if (!valid) {
     view.innerHTML = `<section class="section panel"><h1>${T('Вход в Яйцетаймер')}</h1><p class="empty">${T('Ссылка устарела. Нажмите «Войти через Google» в Яйцетаймере ещё раз.')}</p></section>`;
     return;
