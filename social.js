@@ -46,6 +46,10 @@ const TAG_RE = /(^|[\s(])#([\p{L}\p{N}_-]{1,60})/gu;
 const EGG_COLORS = ['#6FA8FF', '#FFB347', '#A58BFF', '#FF6F91', '#6BE3B4', '#5ED0F0', '#FF8A5B', '#FFC531'];
 
 const ICON = {
+  check: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  ul: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M10 6h10M10 12h10M10 18h10"/><circle cx="5" cy="6" r="1" fill="currentColor"/><circle cx="5" cy="12" r="1" fill="currentColor"/><circle cx="5" cy="18" r="1" fill="currentColor"/></svg>',
+  ol: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 6h10M10 12h10M10 18h10M4 4.5l1.5-1V8M3.8 14.2c.3-.7 2.2-1 2.2.3 0 1-2.2 1.8-2.2 2.9H6"/></svg>',
+  hr: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 12h18M8 6h8M8 18h8" opacity=".45"/><path d="M3 12h18"/></svg>',
   up: '<svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.8 2.8 10.6h4.6v6.6h5.2v-6.6h4.6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
   down: '<svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 17.2 2.8 9.4h4.6V2.8h5.2v6.6h4.6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
   comment: '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M10 3c4.4 0 7.5 2.9 7.5 6.5S14.4 16 10 16c-1 0-2-.1-2.9-.4L3 17.2l1.2-3.4C3 12.7 2.5 11.2 2.5 9.5 2.5 5.9 5.6 3 10 3z" stroke-linejoin="round"/></svg>',
@@ -187,11 +191,100 @@ export function setupSocial(ctx) {
   // Текст пишут посетители: сначала esc, потом ссылки (только http/https), упоминания @имя и хэштеги программ.
   const rich = s => esc(s)
     .replace(/https?:\/\/[^\s<]+[^\s<.,:;"')\]!?]/g, u => `<a class="r-link" href="${u}" target="_blank" rel="noopener nofollow ugc">${u}</a>`)
-    .replace(/(^|[\s(])@([a-z0-9_]{1,20})\b/g, (_, pre, n) => (n === 'everyone' ? `${pre}<b class="r-all">@everyone</b>` : `${pre}<a class="r-link" href="#u/${n}">@${n}</a>`))
+    // Телефон часто пишет @Neba с большой буквы: имена без учёта регистра.
+    .replace(/(^|[\s(])@([a-z0-9_]{1,20})\b/gi, (_, pre, raw) => {
+      const n = raw.toLowerCase();
+      return n === 'everyone' ? `${pre}<b class="r-all">@everyone</b>` : `${pre}<a class="r-link" href="#u/${n}">@${raw}</a>`;
+    })
     .replace(TAG_RE, (m, pre, tag) => {
       const app = appByTag(tag);
       return app ? `${pre}<a class="r-link" href="#app/${esc(app.id)}">#${tag}</a>` : m;
     });
+
+  // Как в Notion: строки «- текст» и «1. текст» — списки, строка «---» — черта между частями. Остальное как есть.
+  function richBlocks(s) {
+    const out = [];
+    let text = [];
+    let list = null;
+    const flushText = () => {
+      while (text.length && !text[0].trim()) text.shift(); // отступы у списков и черты дают поля, пустые строки рядом лишние
+      while (text.length && !text.at(-1).trim()) text.pop();
+      if (text.length) out.push(rich(text.join('\n')));
+      text = [];
+    };
+    const flushList = () => {
+      if (list) out.push(`<${list.tag} class="r-list-${list.tag}"${list.start > 1 ? ` start="${list.start}"` : ''}>${list.items.map(i => `<li>${rich(i)}</li>`).join('')}</${list.tag}>`);
+      list = null;
+    };
+    for (const line of s.split('\n')) {
+      const ul = /^\s*[-*•]\s+(.*)$/.exec(line);
+      const ol = !ul && /^\s*(\d{1,4})[.)]\s+(.*)$/.exec(line);
+      if (ul || ol) {
+        flushText();
+        const tag = ul ? 'ul' : 'ol';
+        if (list?.tag !== tag) { flushList(); list = { tag, start: ol ? +ol[1] : 1, items: [] }; }
+        list.items.push(ul ? ul[1] : ol[2]);
+        continue;
+      }
+      flushList();
+      if (/^\s*(-{3,}|\*{3,}|_{3,}|—{2,})\s*$/.test(line)) { flushText(); out.push('<hr class="r-hr">'); } else text.push(line);
+    }
+    flushText();
+    flushList();
+    return out.join('');
+  }
+
+  // Enter в пункте списка начинает следующий пункт, Enter в пустом пункте выходит из списка.
+  function continueList(t) {
+    if (t.selectionStart !== t.selectionEnd) return false;
+    const start = t.value.lastIndexOf('\n', t.selectionStart - 1) + 1;
+    const m = /^(\s*)(?:([-*•])|(\d{1,4})([.)]))\s+(.*)$/.exec(t.value.slice(start, t.selectionStart));
+    if (!m) return false;
+    if (!m[5].trim()) t.setRangeText('', start, t.selectionStart, 'end');
+    else t.setRangeText(`\n${m[1]}${m[2] || `${+m[3] + 1}${m[4]}`} `, t.selectionStart, t.selectionStart, 'end');
+    t.dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
+  }
+
+  // Кнопки «Список», «Нумерация», «Черта» в посте: на телефоне про «- » и «1. » никто не догадается.
+  function insertFormat(btn) {
+    const t = btn.closest('form').querySelector('textarea');
+    const start = t.value.lastIndexOf('\n', t.selectionStart - 1) + 1;
+    const kind = btn.dataset.fmt;
+    if (kind === 'hr') {
+      const pre = t.selectionStart > start ? '\n' : '';
+      t.setRangeText(`${pre}---\n`, t.selectionStart, t.selectionEnd, 'end');
+    } else {
+      const prev = /^\s*(\d{1,4})[.)]\s/.exec(t.value.slice(t.value.lastIndexOf('\n', start - 2) + 1, start));
+      const mark = kind === 'ul' ? '- ' : `${prev && start ? +prev[1] + 1 : 1}. `;
+      if (!t.value.slice(start).startsWith(mark)) t.setRangeText(mark, start, start, 'preserve');
+    }
+    t.focus();
+    t.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  // Строка каретки в textarea: копия поля с текстом до каретки. Подсказка @ встаёт под эту строку,
+  // а не под всё поле: на телефоне низ длинного поля спрятан под клавиатурой.
+  function caretBottom(t) {
+    const cs = getComputedStyle(t);
+    const div = document.createElement('div');
+    for (const p of ['boxSizing', 'width', 'padding', 'borderWidth', 'font', 'lineHeight', 'letterSpacing', 'wordSpacing', 'tabSize']) div.style[p] = cs[p];
+    Object.assign(div.style, { position: 'absolute', visibility: 'hidden', top: '0', left: '-9999px', borderStyle: 'solid', whiteSpace: 'pre-wrap', overflowWrap: 'break-word' });
+    div.textContent = t.value.slice(0, t.selectionStart);
+    const mark = div.appendChild(document.createElement('span'));
+    mark.textContent = '​';
+    document.body.append(div);
+    const y = mark.offsetTop + mark.offsetHeight - t.scrollTop;
+    div.remove();
+    return Math.min(Math.max(y, 0), t.offsetHeight);
+  }
+
+  // Пост разработчика про свою программу — официальный, его видно издалека.
+  const isDevPost = p => {
+    const app = p.appId && ctx.apps.find(a => a.id === p.appId);
+    return !!app && [app.authorUid, ...(app.coauthors || [])].includes(p.uid);
+  };
+  const devBadge = p => (isDevPost(p) ? `<span class="r-devbadge">${ICON.check}${T('От разработчика')}</span>` : '');
 
   const imageTag = url => (DATA_IMAGE.test(url || '') ? `<img class="c-image" src="${url}" alt="${T('Картинка в комментарии')}" loading="lazy" tabindex="0" role="button">` : '');
 
@@ -239,6 +332,7 @@ export function setupSocial(ctx) {
     <div class="attach"${multi ? ' data-multi' : ''}>
       ${emojiBtn()}
       ${stickers ? stickerBtn() : ''}
+      ${multi ? [['ul', 'Список'], ['ol', 'Нумерованный список'], ['hr', 'Черта между частями']].map(([k, l]) => `<button type="button" class="r-iconbtn" data-fmt="${k}" title="${T(l)}" aria-label="${T(l)}">${ICON[k]}</button>`).join('') : ''}
       <label class="r-iconbtn" title="${T('Добавить картинку или гифку')}">${ICON.image}<span class="sr">${T('Добавить картинку или гифку')}</span>
         <input class="sr" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/heic,image/heif,.heic,.heif" data-attach${multi ? ' multiple' : ''}></label>
       ${multi ? '<span class="attach-list"></span>' : `<input type="hidden" name="image">${attachItem()}`}
@@ -521,7 +615,8 @@ export function setupSocial(ctx) {
   const names = uid => `<span class="r-names"><b>${esc(shownName(uid))}</b>${handle(uid) ? `<small>@${esc(handle(uid))}</small>` : ''}</span>`;
 
   const postCard = (p, { author = true } = {}) => `
-    <article class="r-post" data-href="#post/${esc(p.id)}">
+    <article class="r-post${isDevPost(p) ? ' dev' : ''}" data-href="#post/${esc(p.id)}">
+      ${devBadge(p)}
       <div class="r-meta">
         ${author ? `<a class="r-who" href="${profileHref(p.uid)}">${ava(p.uid, 32)}${names(p.uid)}</a>${relation(p.uid)}<span class="r-dot">•</span>` : ''}
         ${time(p.createdAt)}
@@ -601,6 +696,7 @@ export function setupSocial(ctx) {
       <div class="r-sorts" role="group" aria-label="${T('Сортировка')}">
         ${SORTS.map(([id, label]) => `<a class="r-sort" href="#feed${id === 'hot' ? '' : `/${id}`}" aria-current="${id === sort ? 'page' : 'false'}">${T(label)}</a>`).join('')}
       </div>
+      <a class="r-pill primary r-feed-new" href="#submit">${ICON.plus}<span>${T('Создать пост')}</span></a>
     </div>
     <div class="r-list">${body}</div>`, aside);
 
@@ -688,7 +784,7 @@ export function setupSocial(ctx) {
       </details>` : '';
     const sub = handle(post.uid) ? `@${esc(handle(post.uid))}` : '';
     const main = `
-      <article class="r-full">
+      <article class="r-full${isDevPost(post) ? ' dev' : ''}">
         <div class="r-full-head">
           <button type="button" class="r-iconbtn r-backbtn" data-s-back aria-label="${T('Назад')}">${ICON.back}</button>
           <a href="${profileHref(post.uid)}">${ava(post.uid, 32)}</a>
@@ -698,8 +794,9 @@ export function setupSocial(ctx) {
           </div>
           ${menu}
         </div>
-        <h1 class="r-h1">${esc(post.title)}</h1>
-        <div class="r-body" id="r-post-body">${post.body ? rich(post.body) : ''}</div>
+        ${devBadge(post)}
+        <h1 class="r-h1">${rich(post.title)}</h1>
+        <div class="r-body" id="r-post-body">${post.body ? richBlocks(post.body) : ''}</div>
         ${postMedia(post)}
         ${tagChip(post.appId)}
         <div class="r-actions">
@@ -788,7 +885,7 @@ export function setupSocial(ctx) {
           </div>
           <button type="button" class="r-c-line" data-s-collapse aria-label="${T('Свернуть ветку')}"></button>
           <div class="r-c-content">
-            <div class="r-c-body">${c.deleted ? `<p class="r-muted">${T('[комментарий удалён]')}</p>` : rich(c.body)}</div>
+            <div class="r-c-body">${c.deleted ? `<p class="r-muted">${T('[комментарий удалён]')}</p>` : richBlocks(c.body)}</div>
             ${c.deleted ? '' : imageTag(c.image) + stickerTag(c.sticker)}
             ${c.deleted ? '' : `
               <div class="r-c-actions">
@@ -1191,6 +1288,8 @@ export function setupSocial(ctx) {
           <li>${T('Пост появится на вашей странице и в общей ленте.')}</li>
           <li>${T('Укажите программу в поле под текстом — пост будет виден и на её странице.')}</li>
           <li>${T('Упомяните человека через @имя, ссылки станут кликабельными.')}</li>
+          <li>${T('Список — строка с «- » или «1. », черта между частями — «---». Или кнопки под текстом.')}</li>
+          ${ctx.apps.some(a => [a.authorUid, ...(a.coauthors || [])].includes(me())) ? `<li>${T('Пост о своей программе с её тегом будет отмечен «От разработчика».')}</li>` : ''}
           <li>${T('Будьте вежливы. Админы могут удалить грубость.')}</li>
         </ol>
       </section>`;
@@ -1236,7 +1335,7 @@ export function setupSocial(ctx) {
 
   // Кого отметили через @имя — тем уведомление «Упоминание от …». skip — кому уже ушло уведомление об ответе.
   async function notifyMentions(text, postId, commentId, skip = '') {
-    const names = [...new Set([...(text || '').matchAll(/(^|[^a-z0-9_])@([a-z0-9_]{1,20})(?![a-z0-9_])/g)].map(m => m[2]))]
+    const names = [...new Set([...(text || '').matchAll(/(^|[^a-z0-9_])@([a-z0-9_]{1,20})(?![a-z0-9_])/gi)].map(m => m[2].toLowerCase()))]
       .filter(n => n !== 'everyone').slice(0, 10);
     for (const n of names) {
       const uid = await uidByName(n).catch(() => null);
@@ -1298,10 +1397,13 @@ export function setupSocial(ctx) {
     }
     if (!items.length) return closeSuggest();
     const box = suggest?.box || Object.assign(document.createElement('div'), { className: 'pop suggest' });
+    const fresh = !suggest;
     box.setAttribute('role', 'listbox');
     input.parentElement.append(box);
+    box.style.top = input.tagName === 'TEXTAREA' && !input.closest('.r-ask') ? `${input.offsetTop + caretBottom(input) + 4}px` : '';
     suggest = { box, input, whole, start: before.length - q.length, items, active: 0 };
     drawSuggest();
+    if (fresh) box.scrollIntoView({ block: 'nearest' });
   }
 
   function pickSuggest(i) {
@@ -2457,6 +2559,7 @@ export function setupSocial(ctx) {
     else if (d.sGroupDelete !== undefined) deleteGroup();
     else if (d.sGroupLeave !== undefined) leaveGroup();
     else if (d.emoji) insertEmoji(t);
+    else if (d.fmt) insertFormat(t);
     else if (d.chatUnstage !== undefined) {
       const form = t.closest('form');
       form.photos.splice(+d.chatUnstage, 1);
@@ -2554,12 +2657,17 @@ export function setupSocial(ctx) {
   });
 
   view.addEventListener('mousedown', e => {
+    if (e.target.closest('[data-fmt]')) e.preventDefault(); // поле не теряет фокус, клавиатура телефона не прячется
     const item = e.target.closest('.suggest [data-i]');
     if (!item) return;
     e.preventDefault(); // иначе поле потеряет фокус раньше, чем сработает выбор
     pickSuggest(+item.dataset.i);
   });
   view.addEventListener('focusout', e => { if (e.target === suggest?.input) closeSuggest(); });
+  // beforeinput, а не keydown: клавиатура Android шлёт Enter внутри набора слова, keydown там не ловится.
+  view.addEventListener('beforeinput', e => {
+    if (e.inputType === 'insertLineBreak' && e.target.matches('.r-submit textarea, .r-composer textarea') && continueList(e.target)) e.preventDefault();
+  });
   view.addEventListener('focusin', e => { if (e.target.matches('[data-suggest=app]')) updateSuggest(e.target); });
 
   view.addEventListener('keydown', e => {

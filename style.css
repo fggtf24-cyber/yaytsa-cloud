@@ -89,7 +89,7 @@ h1, h2, p, ul { margin: 0; }
   background: #E5352B; color: #fff; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;
 }
 .bell-panel {
-  position: absolute; right: 0; top: 48px; z-index: 20; width: min(340px, calc(100vw - 32px)); max-height: 420px; overflow-y: auto;
+  position: absolute; right: 0; top: 48px; width: min(340px, calc(100vw - 32px)); max-height: 420px; overflow-y: auto;
   background: var(--card); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 30px var(--shadow);
 }
 .bell-panel .empty { padding: 16px; }
@@ -435,6 +435,22 @@ button.r-sort { border: 0; background: none; font: inherit; cursor: pointer; }
 .r-h1 { font-size: 24px; font-weight: 800; line-height: 1.25; letter-spacing: -.01em; overflow-wrap: anywhere; margin: 0; }
 .r-body { color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; font-size: 15px; }
 .r-body:empty { display: none; }
+/* Списки и черта в тексте поста и комментариев */
+.r-list-ul, .r-list-ol { margin: 4px 0; padding-left: 26px; white-space: normal; }
+.r-list-ul li, .r-list-ol li { white-space: pre-wrap; padding-left: 2px; }
+.r-list-ul li + li, .r-list-ol li + li { margin-top: 3px; }
+.r-list-ul li::marker, .r-list-ol li::marker { color: var(--sub); }
+.r-hr { height: 1px; margin: 14px 0; border: 0; background: var(--line); }
+/* Пост разработчика о своей программе */
+.r-devbadge {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 8px; border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--link); font-size: 12px; font-weight: 700;
+}
+.r-post.dev, .r-full.dev { box-shadow: inset 3px 0 0 var(--accent); }
+.r-post.dev { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.r-full.dev { padding-left: 14px; }
+/* «Создать пост» в ленте: на узком экране боковая колонка с этой кнопкой уезжает под все посты */
+.r-feed-new { display: none; flex: none; margin-left: auto; }
 .r-menu { position: relative; }
 .r-menu-list {
   position: absolute; right: 0; top: calc(100% + 4px); z-index: 6; min-width: 170px; padding: 6px 0;
@@ -611,6 +627,9 @@ a.r-stat:hover b { text-decoration: underline; }
 @media (max-width: 1100px) {
   .r-page { grid-template-columns: minmax(0, 756px); }
   .r-aside { position: static; }
+  .r-feed-new { display: inline-flex; }
+  .r-feedbar { flex-wrap: nowrap; }
+  .r-feedbar .r-sorts { min-width: 0; }
   .r-profile .r-phead-actions { display: flex; }
 }
 /* На узком экране карточка профиля уезжает вниз, поэтому подписка и «Написать» дублируются в шапке */
@@ -671,7 +690,7 @@ a.r-stat:hover b { text-decoration: underline; }
 .s-item b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .s-item small { color: var(--sub); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .s-ico { flex: none; width: 28px; height: 28px; border-radius: 7px; background: var(--pill); display: flex; align-items: center; justify-content: center; }
-.suggest { left: 0; top: calc(100% + 4px); width: min(340px, 100%); max-height: 320px; overflow-y: auto; padding: 6px; font-weight: 400; }
+.suggest { left: 0; top: calc(100% + 4px); width: min(340px, 100%); max-height: min(320px, 40vh); overflow-y: auto; padding: 6px; font-weight: 400; }
 .field { position: relative; }
 
 /* ---------- Шапка и соцсети ---------- */
@@ -777,9 +796,11 @@ a, button, summary, input, textarea, select, .card, .comment, .rail-ico, .r-post
 .emoji-panel button { aspect-ratio: 1; padding: 0; border: 0; border-radius: 8px; background: none; font-size: 19px; line-height: 1; }
 .emoji-panel button:hover { background: var(--pill); }
 .r-chat-form .emoji-panel { top: auto; bottom: calc(100% + 6px); }
-/* В посте смайлик живёт внутри поля текста, в левом нижнем углу */
-.r-field-body textarea { padding-bottom: 52px; }
-.r-field-body .attach { position: absolute; left: 10px; bottom: 10px; margin: 0; }
+/* В посте кнопки живут внутри рамки поля, отдельной строкой под текстом: длинный текст под них не заезжает */
+.r-field-body { gap: 0; border: 1px solid var(--edge); border-radius: 16px; background: var(--bg); }
+.r-field-body:focus-within { border-color: var(--text); }
+.r-field-body textarea, .r-field-body textarea:focus { border: 0; border-radius: 16px 16px 0 0; background: none; }
+.r-field-body .attach { flex-wrap: wrap; margin: 0; padding: 4px 10px 10px; }
 
 /* ---------- Редактирование профиля ---------- */
 .panel.edit { max-width: 920px; margin: 0 auto; padding-top: 32px; padding-bottom: 48px; gap: 24px; }
