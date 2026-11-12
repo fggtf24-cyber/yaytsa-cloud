@@ -1,6 +1,6 @@
 // Яйцетаймер web app: works offline. The app files are cached per version; a new version is
 // fetched in the background and waits until the page says "restart" (like the PC update).
-const VERSION = '2.19.3';
+const VERSION = '2.19.4';
 const CACHE = `yaytsa-timer-${VERSION}`;
 const FILES = ['./', 'index.html', 'style.css', 'app.js', 'sync.js', 'webapi.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 

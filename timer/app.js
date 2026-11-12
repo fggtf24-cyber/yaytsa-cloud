@@ -80,7 +80,7 @@ scale: 'Масштаб', appsPickTitle: 'Добавить программу', a
     stopHint: 'Стоп — заход от 10 минут сохранится', goalWeek: 'Цель на неделю', goalWeekDesc: 'Часов работы за неделю (с понедельника)', goalWeekL: 'Цель на неделю',
     pWeekL7: '7 дней', editEntry: 'Изменить запись', saveL: 'Сохранить', edited: 'Запись изменена', newProjOnly: 'Такого проекта нет. Откройте список ▾ и нажмите «Создать новый проект»', newProjBtn: 'Создать новый проект', createNamed: n => `Создать «${n}»`, newProjPh: 'Название нового проекта', projCreated: n => `Проект «${n}» создан`,
     adPerHour: 'активных минут в каждые 10 минут', adPerDay: 'активных часов в день', adToHist: 'В историю', adAddQ: (d, a, b) => `Добавить ${d} работы (${a}–${b}) в историю?`, adAdded: d => `Добавлено: ${d}`,
-    planSkipNext: 'Пропустить ближайший', untilShort: 'до', taQ: 'Над чем вы сейчас работаете?', taSub: tm => `Таймер идёт по плану с ${tm}. Выберите задачу — она запишется ко всем заходам этой серии.`, taNewPh: 'Или новая задача', taLater: 'Позже', quickOff: 'Убрать', schedL: 'Весь план…', taSet: n => `Задача: ${n}`, scTaskL: 'Задача', scNameQ: 'Как назвать эту серию?', scNameSub: 'Название запишется ко всем её заходам.', skipToday: 'пропустить сегодня', planRemove: 'удалить', undone: 'Отменено', redone: 'Возвращено', undoNone: 'Нечего отменять', redoNone: 'Нечего возвращать', hintLong: 'Можно включить длинный перерыв: каждый 4-й перерыв будет длиннее, как в помодоро', hintLongAct: 'Настроить', hintRange: 'Забыли включить таймер? Выделите участок на графике — его можно записать как работу', hintTrack: 'Выберите программы, в которых вы работаете, — таймер покажет, сколько времени вы в них проводите', hintTrackAct: 'Выбрать', skipTomorrow: 'пропустить завтра', skipDay: d => `пропустить в ${d.toLowerCase()}`, skippedToday: 'сегодня пропущено · вернуть', adPerHourH: 'активных минут в каждом часе', adPickHint: 'Проведите по графику с зажатой кнопкой мыши — выделенный участок можно записать в историю как работу (удобно, если забыли включить таймер). Нажатие на участок берёт весь блок работы вокруг. Колесо мыши приближает и отдаляет, Shift + колесо листает.', adNothing: 'В этом промежутке нет активной работы',
+    planSkipNext: 'Пропустить ближайший', untilShort: 'до', taQ: 'Над чем вы сейчас работаете?', taSub: tm => `Таймер идёт по плану с ${tm}. Выберите задачу — она запишется ко всем заходам этой серии.`, taNewPh: 'Или новая задача', taLater: 'Позже', quickOff: 'Убрать', schedL: 'Весь план…', taSet: n => `Задача: ${n}`, scTaskL: 'Задача', scNameQ: 'Как назвать эту серию?', scNameSub: 'Название запишется ко всем её заходам.', skipToday: 'пропустить сегодня', planRemove: 'удалить', startAtGo: tm => `Запустить в ${tm}`, clashQ: 'Время занято', clashCur: w => `В это время уже идёт серия (${w}). Два таймера сразу не запустить — выберите другое время.`, clashPlan: (w, d) => `Пересекается с планом ${w} (${d.toLowerCase()}). Два таймера сразу не запустить — выберите другое время или измените тот план.`, autoTellQ: w => `Таймер запустится сам ${w}`, autoTellText: 'Даже если вас не будет рядом: в это время он нажмёт «Старт» на любом включённом устройстве. Если вас не было, потом спросит, работали ли вы.', autoQ: tm => `Таймер запустился сам в ${tm}`, autoText: 'Вы работали всё это время?', autoTextDone: 'Вы работали в это время? Если нет, эти заходы не попадут в историю.', autoYes: 'Да, работал', autoNo: 'Нет', autoAgain: tm => `Не считаем время до ${tm}: таймер начат заново`, autoStop: 'Остановить', undone: 'Отменено', redone: 'Возвращено', undoNone: 'Нечего отменять', redoNone: 'Нечего возвращать', hintLong: 'Можно включить длинный перерыв: каждый 4-й перерыв будет длиннее, как в помодоро', hintLongAct: 'Настроить', hintRange: 'Забыли включить таймер? Выделите участок на графике — его можно записать как работу', hintTrack: 'Выберите программы, в которых вы работаете, — таймер покажет, сколько времени вы в них проводите', hintTrackAct: 'Выбрать', skipTomorrow: 'пропустить завтра', skipDay: d => `пропустить в ${d.toLowerCase()}`, skippedToday: 'сегодня пропущено · вернуть', adPerHourH: 'активных минут в каждом часе', adPickHint: 'Проведите по графику с зажатой кнопкой мыши — выделенный участок можно записать в историю как работу (удобно, если забыли включить таймер). Нажатие на участок берёт весь блок работы вокруг. Колесо мыши приближает и отдаляет, Shift + колесо листает.', adNothing: 'В этом промежутке нет активной работы',
     tabPlan: 'План', planLead: 'Таймер сам запустится в нужное время — на компьютере и на телефоне. Откроете позже — время уже будет идти с начала.',
     planAdd: '+ Добавить время', planNextL: 'Следующий старт:', planNone: 'Ничего не запланировано', planEmpty: 'Например: по будням в 7:30 — два захода',
     planOnOff: 'Включить или выключить', planNew: 'Новое время', planEditT: 'Время старта', peTimeL: 'Во сколько', peRepeatL: 'Повтор',
@@ -180,7 +180,7 @@ scale: 'Zoom', appsPickTitle: 'Add a program', appsSearchPh: 'Search programs on
     stopHint: 'Stop: a session of 10 minutes or more is kept', goalWeek: 'Weekly goal', goalWeekDesc: 'Hours of work per week (from Monday)', goalWeekL: 'This week’s goal',
     pWeekL7: '7 days', editEntry: 'Edit entry', saveL: 'Save', edited: 'Entry changed', newProjOnly: 'No such project. Open the list ▾ and press “Create a new project”', newProjBtn: 'Create a new project', createNamed: n => `Create “${n}”`, newProjPh: 'New project name', projCreated: n => `Project “${n}” created`,
     adPerHour: 'active minutes in every 10 minutes', adPerDay: 'active hours per day', adToHist: 'To history', adAddQ: (d, a, b) => `Add ${d} of work (${a}–${b}) to your history?`, adAdded: d => `Added: ${d}`,
-    planSkipNext: 'Skip the next one', untilShort: 'to', taQ: 'What are you working on?', taSub: tm => `The timer has been running as planned since ${tm}. Pick a task: it goes to every session of this run.`, taNewPh: 'Or a new task', taLater: 'Later', quickOff: 'Remove', schedL: 'Full plan…', taSet: n => `Task: ${n}`, scTaskL: 'Task', scNameQ: 'Name this series', scNameSub: 'The name goes to all its sessions.', skipToday: 'skip today', planRemove: 'remove', undone: 'Undone', redone: 'Redone', undoNone: 'Nothing to undo', redoNone: 'Nothing to redo', hintLong: 'You can turn on a long break: every 4th break gets longer, pomodoro style', hintLongAct: 'Set up', hintRange: 'Forgot the timer? Mark a stretch on the chart and log it as work', hintTrack: 'Pick the programs you work in, and the timer will show how much time you spend in them', hintTrackAct: 'Pick', skipTomorrow: 'skip tomorrow', skipDay: d => `skip ${d}`, skippedToday: 'skipped today · undo', adPerHourH: 'active minutes in each hour', adPickHint: 'Drag across the chart to mark a stretch and add it to your history as work (handy if you forgot the timer). A click takes the whole block of work around it. The mouse wheel zooms, Shift + wheel moves along.', adNothing: 'No active work in this stretch',
+    planSkipNext: 'Skip the next one', untilShort: 'to', taQ: 'What are you working on?', taSub: tm => `The timer has been running as planned since ${tm}. Pick a task: it goes to every session of this run.`, taNewPh: 'Or a new task', taLater: 'Later', quickOff: 'Remove', schedL: 'Full plan…', taSet: n => `Task: ${n}`, scTaskL: 'Task', scNameQ: 'Name this series', scNameSub: 'The name goes to all its sessions.', skipToday: 'skip today', planRemove: 'remove', startAtGo: tm => `Start at ${tm}`, clashQ: 'That time is taken', clashCur: w => `A run is already going then (${w}). Two timers can’t run at once: pick another time.`, clashPlan: (w, d) => `It overlaps the plan ${w} (${d}). Two timers can’t run at once: pick another time or change that plan.`, autoTellQ: w => `The timer will start by itself ${w}`, autoTellText: 'Even if you are away: at that time it presses Start on any device that is on. If you weren’t there, it will ask later whether you worked.', autoQ: tm => `The timer started by itself at ${tm}`, autoText: 'Have you been working all this time?', autoTextDone: 'Were you working then? If not, those sessions stay out of your history.', autoYes: 'Yes, I was', autoNo: 'No', autoAgain: tm => `Time before ${tm} doesn’t count: the timer started over`, autoStop: 'Stop', undone: 'Undone', redone: 'Redone', undoNone: 'Nothing to undo', redoNone: 'Nothing to redo', hintLong: 'You can turn on a long break: every 4th break gets longer, pomodoro style', hintLongAct: 'Set up', hintRange: 'Forgot the timer? Mark a stretch on the chart and log it as work', hintTrack: 'Pick the programs you work in, and the timer will show how much time you spend in them', hintTrackAct: 'Pick', skipTomorrow: 'skip tomorrow', skipDay: d => `skip ${d}`, skippedToday: 'skipped today · undo', adPerHourH: 'active minutes in each hour', adPickHint: 'Drag across the chart to mark a stretch and add it to your history as work (handy if you forgot the timer). A click takes the whole block of work around it. The mouse wheel zooms, Shift + wheel moves along.', adNothing: 'No active work in this stretch',
     tabPlan: 'Plan', planLead: 'The timer starts by itself at the time you set, on the PC and on the phone. Open it later and the time is already running from the start.',
     planAdd: '+ Add a time', planNextL: 'Next start:', planNone: 'Nothing planned', planEmpty: 'For example: weekdays at 7:30, two sessions',
     planOnOff: 'Turn on or off', planNew: 'New time', planEditT: 'Start time', peTimeL: 'At', peRepeatL: 'Repeat',
@@ -2140,7 +2140,7 @@ const roundInit = init => {
 };
 function openTimePicker(anchor, init, onPick, opts = {}) {
   const i = roundInit(init);
-  tpState = { h: i.h, m: i.m - (i.m % 5), onPick, now: !!opts.now, nowLabel: opts.nowLabel, extra: opts.extra, anchor };
+  tpState = { h: i.h, m: i.m - (i.m % 5), onPick, now: !!opts.now, nowLabel: opts.nowLabel, extra: opts.extra, okLabel: opts.okLabel, anchor };
   const tp = $('#tp');
   renderTimePicker();
   tp.hidden = false;
@@ -2161,7 +2161,7 @@ function renderTimePicker() {
   tp.innerHTML = `
     <div class="tp-head">${esc(t('seriesStart'))}</div>
     <div class="tp-cols">${col(Array.from({ length: 24 }, (_, i) => i), 'h', tpState.h)}<span class="tp-sep">:</span>${col(Array.from({ length: 12 }, (_, i) => i * 5), 'm', tpState.m)}</div>
-    <div class="cal-foot"><span class="tp-left">${tpState.now ? `<button class="ghost" data-act="now">${esc(tpState.nowLabel || t('seriesNow'))}</button>` : ''}${tpState.extra ? `<button class="ghost tp-extra" data-act="extra">${esc(tpState.extra.label)}</button>` : ''}</span><button class="ghost tp-ok" data-act="ok">${esc(t('done'))}</button></div>`;
+    <div class="cal-foot"><span class="tp-left">${tpState.now ? `<button class="ghost" data-act="now">${esc(tpState.nowLabel || t('seriesNow'))}</button>` : ''}${tpState.extra ? `<button class="ghost tp-extra" data-act="extra">${esc(tpState.extra.label)}</button>` : ''}</span><button class="ghost tp-ok${tpState.okLabel ? ' tp-go' : ''}" data-act="ok">${esc(tpState.okLabel ? tpState.okLabel(tpState.h, tpState.m) : t('done'))}</button></div>`;
   tp.querySelectorAll('.tp-col').forEach((c, i) => { if (keep[i] != null) c.scrollTop = keep[i]; });
 }
 function closeTimePicker() {
@@ -2189,7 +2189,7 @@ function bindTimePicker() {
 /* ---------- Phone: the time on two number wheels (hours, minutes) in a bottom sheet ----------
    Native scrolling with snap does the flick and the inertia; we only add the lens and the click. */
 const TS_ROW = 52;
-let tsOpen = false, tsPick = null, tsExtra = null;
+let tsOpen = false, tsPick = null, tsExtra = null, tsOkLabel = null;
 function tsFill(col, values, sel) {
   col.innerHTML = '<div class="ts-pad"></div>' + values.map(v => `<div class="ts-item" data-v="${v}">${pad(v)}</div>`).join('') + '<div class="ts-pad"></div>';
   col.scrollTop = Math.max(0, values.indexOf(sel)) * TS_ROW;
@@ -2213,6 +2213,11 @@ function openTimeSheet(init, onPick, opts = {}) {
   const i = roundInit(init);
   tsPick = onPick;
   tsExtra = opts.extra || null;
+  tsOkLabel = opts.okLabel || null;
+  const ok = $('#tsOk');
+  if (!ok.dataset.def) ok.dataset.def = ok.textContent;
+  ok.textContent = tsOkLabel ? tsOkLabel(i.h, i.m - (i.m % 5)) : ok.dataset.def;
+  ok.classList.toggle('tp-go', !!tsOkLabel);
   $('#tsNow').hidden = !opts.now;
   $('#tsNow').textContent = opts.nowLabel || t('seriesNow');
   $('#tsExtra').hidden = !tsExtra;
@@ -2238,6 +2243,7 @@ function bindTimeSheet() {
         const v = tsValue(col);
         if (last !== null && v !== last) tickSound(v > last ? 1 : -1);
         last = v;
+        if (tsOkLabel) $('#tsOk').textContent = tsOkLabel(tsValue($('#tsH')), tsValue($('#tsM')));
       });
     }, { passive: true });
   });
@@ -2789,13 +2795,14 @@ function planTick(force) {
   }
   if (changed) { savePlans(); renderPlans(); }
   if (missed.length && !planAsked) askMissed(missed);
+  autoWatch();
   armPlan();
 }
 function startPlan(p, at, id, fresh) {
   // the plan's task, or none yet: yesterday's text in the field is not a guess worth keeping (the app will ask)
   $('#label').value = p.label || '';
   if (p.label) commitLabel(true);
-  series = { id, start: at, count: planCount(p), work: planWork(p), brk: planBrk(p), ...longOf(), logged: 0, pausedAt: 0, label: p.label || '' };
+  series = { id, start: at, count: planCount(p), work: planWork(p), brk: planBrk(p), ...longOf(), logged: 0, pausedAt: 0, label: p.label || '', auto: 1, ack: fresh && winVisible && Date.now() - lastInput < 120000 ? 1 : 0 };
   seriesPos = '';
   api.closeAlert();
   applySeries(true);
@@ -2827,6 +2834,54 @@ async function askMissed(list) {
   }
   planAsked = false;
 }
+/* ---------- A run that started by itself: were you there? ----------
+   A planned start presses Start on its own, on whichever device is on. If nobody touched the app
+   around that time, the first touch afterwards asks whether you really worked; "no" takes back what
+   it logged and starts the run over from now (or leaves it, if it is already over). */
+let autoAsking = false;
+function autoWatch() {
+  const pd = settings.autoPend;
+  if (series && series.auto && !series.ack && (!pd || pd.id !== series.id)) {
+    settings.autoPend = { id: series.id, start: series.start };
+    persist();
+  } else if (pd && ((series && series.id === pd.id && series.ack) || Date.now() - pd.start > 3 * 86400e3)) {
+    settings.autoPend = null; // answered on another device, or too old to ask about
+    persist();
+  }
+}
+function autoAck() {
+  const pd = settings.autoPend;
+  settings.autoPend = null;
+  if (pd && series && series.id === pd.id) series.ack = 1;
+  persist();
+}
+async function autoPresent() {
+  const pd = settings.autoPend;
+  if (!pd || autoAsking) return;
+  if (Date.now() - pd.start < 5 * 60000) { autoAck(); return; } // here when it started
+  autoAsking = true;
+  const running = series && series.id === pd.id;
+  const ok = await confirmModal(t('autoQ')(hm(pd.start)), t(running ? 'autoText' : 'autoTextDone'), t('autoYes'), { safe: true, cancel: t('autoNo') });
+  autoAsking = false;
+  if (ok) { autoAck(); return; }
+  const now = Date.now();
+  sessions = sessions.filter(s => !(s.series === pd.id && s.start < now)); // nothing logged while you were away
+  settings.autoPend = null;
+  if (series && series.id === pd.id) {
+    series = { ...series, start: now, logged: 0, pausedAt: 0, ack: 1 };
+    seriesPos = '';
+    applySeries(true);
+    toast(t('autoAgain')(hm(now)), t('autoStop'), () => stopSeries());
+  }
+  persistNow();
+  renderStats();
+  render();
+}
+function bindAuto() {
+  const touch = () => { if (settings.autoPend && !autoAsking) setTimeout(autoPresent, 0); };
+  document.addEventListener('pointerdown', touch, true);
+  document.addEventListener('keydown', touch, true);
+}
 // Wake-ups for the next start while the timer is idle: the PC host (phase-due) and the phone alarm
 function armPlan() {
   if (ANDROID) return; // the phone gets it with the timer state (syncHost → state.plan)
@@ -2845,7 +2900,7 @@ function hostPlan() {
   const p = n.p;
   return {
     at: n.at, title: t('planGoTitle'), body: t('planGoBody')(planCountText(p), p.label || ''),
-    series: { id: planSeriesId(p, n.key), start: n.at, count: planCount(p), work: planWork(p), brk: planBrk(p), ...longOf(), logged: 0, pausedAt: 0, label: p.label || '' },
+    series: { id: planSeriesId(p, n.key), start: n.at, count: planCount(p), work: planWork(p), brk: planBrk(p), ...longOf(), logged: 0, pausedAt: 0, label: p.label || '', auto: 1, ack: 0 },
   };
 }
 
@@ -2952,10 +3007,54 @@ function savePlanEdit() {
   const today = dayKey(Date.now());
   if (planOccurs(p, today) && planStart(p, today) <= Date.now()) p.last = today;
   else if (s.last && s.last !== today) p.last = s.last;
+  if (p.on && clashStop(p, p.id)) return; // the editor stays open: change the time and save again
   closePlanEdit();
   putPlan(p);
   const n = nextPlan();
-  if (n && n.p.id === p.id) toast(t('planSaved')(planWhenText(n)));
+  if (n && n.p.id === p.id && !autoTell(n.at)) toast(t('planSaved')(planWhenText(n)));
+}
+/* ---------- Two runs at once are not allowed ----------
+   A plan (or a quick start) whose time meets another plan, or the run going on now. An endless plan
+   counts as its first session: after that it can be stopped at any time. */
+function planClash(np, selfId) {
+  const len = p => (planCount(p) > 0 ? planBlock(p) : planWork(p));
+  const now = Date.now();
+  for (let d = 0; d < 15; d++) {
+    const key = dayKey(addDays(startOfDay(now), d));
+    if (!planOccurs(np, key)) continue;
+    const a0 = planStart(np, key), a1 = a0 + len(np);
+    if (a1 <= now) continue;
+    for (const p of planList()) {
+      if (p.id === np.id || p.id === selfId || p.on === false) continue;
+      for (const dd of [-1, 0, 1]) { // a run late in the evening can reach past midnight
+        const k2 = dayKey(addDays(parseDay(key), dd));
+        if (!planOccurs(p, k2) || (p.skip || []).includes(k2)) continue;
+        const b0 = planStart(p, k2), b1 = b0 + len(p);
+        if (b1 > now && a0 < b1 && b0 < a1) return { p, at: b0, end: planCount(p) > 0 ? b1 : 0 };
+      }
+    }
+    if (d === 0 && series && series.count > 0) {
+      const end = seriesWorkStart(series, series.count - 1) + series.work;
+      if (a0 < end && end > now) return { cur: true, at: series.start, end };
+    }
+  }
+  return null;
+}
+function clashStop(np, selfId) {
+  const c = planClash(np, selfId);
+  if (!c) return false;
+  const when = c.end ? `${hm(c.at)}–${hm(c.end)}` : `${hm(c.at)} →`;
+  const what = c.cur ? t('clashCur')(when) : t('clashPlan')(when, c.p.date ? (c.p.date === dayKey(Date.now()) ? t('today') : dayTitle(planStart(c.p, c.p.date))) : daysText(c.p));
+  confirmModal(t('clashQ'), what, t('gotIt'), { noCancel: true, safe: true });
+  return true;
+}
+// The first time a start is set ahead: say plainly that the timer will start by itself
+function autoTell(at) {
+  if (settings.autoTold) return false;
+  settings.autoTold = 1;
+  persist();
+  confirmModal(t('autoTellQ')(planWhenText({ at })), t('autoTellText'), t('gotIt'), { noCancel: true, safe: true });
+  return true;
 }
 function bindPlans() {
   $('#btnPlanAdd').addEventListener('click', () => openPlanEdit(null));
@@ -3096,14 +3195,16 @@ function quickStart(anchor) {
     const d = new Date();
     d.setHours(v.h, v.m, 0, 0);
     if (d.getTime() <= Date.now() + 30000) d.setDate(d.getDate() + 1);
-    if (quick) delete settings.plans[quick.id]; // one quick start at a time: the new time replaces it
-    putPlan({
+    const np = {
       id: newId(), quick: true, time: `${pad(v.h)}:${pad(v.m)}`, date: dayKey(d.getTime()), days: [],
       count: settings.simple ? 0 : settings.seriesCount > 0 ? settings.seriesCount : 0, work: settings.work, brk: settings.brk,
       label: $('#label').value.trim(), on: true,
-    });
-    toast(t('planSaved')(planWhenText({ at: d.getTime() })));
-  }, { now: !!quick, nowLabel: t('quickOff'), extra: { label: t('schedL'), fn: openSchedule } });
+    };
+    if (clashStop(np, quick && quick.id)) return; // two runs at once: not saved, the user hears why
+    if (quick) delete settings.plans[quick.id]; // one quick start at a time: the new time replaces it
+    putPlan(np);
+    autoTell(d.getTime()) || toast(t('planSaved')(planWhenText({ at: d.getTime() })));
+  }, { now: !!quick, nowLabel: t('quickOff'), extra: { label: t('schedL'), fn: openSchedule }, okLabel: (h, m) => t('startAtGo')(`${pad(h)}:${pad(m)}`) });
 }
 let planOpen = false;
 // The full schedule: its own tab, on the PC and on the phone
@@ -3555,7 +3656,7 @@ function renderAutostart() { $('#autostartToggle').classList.toggle('on', autost
    after a click or a key press is a step that can be undone; changes that come on their own (a session
    logged by the timer, sync) only move the baseline, so undo never eats them. A step stores only
    what changed (settings keys, sessions by id, projects by name) and undo puts back just that. */
-const UNDO_SKIP = new Set(['u', 'uk', 'simpleStats', 'statsDays', 'hints', 'modeAsked', 'endlessDefault', 'endless3', 'appsRange', 'heatRange', 'chartMode']);
+const UNDO_SKIP = new Set(['u', 'uk', 'autoPend', 'autoTold', 'simpleStats', 'statsDays', 'hints', 'modeAsked', 'endlessDefault', 'endless3', 'appsRange', 'heatRange', 'chartMode']);
 let lastPush = 0, undoBase = null, undoStack = [], redoStack = [], undoBusy = false, lastInput = 0;
 function undoState() {
   const st = {}, ss = new Map(), pr = {};
@@ -3958,6 +4059,7 @@ function bind() {
   window.addEventListener('resize', () => { cancelAnimationFrame(fitT); fitT = requestAnimationFrame(() => { fitTimer(); fitTabs(); }); });
 
   api.onAlertAction(action => {
+    if (settings.autoPend && Date.now() - settings.autoPend.start < 10 * 60000) autoAck(); // answered the start alert: you were there
     if (alertIsTest) { alertIsTest = false; return; }
     if (action !== 'start') return;
     tick(); // a phase that ran out while the app slept is completed first
@@ -4105,6 +4207,7 @@ function showCrashNote(c, bootLogged) {
   bindTask();
   bindChips();
   bindUndo();
+  bindAuto();
   undoBase = undoState();
   setTimeout(() => hintCount('boot'), 9000);
   initInfo();

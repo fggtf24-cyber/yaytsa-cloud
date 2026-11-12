@@ -2351,3 +2351,5 @@ html.android .hint-card { bottom: calc(86px + env(safe-area-inset-bottom, 0px));
 @keyframes hintIn { from { opacity: 0; transform: translate(-50%, 14px) scale(.97); } }
 @keyframes hintOut { to { opacity: 0; transform: translate(-50%, 10px); } }
 .set.hint-flash { animation: kFlash 1.4s var(--ease); border-radius: 12px; }
+/* "Start at 21:30": the time picker's key says what will happen */
+.tp-ok.tp-go, #tsOk.tp-go { background: var(--pc-grad, linear-gradient(120deg, #3d8bff, #7a5cff 55%, #b05cff)); color: #fff; font-weight: 650; border-radius: 999px; padding-left: 14px; padding-right: 14px; box-shadow: none; }

@@ -489,7 +489,7 @@ const timerCore = () => ({
   startedAt: timer.startedAt || 0,
   label: $('#label').value.trim(),
   // the schedule, without this device's own bookkeeping
-  series: series ? { id: series.id || '', start: series.start, count: series.count, work: series.work, brk: series.brk, every: series.every || 0, lbrk: series.lbrk || 0, pausedAt: series.pausedAt || 0, label: series.label || $('#label').value.trim() } : null,
+  series: series ? { id: series.id || '', start: series.start, count: series.count, work: series.work, brk: series.brk, every: series.every || 0, lbrk: series.lbrk || 0, auto: series.auto || 0, ack: series.ack || 0, pausedAt: series.pausedAt || 0, label: series.label || $('#label').value.trim() } : null,
 });
 
 // Called from renderOuter (about once a second): sends the state when it changed here.
