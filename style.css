@@ -565,6 +565,11 @@ a.r-stat:hover b { text-decoration: underline; }
 .r-chat-last { font-size: 13px; color: var(--sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .r-chat-item.unread .r-chat-last { color: var(--text); font-weight: 600; }
 .r-chat-item.unread .r-chat-line small::before { content: ''; display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; background: var(--up); }
+.r-chat-item.muted.unread .r-chat-line small::before { background: var(--faint); }
+.r-chat-muted { display: inline-flex; vertical-align: -2px; margin-left: 4px; opacity: .55; }
+.r-chat-muted svg { width: 13px; height: 13px; }
+.r-mute { margin-left: auto; }
+.r-mute.on { opacity: .7; }
 .r-room { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .r-room-head { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--rule); }
 .r-room-back { display: none; }
@@ -1170,6 +1175,12 @@ html { -webkit-tap-highlight-color: transparent; }
   .r-chat { height: calc(100dvh - var(--top-h) - 72px); min-height: 0; }
   /* Открытая переписка на весь экран, как в мессенджерах: шапка и меню не отнимают место у клавиатуры */
   .r-chat.has-room { position: fixed; inset: 0; z-index: 26; height: 100dvh; background: var(--panel); }
+  /* На узком экране значкам остаётся ~110px под текст: с текстом поле уходит на всю ширину строкой выше кнопок. */
+  .r-chat-form textarea { text-align: left; }
+  .r-chat-form:has(textarea:not(:placeholder-shown)) { flex-wrap: wrap; row-gap: 2px; padding-left: 10px; border-radius: 20px; }
+  .r-chat-form:has(textarea:not(:placeholder-shown)) textarea { order: -1; flex: 1 0 100%; padding: 6px 4px 2px; }
+  .r-chat-form:has(textarea:not(:placeholder-shown)) .r-mic { margin-left: auto; }
+  .r-chat-form:has(textarea:not(:placeholder-shown)) .r-chat-staged:not([hidden]) { order: -2; flex-basis: 100%; }
 }
 
 /* Фото и голосовые в переписке */

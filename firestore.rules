@@ -574,6 +574,10 @@ service cloud.firestore {
           && (!('lastAt' in request.resource.data.diff(resource.data).affectedKeys())
             || request.resource.data.lastAt == request.time)
           && request.resource.data.seen is map)
+        // Без звука: каждый участник меняет только свою отметку в muted.
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['muted'])
+          && request.resource.data.muted is map
+          && request.resource.data.muted.diff(resource.data.get('muted', {})).affectedKeys().hasOnly([request.auth.uid]))
         // Создатель группы меняет участников, название и фото, любой участник может выйти.
         || (resource.data.get('group', false) == true && resource.data.owner == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'name', 'photo'])

@@ -94,6 +94,10 @@ await ok('создатель меняет название и фото', updateD
 await no('участник не меняет название', updateDoc(doc(bob, 'chats', 'g1'), { name: 'Моё' }));
 await no('фото слишком большое', updateDoc(doc(alice, 'chats', 'g1'), { photo: 'x'.repeat(100001) }));
 await ok('создатель добавляет', updateDoc(doc(alice, 'chats', 'g1'), { members: ['alice', 'bob', 'adm', 'eve'] }));
+await ok('участник выключает звук у себя', updateDoc(doc(bob, 'chats', 'g1'), { 'muted.bob': true }));
+await ok('и включает обратно', updateDoc(doc(bob, 'chats', 'g1'), { 'muted.bob': false }));
+await no('чужую отметку не менять', updateDoc(doc(bob, 'chats', 'g1'), { 'muted.alice': true }));
+await no('посторонний не выключает звук', updateDoc(doc(as('zed'), 'chats', 'g1'), { 'muted.zed': true }));
 await ok('участник выходит', updateDoc(doc(bob, 'chats', 'g1'), { members: ['alice', 'adm', 'eve'] }));
 await no('вышедший не читает', getDoc(doc(bob, 'chats', 'g1')));
 await no('участник не удаляет группу', deleteDoc(doc(eve, 'chats', 'g1')));

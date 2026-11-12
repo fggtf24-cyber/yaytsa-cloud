@@ -69,6 +69,8 @@ const ICON = {
   play: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>',
   pause: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>',
   edit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z" stroke-linejoin="round"/></svg>',
+  bell: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 21h4" stroke-linecap="round"/></svg>',
+  muted: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 21h4M4 4l16 16" stroke-linecap="round"/></svg>',
   trash: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M10 7V4h4v3M6 7l1 13h10l1-13" stroke-linejoin="round"/></svg>',
 };
 
@@ -1544,6 +1546,7 @@ export function setupSocial(ctx) {
       <a class="r-iconbtn r-room-back" href="#chat" aria-label="${T('Все чаты')}">${ICON.back}</a>
       ${groupAva(g, 36)}
       <span class="r-group-who"><b>${esc(g.name)}</b><small>${g.members.map(uid => `<a href="${profileHref(uid)}">${userLabel(uid)}</a>`).join(', ')}</small></span>
+      ${muteBtn()}
       <details class="r-menu">
         <summary class="r-iconbtn" aria-label="${T('Ещё')}">${ICON.dots}</summary>
         <div class="r-menu-list">
@@ -1640,6 +1643,23 @@ export function setupSocial(ctx) {
   }
   const peerOf = c => c.members.find(x => x !== me()) || me();
   const unread = c => c.lastFrom !== me() && ms(c.lastAt) > ms(c.seen?.[me()]);
+  const isMuted = c => !!c?.muted?.[me()];
+  // Без звука: чат не считается в цифре, не звенит и не шлёт уведомлений на телефон, но остаётся жирным в списке.
+  const muteBtn = () => {
+    const on = isMuted(chats.find(c => c.id === roomId));
+    return `<button type="button" class="r-iconbtn r-mute${on ? ' on' : ''}" data-s-mute aria-pressed="${on}" title="${T(on ? 'Включить звук' : 'Выключить звук')}" aria-label="${T(on ? 'Включить звук' : 'Выключить звук')}">${on ? ICON.muted : ICON.bell}</button>`;
+  };
+  async function toggleMute() {
+    const c = chats.find(x => x.id === roomId);
+    if (!c) return ctx.toast(T('Сначала напишите что-нибудь в этот чат.'));
+    try {
+      await F().updateDoc(ref('chats', c.id), { [`muted.${me()}`]: !isMuted(c) });
+    } catch (e) { fail(e); }
+  }
+  function drawMuteBtn() {
+    const old = view.querySelector('.r-mute');
+    if (old) old.outerHTML = muteBtn();
+  }
 
   function watchChats() {
     stopChats?.();
@@ -1656,6 +1676,7 @@ export function setupSocial(ctx) {
         ctx.drawInboxCount();
         if (ctx.route().name === 'chat') {
           drawChatList();
+          drawMuteBtn();
           drawMsgs(); // собеседник мог прочитать: обновятся галочки
           // Пока чат не дошёл до базы, читать его сообщения нельзя: подписка сразу оборвалась бы.
           if (roomId && !stopMsgs && !snap.metadata.hasPendingWrites && chats.some(c => c.id === roomId)) openRoomStream();
@@ -1722,6 +1743,7 @@ export function setupSocial(ctx) {
               <a class="r-iconbtn r-room-back" href="#chat" aria-label="${T('Все чаты')}">${ICON.back}</a>
               <a class="r-who" href="${profileHref(peer)}">${ava(peer, 36)}<span><b>${esc(shownName(peer))}</b>${handle(peer) ? `<small>@${esc(handle(peer))}</small>` : ''}</span></a>
               ${relation(peer)}
+              ${muteBtn()}
             </header>
             <div class="r-msgs" id="chat-msgs" aria-live="polite"></div>
             ${allows(peer, 'dm') ? chatForm() : `<p class="r-composer-stub">${T('Этот человек не принимает сообщения от вас.')}</p>`}`
@@ -1755,10 +1777,10 @@ export function setupSocial(ctx) {
     box.innerHTML = chats.filter(found).map(c => {
       const peer = peerOf(c);
       return `
-        <a class="r-chat-item${c.id === roomId ? ' active' : ''}${unread(c) ? ' unread' : ''}" href="${c.group ? `#group/${esc(c.id)}` : handle(peer) ? `#chat/${esc(handle(peer))}` : `#dm/${esc(peer)}`}">
+        <a class="r-chat-item${c.id === roomId ? ' active' : ''}${unread(c) ? ' unread' : ''}${isMuted(c) ? ' muted' : ''}" href="${c.group ? `#group/${esc(c.id)}` : handle(peer) ? `#chat/${esc(handle(peer))}` : `#dm/${esc(peer)}`}">
           ${c.group ? groupAva(c, 40) : ava(peer, 40)}
           <span class="r-chat-text">
-            <span class="r-chat-line"><b>${esc(c.group ? c.name : shownName(peer))}</b><small>${ms(c.lastAt) ? ago(c.lastAt) : ''}</small></span>
+            <span class="r-chat-line"><b>${esc(c.group ? c.name : shownName(peer))}${isMuted(c) ? `<span class="r-chat-muted" title="${T('Без звука')}">${ICON.muted}</span>` : ''}</b><small>${ms(c.lastAt) ? ago(c.lastAt) : ''}</small></span>
             <span class="r-chat-last">${c.lastFrom === me() ? `${T('Вы:')} ` : ''}${esc(c.lastText)}</span>
           </span>
         </a>`;
@@ -2558,6 +2580,7 @@ export function setupSocial(ctx) {
     else if (d.sGroupName !== undefined) renameGroup();
     else if (d.sGroupDelete !== undefined) deleteGroup();
     else if (d.sGroupLeave !== undefined) leaveGroup();
+    else if (d.sMute !== undefined) toggleMute();
     else if (d.emoji) insertEmoji(t);
     else if (d.fmt) insertFormat(t);
     else if (d.chatUnstage !== undefined) {
@@ -2749,10 +2772,10 @@ export function setupSocial(ctx) {
     nameOf: uid => (people.get(uid) ? shownName(uid) : ''),
     profileHref,
     ava,
-    unreadChats: () => chats.filter(unread).length,
+    unreadChats: () => chats.filter(c => unread(c) && !isMuted(c)).length,
     // Самый свежий непрочитанный чат: от кого и что, для уведомления в приложении для Windows.
     lastUnread: () => {
-      const c = chats.find(unread); // chats отсортированы от новых к старым
+      const c = chats.find(c => unread(c) && !isMuted(c)); // chats отсортированы от новых к старым
       if (!c) return null;
       const from = shownName(c.lastFrom);
       return {
