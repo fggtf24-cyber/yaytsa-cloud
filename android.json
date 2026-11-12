@@ -1,6 +1,6 @@
 {
-  "versionCode": 1,
-  "versionName": "1.0",
-  "url": "https://github.com/fggtf24-cyber/yaytsa-cloud-android/releases/download/v1.0/YaytsaCloud.apk",
-  "notes": "Первая версия: лента, чаты и профиль, уведомления, вход через Google."
+  "versionCode": 2,
+  "versionName": "1.1",
+  "url": "https://github.com/fggtf24-cyber/yaytsa-cloud-android/releases/download/v1.1/YaytsaCloud.apk",
+  "notes": "Чаты без звука: из замученных чатов больше не приходят уведомления."
 }
