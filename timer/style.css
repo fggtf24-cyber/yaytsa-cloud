@@ -2246,3 +2246,6 @@ html.web .titlebar, html.web #btnAddApp, html.web #appPicker, html.web .app .del
 html.web .group-title[data-i18n="gSystem"], html.web .set:has(#autostartToggle), html.web .set:has([data-key="closeToTray"]),
 html.web .set:has([data-key="alwaysOnTop"]), html.web .set:has([data-key="popup"]), html.web #btnFolder { display: none !important; }
 html.web .tabs { padding-top: 6px; }
+
+/* phone: pages meant for the PC only never take a place in the swipe strip (the Plan page put itself before Settings) */
+html.android .view[data-desktop], html.android #view-plan { display: none !important; }
