@@ -2353,3 +2353,50 @@ html.android .hint-card { bottom: calc(86px + env(safe-area-inset-bottom, 0px));
 .set.hint-flash { animation: kFlash 1.4s var(--ease); border-radius: 12px; }
 /* "Start at 21:30": the time picker's key says what will happen */
 .tp-ok.tp-go, #tsOk.tp-go { background: var(--pc-grad, linear-gradient(120deg, #3d8bff, #7a5cff 55%, #b05cff)); color: #fff; font-weight: 650; border-radius: 999px; padding-left: 14px; padding-right: 14px; box-shadow: none; }
+
+/* ---------- 2.19.5: plan editor — the run at a glance ---------- */
+.pe-hero { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 6px 0 14px; }
+.pe-hero .pe-time, .pe-end {
+  font-family: var(--font-display); font-size: 40px; font-weight: 650; letter-spacing: -0.03em; line-height: 1.1;
+  font-variant-numeric: tabular-nums; color: var(--text-strong);
+}
+.pe-hero .pe-time { padding: 4px 12px; margin: 0 -4px; border-radius: 14px; background: none; box-shadow: inset 0 0 0 1.5px var(--border-strong); }
+.pe-hero .pe-time:hover { background: var(--hover); }
+.pe-end.inf { color: var(--text-2); font-weight: 500; }
+.pe-hero .plan-line { max-width: 90px; }
+.at-chip.pe-later { font-style: normal; }
+/* open time: a quiet switch under the active time; on, the chart shows it as a background */
+.ad-open {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; margin-top: 2px;
+  border: 0; border-radius: 999px; padding: 5px 12px; background: var(--hover); color: var(--text-2); font-size: 13px;
+  transition: background .2s var(--ease), color .2s var(--ease);
+}
+.ad-open b { font-weight: 600; color: inherit; font-variant-numeric: tabular-nums; }
+.ad-open.on { background: rgba(111, 107, 255, .18); color: var(--text-strong); }
+.lc-plot.selecting { cursor: col-resize; }
+.lc-plot.selecting .lc-sel { background: rgba(111, 107, 255, .28); box-shadow: inset 0 0 0 1.5px rgba(138, 92, 255, .7); }
+
+/* ---------- 2.19.5: the phone's timer page, calmer ----------
+   Not a stack of boxes: the task is the page's title (plain text), the wheels, then one quiet line of
+   text controls (sessions, ∞, start time) with no fills, and the gradient key as the only solid thing. */
+html.android #view-timer.idle .label-wrap { order: 0; margin: 0 0 6px; }
+html.android #view-timer .label-input, html.android #view-timer .label-input:focus {
+  background: none !important; box-shadow: none !important; border: 0;
+  font-size: 22px; font-weight: 650; letter-spacing: -0.01em; color: var(--text-strong);
+}
+html.android #view-timer .props { flex-wrap: nowrap; align-items: center; gap: 2px; margin-top: 4px; }
+html.android #view-timer .props .stepper { background: none !important; box-shadow: none; gap: 0; }
+html.android #view-timer .props .stepper button { width: 36px; height: 36px; background: none; color: var(--text-2); font-size: 20px; }
+html.android #view-timer .props .stepper .val { min-width: 0; padding: 0 2px; font-size: 16px; font-weight: 600; color: var(--text-strong); }
+html.android #view-timer .props .stepper.endless .val { color: var(--text-2); font-weight: 500; }
+html.android #view-timer .props .stepper .inf { margin-left: 0; color: var(--text-3); font-size: 22px; }
+html.android #view-timer .props .stepper .inf.on { background: none; color: #8f86ff; }
+html.android #view-timer .props .prop[data-p="when"]::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--text-3); margin: 0 10px 0 6px; }
+html.android #view-timer .props .when { width: auto; }
+html.android #view-timer .when-chip, html.android #view-timer .when-chip.set { background: none !important; padding: 8px 4px; font-size: 16px; font-weight: 600; color: var(--text-2); box-shadow: none; }
+html.android #view-timer .when-chip.set { color: #8f86ff; }
+html.android #view-timer .when-x { background: none; width: 30px; height: 30px; color: var(--text-3); }
+html.android #view-timer .controls { margin-top: 30px; }
+html.android .dial-unit { font-size: 13px; color: var(--text-3); }
+/* fewer small captions: a row with a − value + speaks for itself */
+#view-settings .set:has(> .stepper) .set-desc { display: none; }

@@ -52,7 +52,7 @@ const I18N = {
     atAdded: d => `Добавлено: ${d}`, atManual: 'вручную',
     stopSeries: 'Остановить серию', stopSeriesQ: 'Остановить серию?', stopSeriesText: 'Уже сделанные заходы останутся в истории, текущий запишется как есть.',
     appsNoneA: 'Здесь появятся программы, которые отслеживает Яйцетаймер на компьютере. Нужна синхронизация.',
-    adToday: 'Сегодня', ad7: 'Неделя', ad30: 'Месяц', ad90: '3 месяца', adAll: 'Всё время', appsTodayL: 'Активно сегодня', adActiveL: 'активно', adOpenL: 'открыта', adShareL: 'активность',
+    adToday: 'Сегодня', ad7: 'Неделя', ad30: 'Месяц', ad90: '3 месяца', adAll: 'Всё время', appsTodayL: 'Активно сегодня', adActiveL: 'активно', adOpenL: 'открыта', adOpenB: 'Открыта', adShareL: 'активность',
     seriesRow: n => `Серия · ${n} ${plural(n, 'заход', 'захода', 'заходов')}`, histAll: 'Вся история',
     alertSound: 'Звук сигнала', choose: 'Выбрать', soundDefault: 'Стандартный', soundSystem: 'Звуки телефона', soundFile: 'Свой файл',
     soundSet: n => `Звук: ${n}`, updTitle: v => `Доступна версия ${v}`, updText: 'Обновление уже скачано, установка займёт несколько секунд.', updInstall: 'Обновить', updLater: 'Позже',
@@ -80,7 +80,7 @@ scale: 'Масштаб', appsPickTitle: 'Добавить программу', a
     stopHint: 'Стоп — заход от 10 минут сохранится', goalWeek: 'Цель на неделю', goalWeekDesc: 'Часов работы за неделю (с понедельника)', goalWeekL: 'Цель на неделю',
     pWeekL7: '7 дней', editEntry: 'Изменить запись', saveL: 'Сохранить', edited: 'Запись изменена', newProjOnly: 'Такого проекта нет. Откройте список ▾ и нажмите «Создать новый проект»', newProjBtn: 'Создать новый проект', createNamed: n => `Создать «${n}»`, newProjPh: 'Название нового проекта', projCreated: n => `Проект «${n}» создан`,
     adPerHour: 'активных минут в каждые 10 минут', adPerDay: 'активных часов в день', adToHist: 'В историю', adAddQ: (d, a, b) => `Добавить ${d} работы (${a}–${b}) в историю?`, adAdded: d => `Добавлено: ${d}`,
-    planSkipNext: 'Пропустить ближайший', untilShort: 'до', taQ: 'Над чем вы сейчас работаете?', taSub: tm => `Таймер идёт по плану с ${tm}. Выберите задачу — она запишется ко всем заходам этой серии.`, taNewPh: 'Или новая задача', taLater: 'Позже', quickOff: 'Убрать', schedL: 'Весь план…', taSet: n => `Задача: ${n}`, scTaskL: 'Задача', scNameQ: 'Как назвать эту серию?', scNameSub: 'Название запишется ко всем её заходам.', skipToday: 'пропустить сегодня', planRemove: 'удалить', startAtGo: tm => `Запустить в ${tm}`, clashQ: 'Время занято', clashCur: w => `В это время уже идёт серия (${w}). Два таймера сразу не запустить — выберите другое время.`, clashPlan: (w, d) => `Пересекается с планом ${w} (${d.toLowerCase()}). Два таймера сразу не запустить — выберите другое время или измените тот план.`, autoTellQ: w => `Таймер запустится сам ${w}`, autoTellText: 'Даже если вас не будет рядом: в это время он нажмёт «Старт» на любом включённом устройстве. Если вас не было, потом спросит, работали ли вы.', autoQ: tm => `Таймер запустился сам в ${tm}`, autoText: 'Вы работали всё это время?', autoTextDone: 'Вы работали в это время? Если нет, эти заходы не попадут в историю.', autoYes: 'Да, работал', autoNo: 'Нет', autoAgain: tm => `Не считаем время до ${tm}: таймер начат заново`, autoStop: 'Остановить', undone: 'Отменено', redone: 'Возвращено', undoNone: 'Нечего отменять', redoNone: 'Нечего возвращать', hintLong: 'Можно включить длинный перерыв: каждый 4-й перерыв будет длиннее, как в помодоро', hintLongAct: 'Настроить', hintRange: 'Забыли включить таймер? Выделите участок на графике — его можно записать как работу', hintTrack: 'Выберите программы, в которых вы работаете, — таймер покажет, сколько времени вы в них проводите', hintTrackAct: 'Выбрать', skipTomorrow: 'пропустить завтра', skipDay: d => `пропустить в ${d.toLowerCase()}`, skippedToday: 'сегодня пропущено · вернуть', adPerHourH: 'активных минут в каждом часе', adPickHint: 'Проведите по графику с зажатой кнопкой мыши — выделенный участок можно записать в историю как работу (удобно, если забыли включить таймер). Нажатие на участок берёт весь блок работы вокруг. Колесо мыши приближает и отдаляет, Shift + колесо листает.', adNothing: 'В этом промежутке нет активной работы',
+    planSkipNext: 'Пропустить ближайший', untilShort: 'до', taQ: 'Над чем вы сейчас работаете?', taSub: tm => `Таймер идёт по плану с ${tm}. Выберите задачу — она запишется ко всем заходам этой серии.`, taNewPh: 'Или новая задача', taLater: 'Позже', quickOff: 'Убрать', schedL: 'Весь план…', taSet: n => `Задача: ${n}`, scTaskL: 'Задача', scNameQ: 'Как назвать эту серию?', scNameSub: 'Название запишется ко всем её заходам.', skipToday: 'пропустить сегодня', planRemove: 'удалить', peLater: 'Выберу в тот день', pePh: 'Или впишите задачу', startAtGo: tm => `Запустить в ${tm}`, clashQ: 'Время занято', clashCur: w => `В это время уже идёт серия (${w}). Два таймера сразу не запустить — выберите другое время.`, clashPlan: (w, d) => `Пересекается с планом ${w} (${d.toLowerCase()}). Два таймера сразу не запустить — выберите другое время или измените тот план.`, autoTellQ: w => `Таймер запустится сам ${w}`, autoTellText: 'Даже если вас не будет рядом: в это время он нажмёт «Старт» на любом включённом устройстве. Если вас не было, потом спросит, работали ли вы.', autoQ: tm => `Таймер запустился сам в ${tm}`, autoText: 'Вы работали всё это время?', autoTextDone: 'Вы работали в это время? Если нет, эти заходы не попадут в историю.', autoYes: 'Да, работал', autoNo: 'Нет', autoAgain: tm => `Не считаем время до ${tm}: таймер начат заново`, autoStop: 'Остановить', undone: 'Отменено', redone: 'Возвращено', undoNone: 'Нечего отменять', redoNone: 'Нечего возвращать', hintLong: 'Можно включить длинный перерыв: каждый 4-й перерыв будет длиннее, как в помодоро', hintLongAct: 'Настроить', hintRange: 'Забыли включить таймер? Выделите участок на графике — его можно записать как работу', hintTrack: 'Выберите программы, в которых вы работаете, — таймер покажет, сколько времени вы в них проводите', hintTrackAct: 'Выбрать', skipTomorrow: 'пропустить завтра', skipDay: d => `пропустить в ${d.toLowerCase()}`, skippedToday: 'сегодня пропущено · вернуть', adPerHourH: 'активных минут в каждом часе', adPickHint: 'Проведите по графику с зажатой кнопкой мыши — выделенный участок можно записать в историю как работу (удобно, если забыли включить таймер). Нажатие на участок берёт весь блок работы вокруг. Колесо мыши приближает и отдаляет, Shift + колесо листает.', adNothing: 'В этом промежутке нет активной работы',
     tabPlan: 'План', planLead: 'Таймер сам запустится в нужное время — на компьютере и на телефоне. Откроете позже — время уже будет идти с начала.',
     planAdd: '+ Добавить время', planNextL: 'Следующий старт:', planNone: 'Ничего не запланировано', planEmpty: 'Например: по будням в 7:30 — два захода',
     planOnOff: 'Включить или выключить', planNew: 'Новое время', planEditT: 'Время старта', peTimeL: 'Во сколько', peRepeatL: 'Повтор',
@@ -152,7 +152,7 @@ scale: 'Масштаб', appsPickTitle: 'Добавить программу', a
     atAdded: d => `Added: ${d}`, atManual: 'by hand',
     stopSeries: 'Stop series', stopSeriesQ: 'Stop the series?', stopSeriesText: 'Finished sessions stay in your history; the current one is saved as it is.',
     appsNoneA: 'Programs tracked by Яйцетаймер on your PC show up here. Sync needs to be on.',
-    adToday: 'Today', ad7: 'Week', ad30: 'Month', ad90: '3 months', adAll: 'All time', appsTodayL: 'Active today', adActiveL: 'active', adOpenL: 'open', adShareL: 'active share',
+    adToday: 'Today', ad7: 'Week', ad30: 'Month', ad90: '3 months', adAll: 'All time', appsTodayL: 'Active today', adActiveL: 'active', adOpenL: 'open', adOpenB: 'Open', adShareL: 'active share',
     seriesRow: n => `Series · ${n} session${n === 1 ? '' : 's'}`, histAll: 'All history',
     alertSound: 'Alert sound', choose: 'Choose', soundDefault: 'Default', soundSystem: 'Phone sounds', soundFile: 'Your own file',
     soundSet: n => `Sound: ${n}`, updTitle: v => `Version ${v} is available`, updText: 'The update is already downloaded, installing takes a few seconds.', updInstall: 'Update', updLater: 'Later',
@@ -180,7 +180,7 @@ scale: 'Zoom', appsPickTitle: 'Add a program', appsSearchPh: 'Search programs on
     stopHint: 'Stop: a session of 10 minutes or more is kept', goalWeek: 'Weekly goal', goalWeekDesc: 'Hours of work per week (from Monday)', goalWeekL: 'This week’s goal',
     pWeekL7: '7 days', editEntry: 'Edit entry', saveL: 'Save', edited: 'Entry changed', newProjOnly: 'No such project. Open the list ▾ and press “Create a new project”', newProjBtn: 'Create a new project', createNamed: n => `Create “${n}”`, newProjPh: 'New project name', projCreated: n => `Project “${n}” created`,
     adPerHour: 'active minutes in every 10 minutes', adPerDay: 'active hours per day', adToHist: 'To history', adAddQ: (d, a, b) => `Add ${d} of work (${a}–${b}) to your history?`, adAdded: d => `Added: ${d}`,
-    planSkipNext: 'Skip the next one', untilShort: 'to', taQ: 'What are you working on?', taSub: tm => `The timer has been running as planned since ${tm}. Pick a task: it goes to every session of this run.`, taNewPh: 'Or a new task', taLater: 'Later', quickOff: 'Remove', schedL: 'Full plan…', taSet: n => `Task: ${n}`, scTaskL: 'Task', scNameQ: 'Name this series', scNameSub: 'The name goes to all its sessions.', skipToday: 'skip today', planRemove: 'remove', startAtGo: tm => `Start at ${tm}`, clashQ: 'That time is taken', clashCur: w => `A run is already going then (${w}). Two timers can’t run at once: pick another time.`, clashPlan: (w, d) => `It overlaps the plan ${w} (${d}). Two timers can’t run at once: pick another time or change that plan.`, autoTellQ: w => `The timer will start by itself ${w}`, autoTellText: 'Even if you are away: at that time it presses Start on any device that is on. If you weren’t there, it will ask later whether you worked.', autoQ: tm => `The timer started by itself at ${tm}`, autoText: 'Have you been working all this time?', autoTextDone: 'Were you working then? If not, those sessions stay out of your history.', autoYes: 'Yes, I was', autoNo: 'No', autoAgain: tm => `Time before ${tm} doesn’t count: the timer started over`, autoStop: 'Stop', undone: 'Undone', redone: 'Redone', undoNone: 'Nothing to undo', redoNone: 'Nothing to redo', hintLong: 'You can turn on a long break: every 4th break gets longer, pomodoro style', hintLongAct: 'Set up', hintRange: 'Forgot the timer? Mark a stretch on the chart and log it as work', hintTrack: 'Pick the programs you work in, and the timer will show how much time you spend in them', hintTrackAct: 'Pick', skipTomorrow: 'skip tomorrow', skipDay: d => `skip ${d}`, skippedToday: 'skipped today · undo', adPerHourH: 'active minutes in each hour', adPickHint: 'Drag across the chart to mark a stretch and add it to your history as work (handy if you forgot the timer). A click takes the whole block of work around it. The mouse wheel zooms, Shift + wheel moves along.', adNothing: 'No active work in this stretch',
+    planSkipNext: 'Skip the next one', untilShort: 'to', taQ: 'What are you working on?', taSub: tm => `The timer has been running as planned since ${tm}. Pick a task: it goes to every session of this run.`, taNewPh: 'Or a new task', taLater: 'Later', quickOff: 'Remove', schedL: 'Full plan…', taSet: n => `Task: ${n}`, scTaskL: 'Task', scNameQ: 'Name this series', scNameSub: 'The name goes to all its sessions.', skipToday: 'skip today', planRemove: 'remove', peLater: 'Pick on the day', pePh: 'Or type a task', startAtGo: tm => `Start at ${tm}`, clashQ: 'That time is taken', clashCur: w => `A run is already going then (${w}). Two timers can’t run at once: pick another time.`, clashPlan: (w, d) => `It overlaps the plan ${w} (${d}). Two timers can’t run at once: pick another time or change that plan.`, autoTellQ: w => `The timer will start by itself ${w}`, autoTellText: 'Even if you are away: at that time it presses Start on any device that is on. If you weren’t there, it will ask later whether you worked.', autoQ: tm => `The timer started by itself at ${tm}`, autoText: 'Have you been working all this time?', autoTextDone: 'Were you working then? If not, those sessions stay out of your history.', autoYes: 'Yes, I was', autoNo: 'No', autoAgain: tm => `Time before ${tm} doesn’t count: the timer started over`, autoStop: 'Stop', undone: 'Undone', redone: 'Redone', undoNone: 'Nothing to undo', redoNone: 'Nothing to redo', hintLong: 'You can turn on a long break: every 4th break gets longer, pomodoro style', hintLongAct: 'Set up', hintRange: 'Forgot the timer? Mark a stretch on the chart and log it as work', hintTrack: 'Pick the programs you work in, and the timer will show how much time you spend in them', hintTrackAct: 'Pick', skipTomorrow: 'skip tomorrow', skipDay: d => `skip ${d}`, skippedToday: 'skipped today · undo', adPerHourH: 'active minutes in each hour', adPickHint: 'Drag across the chart to mark a stretch and add it to your history as work (handy if you forgot the timer). A click takes the whole block of work around it. The mouse wheel zooms, Shift + wheel moves along.', adNothing: 'No active work in this stretch',
     tabPlan: 'Plan', planLead: 'The timer starts by itself at the time you set, on the PC and on the phone. Open it later and the time is already running from the start.',
     planAdd: '+ Add a time', planNextL: 'Next start:', planNone: 'Nothing planned', planEmpty: 'For example: weekdays at 7:30, two sessions',
     planOnOff: 'Turn on or off', planNew: 'New time', planEditT: 'Start time', peTimeL: 'At', peRepeatL: 'Repeat',
@@ -2276,6 +2276,7 @@ function renderAppDetail() {
   const tt = appTimes(a, adRange);
   swapText($('#adActive'), fmtLong(tt.active || 0));
   swapText($('#adOpen'), fmtLong(tt.run || 0));
+  $('#adOpenBtn').classList.toggle('on', !!settings.adOpen);
   let pts, span = '';
   if (adRange === 1) {
     // today in detail: every 10 minutes (fixed scale 0–10 min, so a slot can never look longer than it is);
@@ -2297,7 +2298,7 @@ function renderAppDetail() {
       const i = s0 + k;
       return {
         v: Math.min(per, act[i] || 0), w: Math.min(per, run[i] || 0), a: lab(i), b: lab(i + 1),
-        tip: `${lab(i)}–${lab(i + 1)} · ${fmtDur(act[i] || 0)}${(run[i] || 0) >= 60 ? ` · ${t('adOpenL')} ${fmtDur(run[i])}` : ''}`,
+        tip: `${lab(i)}–${lab(i + 1)} · ${fmtDur(act[i] || 0)}${settings.adOpen && (run[i] || 0) >= 60 ? ` · ${t('adOpenL')} ${fmtDur(run[i])}` : ''}`,
       };
     });
     const on = pts.map((p, k) => (p.v >= (fine ? 30 : 60) ? k : -1)).filter(k => k >= 0);
@@ -2312,7 +2313,7 @@ function renderAppDetail() {
     };
     lineChart($('#adChart'), pts, {
       slots: total, yMax: per, caption: fine ? t('adPerHour') : t('adPerHourH'), labels, key: `${a.exe}|1`, minSpan: fine ? 6 : 2,
-      smooth: fine ? 1.1 : 0.6, bands: true, // steady work reads as a plateau; open time as bands and a strip
+      smooth: fine ? 1.1 : 0.6, bands: true, open: !!settings.adOpen, // steady work reads as a plateau; open time as bands and a strip
       // a click takes the whole block of work around it, a drag takes the stretch you marked
       pick: i => addAppBlock(a, pts, i, fine ? 30 : 60),
       pickRange: (i, j) => addAppRange(a, pts, i, j),
@@ -2321,14 +2322,14 @@ function renderAppDetail() {
     // day by day for the period (the last 90 days for "all time")
     const recent = Array.isArray(a.recent) ? a.recent : [];
     const days = recent.slice(adRange === 7 ? -7 : adRange === 30 ? -30 : -90);
-    pts = days.map(d => ({ v: d.active || 0, w: d.run || 0, tip: `${dayTitle(parseDay(d.day))} · ${fmtDur(d.active || 0)}${(d.run || 0) >= 60 ? ` · ${t('adOpenL')} ${fmtDur(d.run)}` : ''}` }));
+    pts = days.map(d => ({ v: d.active || 0, w: d.run || 0, tip: `${dayTitle(parseDay(d.day))} · ${fmtDur(d.active || 0)}${settings.adOpen && (d.run || 0) >= 60 ? ` · ${t('adOpenL')} ${fmtDur(d.run)}` : ''}` }));
     const n = days.length, labels = [];
     days.forEach((d, i) => {
       const dt = new Date(parseDay(d.day));
       if (n <= 7) labels.push([(i + 0.5) / n, t('daysMon')[(dt.getDay() + 6) % 7].slice(0, 2)]);
       else if (n <= 31 ? (n - 1 - i) % 7 === 0 : dt.getDate() === 1) labels.push([(i + 0.5) / n, n <= 31 ? String(dt.getDate()) : t('monthsShort')[dt.getMonth()]]);
     });
-    lineChart($('#adChart'), pts, { slots: n, labels, caption: t('adPerDay'), key: `${a.exe}|${adRange}` });
+    lineChart($('#adChart'), pts, { slots: n, labels, key: `${a.exe}|${adRange}`, open: !!settings.adOpen });
   }
   $('#adSpan').textContent = span;
 }
@@ -2366,7 +2367,8 @@ function smoothPath(xy) {
 //   hover / touch: the slot · drag: mark a stretch (pickRange) · click: the block around (pick)
 // The view survives the refresh every few seconds while the same chart is shown (key). Light: one
 // SVG and a few divs, redrawn only when something moves.
-function lineChart(el, pts, { slots, labels, yMax, caption, pick, pickRange, key = '', minSpan = 3, smooth = 0, bands = false }) {
+function lineChart(el, pts, { slots, labels, yMax, pick, pickRange, key = '', minSpan = 3, smooth = 0, bands = false, open = false }) {
+  bands = bands && open; // open time shows only when asked for: by default the chart is active time alone
   if (el._busy) return; // a drag is going on: the refresh waits
   const W = 300, H = 120;
   // smoothing: a small Gaussian over the neighbours, so ten-minute jitter does not read as spikes
@@ -2406,8 +2408,7 @@ function lineChart(el, pts, { slots, labels, yMax, caption, pick, pickRange, key
     </div>
     ${bands ? '<div class="lc-strip"></div>' : ''}
     <div class="lc-x"></div>
-    <div class="lc-scroll" hidden><i class="lc-thumb"></i></div>
-    ${caption ? `<div class="lc-cap">${esc(caption)}${pickRange ? ' <button type="button" class="info-i sm" data-k="adPickHint" aria-label="i">i</button>' : ''}</div>` : ''}`;
+    <div class="lc-scroll" hidden><i class="lc-thumb"></i></div>`;
   const plot = el.querySelector('.lc-plot'), svg = el.querySelector('svg');
   const guide = el.querySelector('.lc-guide'), dot = el.querySelector('.lc-dot'), tip = el.querySelector('.lc-tip'), sel = el.querySelector('.lc-sel');
   const strip = el.querySelector('.lc-strip'), scroll = el.querySelector('.lc-scroll'), thumb = el.querySelector('.lc-thumb');
@@ -2425,7 +2426,7 @@ function lineChart(el, pts, { slots, labels, yMax, caption, pick, pickRange, key
     for (let i = a; i < b; i++) { qa.push([X(i), Y(sv[i])]); qr.push([X(i), Y(pts[i].w)]); }
     const area = (line, q) => (q.length ? `${line}L${q[q.length - 1][0].toFixed(2)} ${H}L${q[0][0].toFixed(2)} ${H}Z` : '');
     const la = qa.length ? smoothPath(qa) : '';
-    svg.querySelector('.lc-run').setAttribute('d', bands || !qr.length ? '' : area(smoothPath(qr), qr));
+    svg.querySelector('.lc-run').setAttribute('d', bands || !open || !qr.length ? '' : area(smoothPath(qr), qr));
     svg.querySelector('.lc-area').setAttribute('d', area(la, qa));
     svg.querySelector('.lc-line').setAttribute('d', la);
     if (bands) {
@@ -2485,9 +2486,111 @@ function lineChart(el, pts, { slots, labels, yMax, caption, pick, pickRange, key
     tip.style.left = `${Math.min(Math.max(0, px - tw / 2), r.width - tw)}px`;
   };
   const hide = () => { guide.hidden = dot.hidden = tip.hidden = true; };
+  /* Fingers (the phone): one finger moves the chart along and it glides on after a flick; two
+     fingers pinch to zoom, like a photo; holding a finger still for a moment starts a selection
+     (a short buzz says so), like selecting text: then drag to mark a stretch, or let go to take the
+     block of work under the finger. A quick tap shows the value there. */
+  const tps = new Map();
+  let tm = null, t0 = null, lpT = 0, pinch = null, fling = 0, tipT = 0;
+  const mid = () => { const [a, b] = [...tps.values()]; return { x: (a.x + b.x) / 2, d: Math.hypot(a.x - b.x, a.y - b.y) }; };
+  const touchEnd = () => { clearTimeout(lpT); tm = null; t0 = null; pinch = null; el._busy = false; plot.classList.remove('selecting'); };
+  plot.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'touch' || !pts.length) return;
+    cancelAnimationFrame(fling);
+    el._goal = null;
+    tps.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    try { plot.setPointerCapture(e.pointerId); } catch {}
+    el._busy = true;
+    const r = plot.getBoundingClientRect();
+    if (tps.size === 1) {
+      tm = 'wait';
+      t0 = { x: e.clientX, y: e.clientY, vp: [...el._vp], w: r.width, i: idx(e), lx: e.clientX, lt: e.timeStamp, v: 0 };
+      lpT = setTimeout(() => {
+        if (tm !== 'wait') return;
+        tm = 'select';
+        plot.classList.add('selecting');
+        if (api.haptic) api.haptic(); else if (navigator.vibrate) navigator.vibrate(12);
+        sel.hidden = false;
+        sel.style.left = `${Math.max(0, pctOf(t0.i))}%`;
+        sel.style.width = `${Math.min(100, pctOf(t0.i + 1)) - Math.max(0, pctOf(t0.i))}%`;
+      }, 420);
+    } else if (tps.size === 2) {
+      clearTimeout(lpT);
+      sel.hidden = true;
+      hide();
+      tm = 'pinch';
+      const m = mid();
+      pinch = { d: Math.max(20, m.d), vp: [...el._vp], f: (m.x - r.left) / r.width };
+      pinch.c = pinch.vp[0] + pinch.f * (pinch.vp[1] - pinch.vp[0]);
+    }
+  });
+  plot.addEventListener('pointermove', e => {
+    if (e.pointerType !== 'touch' || !tps.has(e.pointerId)) return;
+    tps.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (tm === 'pinch' && tps.size === 2) {
+      const m = mid(), w0 = pinch.vp[1] - pinch.vp[0];
+      const nw = Math.min(slots, Math.max(minSpan, w0 * (pinch.d / Math.max(20, m.d))));
+      const r = plot.getBoundingClientRect(), f = Math.min(1, Math.max(0, (m.x - r.left) / r.width)); // the point between the fingers stays put
+      const n0 = pinch.c - f * nw;
+      goTo([n0, n0 + nw], true);
+      return;
+    }
+    if (!t0) return;
+    if (tm === 'wait' && Math.hypot(e.clientX - t0.x, e.clientY - t0.y) > 8) {
+      clearTimeout(lpT);
+      tm = Math.abs(e.clientX - t0.x) >= Math.abs(e.clientY - t0.y) ? 'pan' : 'page'; // up or down: the page scrolls as usual
+      hide();
+    }
+    if (tm === 'pan') {
+      const span = t0.vp[1] - t0.vp[0], d = -((e.clientX - t0.x) / t0.w) * span;
+      goTo([t0.vp[0] + d, t0.vp[1] + d], true);
+      const dt = e.timeStamp - t0.lt;
+      if (dt > 0) { t0.v = 0.7 * t0.v + 0.3 * ((e.clientX - t0.lx) / dt); t0.lx = e.clientX; t0.lt = e.timeStamp; }
+    } else if (tm === 'select') {
+      const i = idx(e), a = Math.min(t0.i, i), b = Math.max(t0.i, i);
+      t0.moved = t0.moved || i !== t0.i;
+      sel.style.left = `${Math.max(0, pctOf(a))}%`;
+      sel.style.width = `${Math.min(100, pctOf(b + 1)) - Math.max(0, pctOf(a))}%`;
+      show(e);
+    }
+  });
+  const touchUp = e => {
+    if (e.pointerType !== 'touch' || !tps.has(e.pointerId)) return;
+    tps.delete(e.pointerId);
+    if (tm === 'pinch') { if (!tps.size) touchEnd(); else { tm = 'done'; } return; }
+    if (tps.size) return;
+    const mode = tm, s = t0;
+    touchEnd();
+    if (e.type === 'pointercancel' || !s) { sel.hidden = true; return; }
+    if (mode === 'select') {
+      const i = idx(e);
+      if (s.moved && pickRange) pickRange(Math.min(s.i, i), Math.max(s.i, i)).finally(() => { sel.hidden = true; });
+      else { sel.hidden = true; if (pick) pick(s.i); }
+    } else if (mode === 'wait') { // a tap: the value there, for a moment
+      show(e);
+      clearTimeout(tipT);
+      tipT = setTimeout(hide, 2500);
+    } else if (mode === 'pan' && Math.abs(s.v) > 0.05) { // a flick: glide on and slow down
+      let v = s.v;
+      const w = s.w;
+      const go = () => {
+        v *= 0.92;
+        if (Math.abs(v) < 0.02) return;
+        const [v0, v1] = el._vp, d = -(v * 16 / w) * (v1 - v0);
+        goTo([v0 + d, v1 + d], true);
+        fling = requestAnimationFrame(go);
+      };
+      fling = requestAnimationFrame(go);
+    }
+  };
+  // while moving, selecting or pinching, the page itself stays still
+  plot.addEventListener('touchmove', e => { if (tm === 'pan' || tm === 'select' || tm === 'pinch') e.preventDefault(); }, { passive: false });
+  plot.addEventListener('pointerup', touchUp);
+  plot.addEventListener('pointercancel', touchUp);
   let drag = null, pan = null;
   plot.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); }); // no autoscroll on the middle button
   plot.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'touch') return; // fingers: above
     if (!pts.length) return;
     if (e.button === 1) { // the wheel held down: move along
       pan = { x: e.clientX, vp: [...el._vp], id: e.pointerId, w: plot.getBoundingClientRect().width };
@@ -2502,6 +2605,7 @@ function lineChart(el, pts, { slots, labels, yMax, caption, pick, pickRange, key
     show(e);
   });
   plot.addEventListener('pointermove', e => {
+    if (e.pointerType === 'touch') return;
     if (pan && e.pointerId === pan.id) {
       const span = pan.vp[1] - pan.vp[0], d = -((e.clientX - pan.x) / pan.w) * span;
       goTo([pan.vp[0] + d, pan.vp[1] + d], true);
@@ -2517,6 +2621,7 @@ function lineChart(el, pts, { slots, labels, yMax, caption, pick, pickRange, key
     sel.style.width = `${Math.min(100, pctOf(b + 1)) - Math.max(0, pctOf(a))}%`;
   });
   const up = e => {
+    if (e.pointerType === 'touch') return;
     if (pan && e.pointerId === pan.id) { pan = null; el._busy = false; plot.classList.remove('panning'); return; }
     if (!drag || e.pointerId !== drag.id) return;
     const d = drag;
@@ -2527,7 +2632,7 @@ function lineChart(el, pts, { slots, labels, yMax, caption, pick, pickRange, key
     else { sel.hidden = true; if (!d.moved && pick) pick(i); }
   };
   plot.addEventListener('pointerup', up);
-  plot.addEventListener('pointercancel', e => { drag = null; pan = null; el._busy = false; sel.hidden = true; plot.classList.remove('panning'); void e; });
+  plot.addEventListener('pointercancel', e => { if (e.pointerType === 'touch') return; drag = null; pan = null; el._busy = false; sel.hidden = true; plot.classList.remove('panning'); void e; });
   plot.addEventListener('pointerleave', () => { if (!drag && !pan) hide(); });
   plot.addEventListener('wheel', e => {
     e.preventDefault();
@@ -2601,6 +2706,7 @@ function bindAppDetail() {
     }
     const r = e.target.closest('#adRange button');
     if (r) { adRange = Number(r.dataset.r); renderAppDetail(); }
+    if (e.target.closest('#adOpenBtn')) { settings.adOpen = !settings.adOpen; persist(); renderAppDetail(); }
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && adExe) closeAppDetail(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && scId) closeSeriesCard(); });
@@ -2967,7 +3073,7 @@ function openPlanEdit(p) {
   const d = new Date(Date.now() + 3600000);
   peState = p ? JSON.parse(JSON.stringify(p)) : {
     id: newId(), time: `${pad(d.getHours())}:00`, days: [1, 2, 3, 4, 5], date: '', count: settings.seriesCount > 0 ? settings.seriesCount : 2,
-    work: settings.work, brk: settings.brk, label: $('#label').value.trim(), on: true,
+    work: settings.work, brk: settings.brk, label: '', on: true, // the task is picked on the day, unless you name it here
   };
   peState.isNew = !p;
   peState.mode = peState.date ? 'once' : (Array.isArray(peState.days) && peState.days.length === 7 ? 'daily' : 'days');
@@ -2983,7 +3089,9 @@ function renderPlanEdit() {
   $('#peTitle').textContent = s.isNew ? t('planNew') : t('planEditT');
   $('#peTime').textContent = s.time;
   const st = planStart({ time: s.time }, dayKey(Date.now()));
-  $('#peSpan').textContent = planEndAt(s, st) ? `${planRange(s, st)} · ${t('planTotal')(fmtDur(planBlock(s) / 1000))}` : `${planRange(s, st)} ${t('endlessL')}`;
+  const end = planEndAt(s, st);
+  $('#peEnd').textContent = end ? hm(end) : '∞';
+  $('#peEnd').classList.toggle('inf', !end);
   $$('#peRepeat button').forEach(b => b.classList.toggle('on', b.dataset.v === s.mode));
   $('#peDaysRow').hidden = s.mode !== 'days';
   $('#peDateRow').hidden = s.mode !== 'once';
@@ -2996,7 +3104,9 @@ function renderPlanEdit() {
   $('#peDelete').hidden = s.isNew;
   const recent = projectList().filter(p => !p.hidden).slice(0, 6);
   const cur = projKey($('#peProject').value);
-  $('#peChips').innerHTML = recent.map(p => `<button type="button" class="at-chip${p.key === cur ? ' on' : ''}" data-name="${esc(p.name)}">${esc(p.name)}</button>`).join('');
+  // first: no task yet — the timer asks on the day it runs
+  $('#peChips').innerHTML = `<button type="button" class="at-chip pe-later${cur ? '' : ' on'}" data-name="">${esc(t('peLater'))}</button>`
+    + recent.map(p => `<button type="button" class="at-chip${p.key === cur ? ' on' : ''}" data-name="${esc(p.name)}">${esc(p.name)}</button>`).join('');
   $('#peSave').disabled = s.mode === 'days' && !s.days.length;
 }
 function savePlanEdit() {

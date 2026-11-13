@@ -415,8 +415,8 @@
   <div class="modal" id="planEdit" hidden>
     <form class="modal-card at-card pe-card" id="peForm" autocomplete="off">
       <h3 id="peTitle"></h3>
-      <div class="at-row"><span class="at-l" data-i18n="peTimeL"></span><button type="button" class="pe-time" id="peTime"></button></div>
-      <div class="pe-span" id="peSpan"></div>
+      <!-- the run at a glance, like a plan card: start (tap to change) —— end -->
+      <div class="pe-hero"><button type="button" class="pe-time" id="peTime"></button><i class="plan-line"></i><span class="pe-end" id="peEnd"></span></div>
       <div class="at-row"><span class="at-l" data-i18n="peRepeatL"></span>
         <div class="seg small" id="peRepeat"><button type="button" data-v="once" data-i18n="peOnce"></button><button type="button" data-v="daily" data-i18n="everyDay"></button><button type="button" data-v="days" data-i18n="peWeekly"></button></div></div>
       <div class="pe-days" id="peDaysRow"><div id="peDays"></div></div>
@@ -424,7 +424,7 @@
       <div class="at-row"><span class="at-l" data-i18n="seriesCountL"></span><div class="stepper at-step"><button type="button" data-step="count" data-d="-1">−</button><span class="val" id="peCount"></span><button type="button" data-step="count" data-d="1">+</button></div></div>
       <div class="at-row"><span class="at-l" data-i18n="work"></span><div class="stepper at-step"><button type="button" data-step="work" data-d="-1">−</button><span class="val" id="peWork"></span><button type="button" data-step="work" data-d="1">+</button></div></div>
       <div class="at-row" id="peBrkRow"><span class="at-l" data-i18n="break"></span><div class="stepper at-step"><button type="button" data-step="brk" data-d="-1">−</button><span class="val" id="peBrk"></span><button type="button" data-step="brk" data-d="1">+</button></div></div>
-      <input class="text-input" id="peProject" maxlength="120" data-i18n-ph="atProjectPh">
+      <input class="text-input" id="peProject" maxlength="120" data-i18n-ph="pePh">
       <div class="at-chips" id="peChips"></div>
       <div class="modal-btns"><button type="button" class="pe-del" id="peDelete" data-i18n="delete"></button><button type="button" class="ghost" id="peCancel" data-i18n="cancel"></button><button type="submit" class="danger-btn safe" id="peSave" data-i18n="planSave"></button></div>
     </form>
@@ -434,9 +434,8 @@
       <div class="ad-head"><span id="adIco"></span><h3 id="adName"></h3><button class="when-x" id="adClose" aria-label="×"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg></button></div>
       <div class="seg small" id="adRange"><button data-r="1" data-i18n="adToday"></button><button data-r="7" data-i18n="ad7"></button><button data-r="30" data-i18n="ad30"></button><button data-r="90" data-i18n="ad90"></button><button data-r="0" data-i18n="adAll"></button></div>
       <div class="ad-main"><b id="adActive"></b><span data-i18n="adActiveL"></span></div>
-      <div class="ad-nums">
-        <div><b id="adOpen"></b><span data-i18n="adOpenL"></span></div>
-      </div>
+      <!-- open time: only on request; on, it also shows as a background on the chart -->
+      <button class="ad-open" id="adOpenBtn"><span data-i18n="adOpenB"></span> <b id="adOpen"></b></button>
       <div class="ad-chart lc" id="adChart"></div>
       <div class="ad-span" id="adSpan"></div>
       <button class="ad-untrack" id="adUntrack" data-desktop data-i18n="stopTrack"></button>
