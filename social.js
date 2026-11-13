@@ -1130,13 +1130,20 @@ export function setupSocial(ctx) {
 
   // Браузер отмечается раз в 2 минуты, пока вкладка открыта. «В сети» — отметка не старше 4 минут.
   const BEAT = 2 * 60e3;
-  // Ушёл со вкладки — сразу отмечаемся away, чтобы «в сети» гасло без 4 минут ожидания.
-  // ponytail: с двух вкладок или устройств скрытая перебивает открытую до её следующей отметки (≤2 мин).
-  function beat() {
-    if (ctx.user) F().setDoc(ref('presence', me()), { at: F().serverTimestamp(), ...(document.hidden ? { away: true } : {}) }).catch(console.error);
+  // «В сети» — только пока сайт перед глазами: вкладка открыта и окно в фокусе. Свернул окно, переключился
+  // на другую программу или вкладку — сразу отмечаемся away, без 4 минут ожидания.
+  // ponytail: с двух вкладок или устройств неактивная перебивает активную до её следующей отметки (≤2 мин).
+  const here = () => !document.hidden && document.hasFocus();
+  let wasHere = null;
+  function beat(force = false) {
+    if (!ctx.user || (!force && here() === wasHere)) return; // фокус дёргается часто — пишем только смену
+    wasHere = here();
+    F().setDoc(ref('presence', me()), { at: F().serverTimestamp(), ...(wasHere ? {} : { away: true }) }).catch(console.error);
   }
-  setInterval(() => { if (!document.hidden) beat(); }, BEAT);
-  document.addEventListener('visibilitychange', beat);
+  setInterval(() => { if (here()) beat(true); }, BEAT);
+  document.addEventListener('visibilitychange', () => beat());
+  addEventListener('focus', () => beat());
+  addEventListener('blur', () => beat());
 
   const isOnline = (at, isMe, away = false) => isMe || (!away && Date.now() - ms(at) < 2 * BEAT);
 
@@ -2625,7 +2632,7 @@ export function setupSocial(ctx) {
       ins?.forEach(d => followers.add(d.data().from));
     }
     watchChats();
-    beat();
+    beat(true);
   }
 
   /* ---------- Маршруты и события ---------- */
