@@ -84,6 +84,9 @@ await no('время нельзя подделать', setDoc(doc(alice, 'presen
 await no('за другого нельзя', setDoc(doc(bob, 'presence', 'alice'), { at: serverTimestamp() }));
 await ok('статус видят все', getDoc(doc(anon, 'presence', 'alice')));
 await ok('ушёл со вкладки', setDoc(doc(alice, 'presence', 'alice'), { at: serverTimestamp(), away: true }));
+await ok('свои черновики', setDoc(doc(alice, 'drafts', 'alice'), { posts: [{ id: 'a', title: 't', body: '', tag: '', at: 1 }] }));
+await no('чужие черновики не прочесть', getDoc(doc(bob, 'drafts', 'alice')));
+await no('лишние поля нельзя', setDoc(doc(alice, 'drafts', 'alice'), { posts: [], x: 1 }));
 await no('away только true', setDoc(doc(alice, 'presence', 'alice'), { at: serverTimestamp(), away: false }));
 await ok('печатаю в своём чате', setDoc(doc(alice, 'chats', 'alice_bob', 'typing', 'alice'), { at: serverTimestamp() }));
 await no('печатаю за другого', setDoc(doc(alice, 'chats', 'alice_bob', 'typing', 'bob'), { at: serverTimestamp() }));

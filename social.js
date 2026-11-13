@@ -290,7 +290,7 @@ export function setupSocial(ctx) {
   const isUpdatePost = p => p.update === true && isDevPost(p);
   const devBadge = p => (isDevPost(p) ? `<span class="r-devbadge">${ICON.check}${T(isUpdatePost(p) ? 'Обновление программы' : 'От разработчика')}</span>` : '');
 
-  // Черновики лежат в этом браузере: недописанный пост или сообщение не пропадёт, если уйти со страницы.
+  // Черновики лежат в этом браузере (посты ещё и в базе, см. watchDrafts): недописанное не пропадёт, если уйти со страницы.
   const draftKey = k => `draft:${me()}:${k}`;
   const getDraft = k => { try { return JSON.parse(localStorage.getItem(draftKey(k))); } catch { return null; } };
   const setDraft = (k, v) => {
@@ -315,8 +315,44 @@ export function setupSocial(ctx) {
   }
   const putPostDraft = (id, d) => {
     const list = postDrafts().filter(x => x.id !== id);
-    setDraft('posts', d ? [{ ...d, id, at: Date.now() }, ...list] : list.length ? list : null);
+    setDraft('posts', d ? [{ ...d, id, at: Date.now() }, ...list].slice(0, 50) : list.length ? list : null);
+    pushDrafts();
   };
+  // Копия списка в базе (drafts/{uid}) — черновики видны на всех устройствах.
+  // Пишем через 1,5 с после последней буквы; пока запись ждёт, пришедшая из базы версия не перебивает свою.
+  // ponytail: если писать один пост сразу с двух устройств, побеждает последнее сохранение целиком.
+  let pushTimer = 0, stopDrafts = null;
+  function pushDrafts() {
+    if (!ctx.user) return;
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(() => {
+      pushTimer = 0;
+      F().setDoc(ref('drafts', me()), { posts: postDrafts() }).catch(console.error);
+    }, 1500);
+  }
+  function watchDrafts() {
+    stopDrafts?.();
+    stopDrafts = null;
+    clearTimeout(pushTimer);
+    pushTimer = 0;
+    if (!ctx.user) return;
+    let first = true;
+    stopDrafts = F().onSnapshot(ref('drafts', me()), snap => {
+      if (pushTimer || snap.metadata.hasPendingWrites) return;
+      const cloud = snap.data()?.posts || [];
+      let list = cloud;
+      if (first) { // первый раз сливаем с тем, что лежало только в этом браузере
+        const byId = new Map(cloud.map(d => [d.id, d]));
+        postDrafts().forEach(d => { if (!byId.has(d.id) || byId.get(d.id).at < d.at) byId.set(d.id, d); });
+        list = [...byId.values()].sort((a, b) => b.at - a.at).slice(0, 50);
+      }
+      setDraft('posts', list.length ? list : null);
+      if (first && JSON.stringify(list) !== JSON.stringify(cloud)) pushDrafts();
+      first = false;
+      if (view.querySelector('.r-drafts')) renderDrafts();
+      else { const nav = view.querySelector('.r-submit-tabs'); if (nav) nav.outerHTML = submitTabs(false); } // число у вкладки
+    }, console.error);
+  }
   function savePostDraft(form) {
     const { title, body, tag } = Object.fromEntries(new FormData(form));
     const update = !!form.elements.update?.checked;
@@ -2677,6 +2713,7 @@ export function setupSocial(ctx) {
       ins?.forEach(d => followers.add(d.data().from));
     }
     watchChats();
+    watchDrafts();
     beat(true);
   }
 
