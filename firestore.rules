@@ -347,7 +347,9 @@ service cloud.firestore {
     match /posts/{id} {
       allow read: if true;
       allow create: if signedIn() && hasProfile()
-        && request.resource.data.keys().hasOnly(['uid', 'title', 'body', 'appId', 'score', 'commentCount', 'createdAt', 'imageRatio', 'images'])
+        && request.resource.data.keys().hasOnly(['uid', 'title', 'body', 'appId', 'score', 'commentCount', 'createdAt', 'imageRatio', 'images', 'update'])
+        // update — «обновление программы», выделяется синим (проверка, что автор — разработчик, в приложении)
+        && request.resource.data.get('update', true) == true
         // images — сколько фото, если их больше одного (2–10); вторая и дальше лежат в postimages/<id>_1, _2…
         && (!('images' in request.resource.data)
           || (request.resource.data.images is int && request.resource.data.images >= 2 && request.resource.data.images <= 10

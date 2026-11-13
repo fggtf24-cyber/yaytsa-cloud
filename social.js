@@ -281,12 +281,27 @@ export function setupSocial(ctx) {
     return Math.min(Math.max(y, 0), t.offsetHeight);
   }
 
-  // Пост разработчика про свою программу — официальный, его видно издалека.
+  // Пост разработчика про свою программу помечен значком. Синим выделяется только «обновление программы» —
+  // автор сам ставит галочку, иначе каждый его пост о программе горел бы синим.
   const isDevPost = p => {
     const app = p.appId && ctx.apps.find(a => a.id === p.appId);
     return !!app && [app.authorUid, ...(app.coauthors || [])].includes(p.uid);
   };
-  const devBadge = p => (isDevPost(p) ? `<span class="r-devbadge">${ICON.check}${T('От разработчика')}</span>` : '');
+  const isUpdatePost = p => p.update === true && isDevPost(p);
+  const devBadge = p => (isDevPost(p) ? `<span class="r-devbadge">${ICON.check}${T(isUpdatePost(p) ? 'Обновление программы' : 'От разработчика')}</span>` : '');
+
+  // Черновики лежат в этом браузере: недописанный пост или сообщение не пропадёт, если уйти со страницы.
+  const draftKey = k => `draft:${me()}:${k}`;
+  const getDraft = k => { try { return JSON.parse(localStorage.getItem(draftKey(k))); } catch { return null; } };
+  const setDraft = (k, v) => {
+    try { if (v) localStorage.setItem(draftKey(k), JSON.stringify(v)); else localStorage.removeItem(draftKey(k)); } catch { /* приватный режим */ }
+  };
+  // ponytail: фото в черновик поста не кладём — они большие, localStorage переполнится.
+  function savePostDraft(form) {
+    const { title, body, tag } = Object.fromEntries(new FormData(form));
+    const update = !!form.elements.update?.checked;
+    setDraft('post', title.trim() || body.trim() || tag.trim() || update ? { title, body, tag, update } : null);
+  }
 
   const imageTag = url => (DATA_IMAGE.test(url || '') ? `<img class="c-image" src="${url}" alt="${T('Картинка в комментарии')}" loading="lazy" tabindex="0" role="button">` : '');
 
@@ -617,7 +632,7 @@ export function setupSocial(ctx) {
   const names = uid => `<span class="r-names"><b>${esc(shownName(uid))}</b>${handle(uid) ? `<small>@${esc(handle(uid))}</small>` : ''}</span>`;
 
   const postCard = (p, { author = true } = {}) => `
-    <article class="r-post${isDevPost(p) ? ' dev' : ''}" data-href="#post/${esc(p.id)}">
+    <article class="r-post${isUpdatePost(p) ? ' dev' : ''}" data-href="#post/${esc(p.id)}">
       ${devBadge(p)}
       <div class="r-meta">
         ${author ? `<a class="r-who" href="${profileHref(p.uid)}">${ava(p.uid, 32)}${names(p.uid)}</a>${relation(p.uid)}<span class="r-dot">•</span>` : ''}
@@ -786,7 +801,7 @@ export function setupSocial(ctx) {
       </details>` : '';
     const sub = handle(post.uid) ? `@${esc(handle(post.uid))}` : '';
     const main = `
-      <article class="r-full${isDevPost(post) ? ' dev' : ''}">
+      <article class="r-full${isUpdatePost(post) ? ' dev' : ''}">
         <div class="r-full-head">
           <button type="button" class="r-iconbtn r-backbtn" data-s-back aria-label="${T('Назад')}">${ICON.back}</button>
           <a href="${profileHref(post.uid)}">${ava(post.uid, 32)}</a>
@@ -1259,6 +1274,7 @@ export function setupSocial(ctx) {
 
   function renderSubmit(appId) {
     const app = ctx.apps.find(a => a.id === appId);
+    const dev = ctx.apps.some(a => [a.authorUid, ...(a.coauthors || [])].includes(me()));
     if (notReady()) return;
     document.title = `${T('Создать пост')} — ${T('Яйца Cloud')}`;
     if (!ctx.user) return note(`<a class="link" href="#account">${T('Войдите')}</a>${T(', чтобы создать пост.')}`);
@@ -1277,6 +1293,7 @@ export function setupSocial(ctx) {
         <label class="field r-tagfield"><span class="sr">${T('Программа')}</span>
           <span class="r-at"><span aria-hidden="true">#</span><input name="tag" maxlength="60" autocomplete="off" data-suggest="app" placeholder="${T('Программа, необязательно')}" value="${app ? esc(appTag(ctx.nm(app))) : ''}"></span>
         </label>
+        ${dev ? `<label class="mod-check r-update-check"><input type="checkbox" name="update"><span>${T('Это обновление программы')}</span></label>` : ''}
         ${ctx.isAdmin ? `<p class="r-hint">${T('@everyone отметит всех: пост придёт в уведомления.')}</p>` : ''}
         <div class="r-submit-bar">
           <button type="button" class="r-pill ghost" data-s-back>${T('Отмена')}</button>
@@ -1291,11 +1308,19 @@ export function setupSocial(ctx) {
           <li>${T('Укажите программу в поле под текстом — пост будет виден и на её странице.')}</li>
           <li>${T('Упомяните человека через @имя, ссылки станут кликабельными.')}</li>
           <li>${T('Список — строка с «- » или «1. », черта между частями — «---». Или кнопки под текстом.')}</li>
-          ${ctx.apps.some(a => [a.authorUid, ...(a.coauthors || [])].includes(me())) ? `<li>${T('Пост о своей программе с её тегом будет отмечен «От разработчика».')}</li>` : ''}
+          ${dev ? `<li>${T('Пост о своей программе с её тегом будет отмечен «От разработчика». Галочка «Это обновление программы» выделит его синим.')}</li>` : ''}
           <li>${T('Будьте вежливы. Админы могут удалить грубость.')}</li>
         </ol>
       </section>`;
     view.innerHTML = page(main, aside);
+    const d = getDraft('post'), form = view.querySelector('.r-submit');
+    if (d) {
+      form.elements.title.value = d.title || '';
+      form.elements.body.value = d.body || '';
+      if (!app) form.elements.tag.value = d.tag || '';
+      if (form.elements.update) form.elements.update.checked = !!d.update;
+      view.querySelector('.r-counter').textContent = `${form.elements.title.value.length}/300`;
+    }
   }
 
   async function addPost(form) {
@@ -1307,6 +1332,8 @@ export function setupSocial(ctx) {
     const tagName = tag.trim().replace(/^#/, '');
     const tagged = tagName ? appByTag(appTag(tagName)) : null;
     if (tagName && !tagged) return ctx.toast(T('Такой программы нет. Выберите её из списка.'));
+    const update = !!form.elements.update?.checked;
+    if (update && !isDevPost({ appId: tagged?.id, uid: me() })) return ctx.toast(T('Обновление — только для своей программы. Укажите её тег.'));
     const button = form.querySelector('button:not([type])');
     button.disabled = true;
     try {
@@ -1315,6 +1342,7 @@ export function setupSocial(ctx) {
       const size = images.length && await imageSize(images[0]);
       batch.set(pRef, {
         uid: me(), title: title.trim(), body: body.trim(), appId: tagged?.id || '', score: 1, commentCount: 0, createdAt: F().serverTimestamp(),
+        ...(update ? { update: true } : {}),
         ...(images.length ? { imageRatio: +(size.width / size.height).toFixed(3) } : {}),
         ...(images.length > 1 ? { images: images.length } : {}),
       });
@@ -1326,6 +1354,7 @@ export function setupSocial(ctx) {
         });
       }
       await batch.commit();
+      setDraft('post', null);
       notifyMentions(`${title} ${body}`, pRef.id, '');
       myVotes.set(`p_${pRef.id}`, 1);
       location.hash = `post/${pRef.id}`;
@@ -1755,7 +1784,12 @@ export function setupSocial(ctx) {
     ctx.drawInboxCount();
     if (roomId && chats.some(c => c.id === roomId)) openRoomStream();
     markSeen();
-    view.querySelector('.r-chat-form textarea')?.focus();
+    const input = view.querySelector('.r-chat-form textarea');
+    if (input && roomId) {
+      input.value = getDraft(`chat:${roomId}`) || '';
+      input.dispatchEvent(new Event('input', { bubbles: true })); // подогнать высоту поля
+    }
+    input?.focus();
   }
 
   function drawChatList() {
@@ -2009,7 +2043,7 @@ export function setupSocial(ctx) {
     const caption = !sticker && media?.kind !== 'voice'; // текст из строки ввода уходит с сообщением или как подпись к фото
     const text = caption ? input.value.trim() : '';
     if (!text && !extra) return;
-    if (caption) input.value = '';
+    if (caption) { input.value = ''; setDraft(`chat:${roomId}`, null); }
     try {
       const batch = F().writeBatch(ctx.db);
       const label = sticker ? '[стикер]' : media?.kind === 'voice' ? '[голосовое]' : '[фото]';
@@ -2033,7 +2067,7 @@ export function setupSocial(ctx) {
       ctx.push?.('chat', roomId); // уведомление собеседнику на телефон, даже если у него всё закрыто
       if (!stopMsgs) openRoomStream();
     } catch (e) {
-      if (caption && !input.value) input.value = text;
+      if (caption && !input.value) { input.value = text; setDraft(`chat:${roomId}`, text); }
       fail(e);
     }
   }
@@ -2057,7 +2091,7 @@ export function setupSocial(ctx) {
     editingMsg = null;
     view.querySelector('.r-edit-bar')?.remove();
     const input = view.querySelector('.r-chat-form textarea');
-    if (input) { input.value = ''; input.dispatchEvent(new Event('input', { bubbles: true })); }
+    if (input) { input.value = getDraft(`chat:${roomId}`) || ''; input.dispatchEvent(new Event('input', { bubbles: true })); }
   }
 
   // Строка в списке чатов, если правят или удаляют последнее сообщение.
@@ -2620,6 +2654,7 @@ export function setupSocial(ctx) {
   });
 
   view.addEventListener('change', e => {
+    if (e.target.closest('.r-submit')) savePostDraft(e.target.closest('form')); // тег, выбранный из подсказки
     if (e.target.matches('[data-s-privacy]')) setPrivacy(e.target.dataset.sPrivacy, e.target.value);
     if (e.target.matches('[data-s-bday]')) setBirthdayPublic(e.target);
     if (e.target.matches('[data-s-sort]')) { commentSort = e.target.value; drawPost(true); }
@@ -2673,6 +2708,8 @@ export function setupSocial(ctx) {
     if (e.target.matches('[data-suggest]')) updateSuggest(e.target);
     if (e.target.id === 'chat-search') searchChats(e.target.value);
     if (e.target.matches('[name=net]')) e.target.closest('.net-row').querySelector('img').src = netIcon(e.target.value.trim());
+    if (e.target.closest('.r-submit')) savePostDraft(e.target.closest('form'));
+    if (e.target.matches('.r-chat-form textarea') && roomId && !editingMsg) setDraft(`chat:${roomId}`, e.target.value);
     if (e.target.matches('.r-chat-form textarea, .r-composer textarea')) {
       e.target.style.height = 'auto';
       e.target.style.height = `${Math.min(e.target.scrollHeight, 240)}px`;
