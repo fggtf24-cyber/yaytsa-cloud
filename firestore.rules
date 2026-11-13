@@ -366,8 +366,9 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time;
       allow update: if signedIn() && (
         (resource.data.uid == request.auth.uid
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body', 'editedAt', 'imageRatio', 'images'])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body', 'editedAt', 'imageRatio', 'images', 'update'])
           && str(request.resource.data.body, 0, 10000)
+          && request.resource.data.get('update', true) == true
           // При правке можно поменять фото: те же условия, что при создании.
           && (!('images' in request.resource.data)
             || (request.resource.data.images is int && request.resource.data.images >= 2 && request.resource.data.images <= 10

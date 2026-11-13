@@ -35,6 +35,7 @@ await no('счёт 1 без голоса', setDoc(doc(alice, 'posts', 'p3'), { u
 await ok('старый клиент: счёт 0', setDoc(doc(alice, 'posts', 'p4'), { uid: 'alice', title: 'x', body: '', appId: '', score: 0, commentCount: 0, createdAt: serverTimestamp() }));
 await ok('пост-обновление', setDoc(doc(alice, 'posts', 'p4u'), { uid: 'alice', title: 'x', body: '', appId: '', score: 0, commentCount: 0, createdAt: serverTimestamp(), update: true }));
 await no('update только true', setDoc(doc(alice, 'posts', 'p4f'), { uid: 'alice', title: 'x', body: '', appId: '', score: 0, commentCount: 0, createdAt: serverTimestamp(), update: 'да' }));
+await ok('отметить старый пост обновлением', updateDoc(doc(alice, 'posts', 'p4'), { update: true, editedAt: serverTimestamp() }));
 const comment = (db, id, uid, extra = {}, body = 'hi') => { const b = writeBatch(db);
   b.set(doc(db, 'tcomments', id), { postId: 'p0', parentId: '', uid, body, score: 1, deleted: false, createdAt: serverTimestamp(), ...extra });
   b.set(doc(db, 'votes', `c_${id}_${uid}`), { uid, kind: 'c', target: id, v: 1 });

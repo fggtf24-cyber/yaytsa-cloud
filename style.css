@@ -455,6 +455,8 @@ button.r-sort { border: 0; background: none; font: inherit; cursor: pointer; }
 .r-full.dev { padding: 14px; border-radius: 16px; }
 .r-post.dev + .r-post::before, .r-post + .r-post.dev::before { display: none; }
 .r-update-check { font-weight: 500; }
+.r-composer-bar .r-update-check { margin-right: auto; padding-left: 8px; font-size: 14px; }
+.r-composer textarea { scrollbar-width: thin; scrollbar-color: var(--edge) transparent; }
 /* «Создать пост» в ленте: на узком экране боковая колонка с этой кнопкой уезжает под все посты */
 .r-feed-new { display: none; flex: none; margin-left: auto; }
 .r-menu { position: relative; }

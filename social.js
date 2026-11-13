@@ -962,12 +962,13 @@ export function setupSocial(ctx) {
     content.querySelector(':scope > .r-composer textarea').focus();
   }
 
-  function editForm(kind, id, text, optional = kind === 'post') {
+  function editForm(kind, id, text, optional = kind === 'post', extra = '') {
     return `
       <form class="r-composer open" data-s-form="edit-${kind}" data-id="${esc(id)}">
         <textarea name="text" rows="5" maxlength="${kind === 'post' ? 10000 : 5000}" ${optional ? '' : 'required'} data-suggest="@" aria-label="${T('Текст')}">${esc(text)}</textarea>
         ${kind === 'post' ? attachBar(false, true) : ''}
         <div class="r-composer-bar">
+          ${extra}
           <button type="button" class="r-pill ghost" data-s-cancel-edit>${T('Отмена')}</button>
           <button class="r-pill primary">${T('Сохранить')}</button>
         </div>
@@ -979,7 +980,10 @@ export function setupSocial(ctx) {
     const kind = form.dataset.sForm === 'edit-post' ? 'post' : 'comment';
     if (form.dataset.loading !== undefined) return ctx.toast(T('Фото ещё загружаются, подождите секунду.'));
     try {
-      if (kind === 'post') await savePostEdit(form, text);
+      if (kind === 'post') {
+        await savePostEdit(form, text);
+        if (form.elements.update) thread.post.update = form.elements.update.checked;
+      }
       else {
         const c = thread.comments.find(x => x.id === form.dataset.id);
         if (!text && !c.image && !c.sticker) return;
@@ -994,8 +998,10 @@ export function setupSocial(ctx) {
   const postImageId = (id, i) => (i ? `${id}_${i}` : id);
   async function savePostEdit(form, text) {
     const { post } = thread;
+    const box = form.elements.update;
+    const flag = box && box.checked !== (post.update === true) ? { update: box.checked || F().deleteField() } : {};
     if (!form.querySelector('.attach')) {
-      await F().updateDoc(ref('posts', post.id), { body: text, editedAt: F().serverTimestamp() });
+      await F().updateDoc(ref('posts', post.id), { body: text, editedAt: F().serverTimestamp(), ...flag });
       return Object.assign(post, { body: text, editedAt: true });
     }
     const images = [...form.querySelectorAll('[name=image]')].map(i => i.value).filter(Boolean).slice(0, MAX_IMAGES);
@@ -1009,7 +1015,7 @@ export function setupSocial(ctx) {
     });
     for (let i = images.length; i < had; i++) batch.delete(ref('postimages', postImageId(post.id, i)));
     batch.update(ref('posts', post.id), {
-      body: text, editedAt: F().serverTimestamp(),
+      body: text, editedAt: F().serverTimestamp(), ...flag,
       imageRatio: ratio || F().deleteField(),
       images: images.length > 1 ? images.length : F().deleteField(),
     });
@@ -1023,7 +1029,11 @@ export function setupSocial(ctx) {
   async function startPostEdit() {
     const { post } = thread;
     const body = document.getElementById('r-post-body');
-    body.innerHTML = editForm('post', post.id, post.body || '');
+    const check = isDevPost(post) ? `<label class="mod-check r-update-check"><input type="checkbox" name="update" ${post.update === true ? 'checked' : ''}><span>${T('Это обновление программы')}</span></label>` : '';
+    body.innerHTML = editForm('post', post.id, post.body || '', true, check);
+    const input = body.querySelector('textarea');
+    input.dispatchEvent(new Event('input', { bubbles: true })); // поле сразу по высоте текста, без тесной прокрутки
+    input.focus();
     body.parentElement.querySelector(':scope > .r-media, :scope > .r-gallery')?.setAttribute('hidden', '');
     const list = body.querySelector('.attach-list');
     const form = list.closest('form');
@@ -2712,7 +2722,7 @@ export function setupSocial(ctx) {
     if (e.target.matches('.r-chat-form textarea') && roomId && !editingMsg) setDraft(`chat:${roomId}`, e.target.value);
     if (e.target.matches('.r-chat-form textarea, .r-composer textarea')) {
       e.target.style.height = 'auto';
-      e.target.style.height = `${Math.min(e.target.scrollHeight, 240)}px`;
+      e.target.style.height = `${Math.min(e.target.scrollHeight, e.target.closest('[data-s-form^=edit]') ? innerHeight * 0.6 : 240)}px`;
     }
   });
 
