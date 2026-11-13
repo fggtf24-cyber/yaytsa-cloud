@@ -305,10 +305,50 @@ export function setupSocial(ctx) {
     box.hidden = !isDevPost({ appId: app?.id, uid: me() });
     if (box.hidden) form.elements.update.checked = false;
   }
+  // Черновики постов — список, как на Reddit: у каждой формы свой черновик (draftId), вкладка «Черновики» показывает все.
+  let draftId = '';
+  function postDrafts() {
+    const list = getDraft('posts') || [];
+    const old = getDraft('post'); // единственный черновик из прошлой версии
+    if (old) { list.unshift({ id: 'old', at: Date.now(), ...old }); setDraft('posts', list); setDraft('post', null); }
+    return list;
+  }
+  const putPostDraft = (id, d) => {
+    const list = postDrafts().filter(x => x.id !== id);
+    setDraft('posts', d ? [{ ...d, id, at: Date.now() }, ...list] : list.length ? list : null);
+  };
   function savePostDraft(form) {
     const { title, body, tag } = Object.fromEntries(new FormData(form));
     const update = !!form.elements.update?.checked;
-    setDraft('post', title.trim() || body.trim() || tag.trim() || update ? { title, body, tag, update } : null);
+    if (!draftId) return;
+    putPostDraft(draftId, title.trim() || body.trim() || tag.trim() || update ? { title, body, tag, update } : null);
+  }
+  const submitTabs = drafts => `
+    <nav class="r-tabs r-submit-tabs" aria-label="${T('Создать пост')}">
+      <a href="#submit" aria-current="${drafts ? 'false' : 'page'}">${T('Пост')}</a>
+      <a href="#submit/drafts" aria-current="${drafts ? 'page' : 'false'}">${T('Черновики')}${postDrafts().length ? ` <b class="r-count">${postDrafts().length}</b>` : ''}</a>
+    </nav>`;
+
+  function renderDrafts() {
+    const list = postDrafts();
+    const main = `
+      <h1 class="r-h1">${T('Создать пост')}</h1>
+      ${submitTabs(true)}
+      <div class="r-drafts">${list.length ? list.map(d => `
+        <article class="r-draft">
+          <a class="r-draft-open" href="#submit/draft/${esc(d.id)}">
+            <b>${esc(d.title.trim() || T('Без заголовка'))}</b>
+            ${d.body.trim() ? `<span class="r-draft-body">${esc(d.body.trim().slice(0, 200))}</span>` : ''}
+            <small>${d.tag.trim() ? `#${esc(d.tag.trim().replace(/^#/, ''))} · ` : ''}${T('изменён {when}', { when: ago({ toMillis: () => d.at }) })}</small>
+          </a>
+          <button type="button" class="r-iconbtn" data-s-del-draft="${esc(d.id)}" aria-label="${T('Удалить черновик')}" title="${T('Удалить черновик')}">${ICON.trash || '×'}</button>
+        </article>`).join('') : `<p class="empty r-note">${T('Черновиков нет. Недописанный пост сохранится сюда сам.')}</p>`}
+      </div>`;
+    view.innerHTML = page(main, `
+      <section class="r-card">
+        <h3 class="r-card-title small">${T('Черновики')}</h3>
+        <p class="r-sub">${T('Недописанные посты сохраняются сами, пока вы печатаете. Они хранятся в этом браузере.')}</p>
+      </section>`);
   }
 
   const imageTag = url => (DATA_IMAGE.test(url || '') ? `<img class="c-image" src="${url}" alt="${T('Картинка в комментарии')}" loading="lazy" tabindex="0" role="button">` : '');
@@ -1300,7 +1340,8 @@ export function setupSocial(ctx) {
 
   /* ---------- Новый пост ---------- */
 
-  function renderSubmit(appId) {
+  function renderSubmit(appId, drafts = false, openDraft = '') {
+    if (drafts && ctx.user && pub) { document.title = `${T('Черновики')} — ${T('Яйца Cloud')}`; return renderDrafts(); }
     const app = ctx.apps.find(a => a.id === appId);
     const dev = ctx.apps.some(a => [a.authorUid, ...(a.coauthors || [])].includes(me()));
     if (notReady()) return;
@@ -1309,6 +1350,7 @@ export function setupSocial(ctx) {
     if (!pub) return note(`${T('Сначала выберите @имя.')} <a class="link" href="#account">${T('Открыть профиль')}</a>`);
     const main = `
       <h1 class="r-h1">${T('Создать пост')}</h1>
+      ${submitTabs(false)}
       <form class="r-submit" data-s-form="post">
         <div class="r-field">
           <input name="title" maxlength="300" required autocomplete="off" data-suggest="@" placeholder="${T('Заголовок')}*" aria-label="${T('Заголовок')}">
@@ -1341,7 +1383,9 @@ export function setupSocial(ctx) {
         </ol>
       </section>`;
     view.innerHTML = page(main, aside);
-    const d = getDraft('post'), form = view.querySelector('.r-submit');
+    const form = view.querySelector('.r-submit');
+    const d = openDraft && postDrafts().find(x => x.id === openDraft);
+    draftId = d ? d.id : Date.now().toString(36); // новый пост — новый черновик, появится в списке с первой буквы
     if (d) {
       form.elements.title.value = d.title || '';
       form.elements.body.value = d.body || '';
@@ -1383,7 +1427,7 @@ export function setupSocial(ctx) {
         });
       }
       await batch.commit();
-      setDraft('post', null);
+      putPostDraft(draftId, null);
       notifyMentions(`${title} ${body}`, pRef.id, '');
       myVotes.set(`p_${pRef.id}`, 1);
       location.hash = `post/${pRef.id}`;
@@ -2643,7 +2687,7 @@ export function setupSocial(ctx) {
     if (name === 'post' && a) return { name: 'post', id: a, focus: b || '', social: true };
     if (name === 'u' && a) return { name: 'u', handle: a.toLowerCase(), tab: PROFILE_TABS.some(t => t[0] === b) ? b || '' : '', social: true };
     if (name === 'uid' && a) return { name: 'uid', uid: a, social: true };
-    if (name === 'submit') return { name: 'submit', appId: a || '', social: true };
+    if (name === 'submit') return { name: 'submit', appId: a === 'drafts' || a === 'draft' ? '' : a || '', drafts: a === 'drafts', draft: a === 'draft' ? b || '' : '', social: true };
     if (name === 'chat') return { name: 'chat', handle: (a || '').toLowerCase(), social: true };
     if (name === 'group' && a) return { name: 'chat', handle: '', group: a, social: true };
     // Чат с человеком без @имени (не выбрал имя или удалил профиль): по uid, иначе его не открыть и не отметить прочитанным.
@@ -2661,7 +2705,7 @@ export function setupSocial(ctx) {
     else if (r.name === 'post') renderPost(r.id, r.focus);
     else if (r.name === 'u') renderProfile(r.handle, r.tab);
     else if (r.name === 'uid') renderUid(r.uid);
-    else if (r.name === 'submit') renderSubmit(r.appId);
+    else if (r.name === 'submit') renderSubmit(r.appId, r.drafts, r.draft);
     else if (r.name === 'chat') renderChat(r.handle, r.group, r.peer);
   }
 
@@ -2690,6 +2734,10 @@ export function setupSocial(ctx) {
       else { form.reset(); clearAttach(form); document.activeElement.blur(); }
     }
     else if (d.sCancelEdit !== undefined) drawPost(true);
+    else if (d.sDelDraft) {
+      askDialog(T, { title: T('Удалить черновик?'), text: T('Его нельзя будет вернуть.'), ok: 'Удалить', danger: true })
+        .then(yes => { if (yes) { putPostDraft(d.sDelDraft, null); renderDrafts(); } });
+    }
     else if (d.sEditPost !== undefined) {
       t.closest('details').open = false;
       startPostEdit().catch(fail);
