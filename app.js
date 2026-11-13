@@ -1,5 +1,5 @@
-import { EN, TERMS } from './i18n.js?v=74';
-import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=57';
+import { EN, TERMS } from './i18n.js?v=75';
+import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=59';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).

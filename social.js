@@ -297,6 +297,14 @@ export function setupSocial(ctx) {
     try { if (v) localStorage.setItem(draftKey(k), JSON.stringify(v)); else localStorage.removeItem(draftKey(k)); } catch { /* приватный режим */ }
   };
   // ponytail: фото в черновик поста не кладём — они большие, localStorage переполнится.
+  // Галочка «обновление» в новом посте видна, только когда в теге стоит своя программа.
+  function syncUpdateCheck(form) {
+    const box = form.querySelector('.r-update-check');
+    if (!box) return;
+    const app = appByTag(appTag(form.elements.tag.value.trim().replace(/^#/, '')));
+    box.hidden = !isDevPost({ appId: app?.id, uid: me() });
+    if (box.hidden) form.elements.update.checked = false;
+  }
   function savePostDraft(form) {
     const { title, body, tag } = Object.fromEntries(new FormData(form));
     const update = !!form.elements.update?.checked;
@@ -1122,13 +1130,15 @@ export function setupSocial(ctx) {
 
   // Браузер отмечается раз в 2 минуты, пока вкладка открыта. «В сети» — отметка не старше 4 минут.
   const BEAT = 2 * 60e3;
+  // Ушёл со вкладки — сразу отмечаемся away, чтобы «в сети» гасло без 4 минут ожидания.
+  // ponytail: с двух вкладок или устройств скрытая перебивает открытую до её следующей отметки (≤2 мин).
   function beat() {
-    if (ctx.user && !document.hidden) F().setDoc(ref('presence', me()), { at: F().serverTimestamp() }).catch(console.error);
+    if (ctx.user) F().setDoc(ref('presence', me()), { at: F().serverTimestamp(), ...(document.hidden ? { away: true } : {}) }).catch(console.error);
   }
-  setInterval(beat, BEAT);
+  setInterval(() => { if (!document.hidden) beat(); }, BEAT);
   document.addEventListener('visibilitychange', beat);
 
-  const isOnline = (at, isMe) => isMe || Date.now() - ms(at) < 2 * BEAT;
+  const isOnline = (at, isMe, away = false) => isMe || (!away && Date.now() - ms(at) < 2 * BEAT);
 
   /* ---------- Профиль ---------- */
 
@@ -1166,7 +1176,8 @@ export function setupSocial(ctx) {
     }
     // Свежий профиль, а не из кэша: имя и фото могли поменяться.
     try { const d = await F().getDoc(ref('profiles', uid)); remember(uid, d.exists() ? d.data() : null); } catch { /* останется кэш */ }
-    const lastSeen = await F().getDoc(ref('presence', uid)).then(d => d.data()?.at, () => null);
+    const seen = await F().getDoc(ref('presence', uid)).then(d => d.data() || {}, () => ({}));
+    const lastSeen = seen.at;
     await loadRoles([uid], true);
     comments = comments.filter(c => !c.deleted);
     shownComments.clear();
@@ -1228,11 +1239,11 @@ export function setupSocial(ctx) {
         <header class="r-phead">
           <div class="r-pava">
             ${ava(uid, 116)}
-            ${isOnline(lastSeen, isMe) ? `<span class="r-online" role="img" title="${T('В сети')}" aria-label="${T('В сети')}"></span>` : ''}
+            ${isOnline(lastSeen, isMe, seen.away) ? `<span class="r-online" role="img" title="${T('В сети')}" aria-label="${T('В сети')}"></span>` : ''}
           </div>
           <div class="r-phead-text">
             <h1>${esc(p.name || p.username)}${roleTags(uid)}</h1>
-            <p class="r-sub">@${esc(p.username)}${!isOnline(lastSeen, isMe) && ms(lastSeen) ? `<span class="r-dot">•</span><span>${T('Был(а) в сети {when}', { when: ago(lastSeen) })}</span>` : ''}${!isMe && followers.has(uid) && !isMutual(uid) ? ` <span class="r-tag">${T('подписан(а) на вас')}</span>` : ''}</p>
+            <p class="r-sub">@${esc(p.username)}${!isOnline(lastSeen, isMe, seen.away) && ms(lastSeen) ? `<span class="r-dot">•</span><span>${T('Был(а) в сети {when}', { when: ago(lastSeen) })}</span>` : ''}${!isMe && followers.has(uid) && !isMutual(uid) ? ` <span class="r-tag">${T('подписан(а) на вас')}</span>` : ''}</p>
           </div>
           ${netLinks(uid)}
         </header>
@@ -1303,7 +1314,7 @@ export function setupSocial(ctx) {
         <label class="field r-tagfield"><span class="sr">${T('Программа')}</span>
           <span class="r-at"><span aria-hidden="true">#</span><input name="tag" maxlength="60" autocomplete="off" data-suggest="app" placeholder="${T('Программа, необязательно')}" value="${app ? esc(appTag(ctx.nm(app))) : ''}"></span>
         </label>
-        ${dev ? `<label class="mod-check r-update-check"><input type="checkbox" name="update"><span>${T('Это обновление программы')}</span></label>` : ''}
+        ${dev ? `<label class="mod-check r-update-check" hidden><input type="checkbox" name="update"><span>${T('Это обновление программы')}</span></label>` : ''}
         ${ctx.isAdmin ? `<p class="r-hint">${T('@everyone отметит всех: пост придёт в уведомления.')}</p>` : ''}
         <div class="r-submit-bar">
           <button type="button" class="r-pill ghost" data-s-back>${T('Отмена')}</button>
@@ -1331,6 +1342,7 @@ export function setupSocial(ctx) {
       if (form.elements.update) form.elements.update.checked = !!d.update;
       view.querySelector('.r-counter').textContent = `${form.elements.title.value.length}/300`;
     }
+    syncUpdateCheck(form);
   }
 
   async function addPost(form) {
@@ -1580,11 +1592,12 @@ export function setupSocial(ctx) {
       <button class="btn primary">${T('Создать группу')}</button>
     </form>`;
 
+  const roomStatusTag = '<small class="r-room-status" data-room-status hidden></small>';
   const groupRoom = g => `
     <header class="r-room-head">
       <a class="r-iconbtn r-room-back" href="#chat" aria-label="${T('Все чаты')}">${ICON.back}</a>
       ${groupAva(g, 36)}
-      <span class="r-group-who"><b>${esc(g.name)}</b><small>${g.members.map(uid => `<a href="${profileHref(uid)}">${userLabel(uid)}</a>`).join(', ')}</small></span>
+      <span class="r-group-who"><b>${esc(g.name)}</b><small data-room-default>${g.members.map(uid => `<a href="${profileHref(uid)}">${userLabel(uid)}</a>`).join(', ')}</small>${roomStatusTag}</span>
       ${muteBtn()}
       <details class="r-menu">
         <summary class="r-iconbtn" aria-label="${T('Ещё')}">${ICON.dots}</summary>
@@ -1660,11 +1673,13 @@ export function setupSocial(ctx) {
     if (!await askDialog(T, { title: T('Удалить группу?'), text: T('Переписка удалится у всех участников. Это нельзя отменить.'), ok: 'Удалить', danger: true })) return;
     const id = roomId;
     try {
+      closeRoomLive();
       stopMsgs?.();
       stopMsgs = null;
       const msgs = await F().getDocs(col('chats', id, 'msgs'));
       const files = await F().getDocs(col('chats', id, 'media'));
-      await Promise.all([...msgs.docs, ...files.docs].map(d => F().deleteDoc(d.ref)));
+      const typing = await F().getDocs(col('chats', id, 'typing')).catch(() => ({ docs: [] }));
+      await Promise.all([...msgs.docs, ...files.docs, ...typing.docs].map(d => F().deleteDoc(d.ref)));
       await F().deleteDoc(ref('chats', id));
       location.hash = 'chat';
     } catch (e) {
@@ -1719,6 +1734,7 @@ export function setupSocial(ctx) {
           drawMsgs(); // собеседник мог прочитать: обновятся галочки
           // Пока чат не дошёл до базы, читать его сообщения нельзя: подписка сразу оборвалась бы.
           if (roomId && !stopMsgs && !snap.metadata.hasPendingWrites && chats.some(c => c.id === roomId)) openRoomStream();
+          if (roomId && liveRoom !== roomId && !snap.metadata.hasPendingWrites && chats.some(c => c.id === roomId)) openRoomLive();
           markSeen();
         }
       },
@@ -1753,6 +1769,7 @@ export function setupSocial(ctx) {
     }
     const nextRoom = nextGroup ? nextGroup.id : peer ? chatId(me(), peer) : null;
     if (nextRoom !== roomId) {
+      closeRoomLive();
       stopMsgs?.();
       stopMsgs = null;
       roomMsgs = [];
@@ -1780,7 +1797,7 @@ export function setupSocial(ctx) {
           ${group === 'new' ? newGroupForm() : nextGroup ? groupRoom(nextGroup) : peer ? `
             <header class="r-room-head">
               <a class="r-iconbtn r-room-back" href="#chat" aria-label="${T('Все чаты')}">${ICON.back}</a>
-              <a class="r-who" href="${profileHref(peer)}">${ava(peer, 36)}<span><b>${esc(shownName(peer))}</b>${handle(peer) ? `<small>@${esc(handle(peer))}</small>` : ''}</span></a>
+              <a class="r-who" href="${profileHref(peer)}">${ava(peer, 36)}<span><b>${esc(shownName(peer))}</b><small data-room-default>${handle(peer) ? `@${esc(handle(peer))}` : ''}</small>${roomStatusTag}</span></a>
               ${relation(peer)}
               ${muteBtn()}
             </header>
@@ -1794,6 +1811,7 @@ export function setupSocial(ctx) {
     ctx.drawInboxCount();
     if (roomId && chats.some(c => c.id === roomId)) openRoomStream();
     markSeen();
+    if (roomPeer || roomGroup) openRoomLive();
     const input = view.querySelector('.r-chat-form textarea');
     if (input && roomId) {
       input.value = getDraft(`chat:${roomId}`) || '';
@@ -1842,6 +1860,69 @@ export function setupSocial(ctx) {
     if (my !== chatSearchSeq) return;
     chatPeople = found;
     drawChatList();
+  }
+
+  /* ---------- «В сети» и «печатает…» в открытом чате ---------- */
+
+  let liveRoom = null, stopLive = null, peerPresence = null, typingUntil = new Map(), statusTimer = 0, typingSent = 0;
+  function openRoomLive() {
+    if (liveRoom === roomId) return drawRoomStatus();
+    closeRoomLive();
+    if (!roomId) return;
+    const id = liveRoom = roomId;
+    const stops = [F().onSnapshot(col('chats', id, 'typing'), snap => {
+      snap.docChanges().forEach(ch => {
+        if (ch.doc.id === me()) return;
+        // Свежесть меряем своими часами по приходу отметки: часы у людей расходятся.
+        const stale = ch.type === 'added' && Date.now() - ms(ch.doc.data().at) > 8000;
+        if (ch.type === 'removed' || stale) typingUntil.delete(ch.doc.id);
+        else typingUntil.set(ch.doc.id, Date.now() + 6000);
+      });
+      drawRoomStatus();
+    }, () => { if (liveRoom === id) liveRoom = null; })]; // личного чата ещё нет в базе: подпишемся, когда он появится
+    if (roomPeer) stops.push(F().onSnapshot(ref('presence', roomPeer), d => { peerPresence = d.data() || null; drawRoomStatus(); }, console.error));
+    stopLive = () => stops.forEach(stop => stop());
+  }
+  function closeRoomLive() {
+    stopLive?.();
+    clearTimeout(statusTimer);
+    stopLive = liveRoom = peerPresence = null;
+    typingUntil = new Map();
+    typingSent = 0;
+  }
+  function drawRoomStatus() {
+    clearTimeout(statusTimer);
+    const box = view.querySelector('[data-room-status]');
+    if (!liveRoom || liveRoom !== roomId || !box) return;
+    const now = Date.now();
+    const typers = [...typingUntil].filter(([, until]) => until > now).map(([uid]) => uid);
+    let text = '', cls = '';
+    if (typers.length) {
+      text = roomGroup ? T('{who} печатает…', { who: typers.map(shownName).join(', ') }) : T('печатает…');
+      cls = 'typing';
+    } else if (roomPeer && ms(peerPresence?.at)) {
+      const on = isOnline(peerPresence.at, false, peerPresence.away);
+      text = on ? T('в сети') : T('Был(а) в сети {when}', { when: ago(peerPresence.at) });
+      cls = on ? 'online' : '';
+    }
+    box.textContent = text;
+    box.className = `r-room-status ${cls}`;
+    box.hidden = !text;
+    box.parentElement.querySelector('[data-room-default]').hidden = !!text;
+    // Перерисовать, когда «печатает» истечёт, и раз в полминуты — для «в сети» и «был(а) N минут назад».
+    statusTimer = setTimeout(drawRoomStatus, Math.min(30e3, ...typers.map(uid => typingUntil.get(uid) - now)) + 50);
+  }
+  // Своя отметка «печатаю» — не чаще раза в 4 секунды; пустое поле или отправка её снимают.
+  function sendTyping(text) {
+    if (!roomId || !ctx.user) return;
+    if (!text.trim()) {
+      if (typingSent) F().deleteDoc(ref('chats', roomId, 'typing', me())).catch(() => {});
+      typingSent = 0;
+      return;
+    }
+    if (Date.now() - typingSent < 4000) return;
+    typingSent = Date.now();
+    F().setDoc(ref('chats', roomId, 'typing', me()), { at: F().serverTimestamp() }).catch(() => {});
   }
 
   function openRoomStream() {
@@ -2053,7 +2134,7 @@ export function setupSocial(ctx) {
     const caption = !sticker && media?.kind !== 'voice'; // текст из строки ввода уходит с сообщением или как подпись к фото
     const text = caption ? input.value.trim() : '';
     if (!text && !extra) return;
-    if (caption) { input.value = ''; setDraft(`chat:${roomId}`, null); }
+    if (caption) { input.value = ''; setDraft(`chat:${roomId}`, null); sendTyping(''); }
     try {
       const batch = F().writeBatch(ctx.db);
       const label = sticker ? '[стикер]' : media?.kind === 'voice' ? '[голосовое]' : '[фото]';
@@ -2521,6 +2602,7 @@ export function setupSocial(ctx) {
   /* ---------- Вход и выход ---------- */
 
   async function onUser(u) {
+    closeRoomLive();
     stopMsgs?.();
     stopMsgs = null;
     roomId = null;
@@ -2664,7 +2746,7 @@ export function setupSocial(ctx) {
   });
 
   view.addEventListener('change', e => {
-    if (e.target.closest('.r-submit')) savePostDraft(e.target.closest('form')); // тег, выбранный из подсказки
+    if (e.target.closest('.r-submit')) { syncUpdateCheck(e.target.closest('form')); savePostDraft(e.target.closest('form')); } // тег, выбранный из подсказки
     if (e.target.matches('[data-s-privacy]')) setPrivacy(e.target.dataset.sPrivacy, e.target.value);
     if (e.target.matches('[data-s-bday]')) setBirthdayPublic(e.target);
     if (e.target.matches('[data-s-sort]')) { commentSort = e.target.value; drawPost(true); }
@@ -2718,8 +2800,11 @@ export function setupSocial(ctx) {
     if (e.target.matches('[data-suggest]')) updateSuggest(e.target);
     if (e.target.id === 'chat-search') searchChats(e.target.value);
     if (e.target.matches('[name=net]')) e.target.closest('.net-row').querySelector('img').src = netIcon(e.target.value.trim());
-    if (e.target.closest('.r-submit')) savePostDraft(e.target.closest('form'));
-    if (e.target.matches('.r-chat-form textarea') && roomId && !editingMsg) setDraft(`chat:${roomId}`, e.target.value);
+    if (e.target.closest('.r-submit')) { syncUpdateCheck(e.target.closest('form')); savePostDraft(e.target.closest('form')); }
+    if (e.target.matches('.r-chat-form textarea') && roomId && !editingMsg) {
+      setDraft(`chat:${roomId}`, e.target.value);
+      if (e.isTrusted) sendTyping(e.target.value); // не при подстановке черновика
+    }
     if (e.target.matches('.r-chat-form textarea, .r-composer textarea')) {
       e.target.style.height = 'auto';
       e.target.style.height = `${Math.min(e.target.scrollHeight, e.target.closest('[data-s-form^=edit]') ? innerHeight * 0.6 : 240)}px`;

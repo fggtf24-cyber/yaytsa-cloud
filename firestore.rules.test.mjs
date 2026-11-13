@@ -18,6 +18,8 @@ await env.withSecurityRulesDisabled(async c => {
   const db = c.firestore();
   await setDoc(doc(db, 'admins', ADMIN), {});
   for (const u of ['alice', 'bob', 'adm']) await setDoc(doc(db, 'profiles', u), { username: u, name: u, photo: '', bio: '', createdAt: new Date() });
+  await setDoc(doc(db, 'apps', 'app1'), { name: 'A', authorUid: 'alice' });
+  await setDoc(doc(db, 'posts', 'pa'), { uid: 'alice', title: 't', body: '', appId: 'app1', score: 0, commentCount: 0, createdAt: new Date() });
   await setDoc(doc(db, 'posts', 'p0'), { uid: 'bob', title: 't', body: '', appId: '', score: 0, commentCount: 0, createdAt: new Date() });
 });
 
@@ -33,9 +35,13 @@ await ok('пост со своим голосом', post(alice, 'p1', 'alice'));
 await no('счёт 5 при создании', post(alice, 'p2', 'alice', 5));
 await no('счёт 1 без голоса', setDoc(doc(alice, 'posts', 'p3'), { uid: 'alice', title: 'x', body: '', appId: '', score: 1, commentCount: 0, createdAt: serverTimestamp() }));
 await ok('старый клиент: счёт 0', setDoc(doc(alice, 'posts', 'p4'), { uid: 'alice', title: 'x', body: '', appId: '', score: 0, commentCount: 0, createdAt: serverTimestamp() }));
-await ok('пост-обновление', setDoc(doc(alice, 'posts', 'p4u'), { uid: 'alice', title: 'x', body: '', appId: '', score: 0, commentCount: 0, createdAt: serverTimestamp(), update: true }));
-await no('update только true', setDoc(doc(alice, 'posts', 'p4f'), { uid: 'alice', title: 'x', body: '', appId: '', score: 0, commentCount: 0, createdAt: serverTimestamp(), update: 'да' }));
-await ok('отметить старый пост обновлением', updateDoc(doc(alice, 'posts', 'p4'), { update: true, editedAt: serverTimestamp() }));
+const upd = (db, id, uid, appId, update) => setDoc(doc(db, 'posts', id), { uid, title: 'x', body: '', appId, score: 0, commentCount: 0, createdAt: serverTimestamp(), update });
+await ok('обновление своей программы', upd(alice, 'p4u', 'alice', 'app1', true));
+await no('обновление чужой программы', upd(bob, 'p4b', 'bob', 'app1', true));
+await no('обновление без программы', upd(alice, 'p4n', 'alice', '', true));
+await no('update только true', upd(alice, 'p4f', 'alice', 'app1', 'да'));
+await ok('отметить старый пост обновлением', updateDoc(doc(alice, 'posts', 'pa'), { update: true, editedAt: serverTimestamp() }));
+await no('не разработчик не отметит пост без программы', updateDoc(doc(alice, 'posts', 'p4'), { update: true, editedAt: serverTimestamp() }));
 const comment = (db, id, uid, extra = {}, body = 'hi') => { const b = writeBatch(db);
   b.set(doc(db, 'tcomments', id), { postId: 'p0', parentId: '', uid, body, score: 1, deleted: false, createdAt: serverTimestamp(), ...extra });
   b.set(doc(db, 'votes', `c_${id}_${uid}`), { uid, kind: 'c', target: id, v: 1 });
@@ -77,6 +83,13 @@ await ok('отмечаю себя в сети', setDoc(doc(alice, 'presence', 'a
 await no('время нельзя подделать', setDoc(doc(alice, 'presence', 'alice'), { at: new Date(2030, 0, 1) }));
 await no('за другого нельзя', setDoc(doc(bob, 'presence', 'alice'), { at: serverTimestamp() }));
 await ok('статус видят все', getDoc(doc(anon, 'presence', 'alice')));
+await ok('ушёл со вкладки', setDoc(doc(alice, 'presence', 'alice'), { at: serverTimestamp(), away: true }));
+await no('away только true', setDoc(doc(alice, 'presence', 'alice'), { at: serverTimestamp(), away: false }));
+await ok('печатаю в своём чате', setDoc(doc(alice, 'chats', 'alice_bob', 'typing', 'alice'), { at: serverTimestamp() }));
+await no('печатаю за другого', setDoc(doc(alice, 'chats', 'alice_bob', 'typing', 'bob'), { at: serverTimestamp() }));
+await ok('собеседник видит «печатает»', getDocs(collection(bob, 'chats', 'alice_bob', 'typing')));
+await no('чужой не видит «печатает»', getDocs(collection(as('eve'), 'chats', 'alice_bob', 'typing')));
+await ok('снимаю «печатаю»', deleteDoc(doc(alice, 'chats', 'alice_bob', 'typing', 'alice')));
 
 // Группы
 const group = (db, id, owner, members, extra = {}) => setDoc(doc(db, 'chats', id), { group: true, name: 'Яйца', owner, members, lastText: '', lastFrom: owner, lastAt: serverTimestamp(), seen: {}, ...extra });

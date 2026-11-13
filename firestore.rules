@@ -271,7 +271,9 @@ service cloud.firestore {
     match /presence/{uid} {
       allow read: if true;
       allow write: if signedIn() && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['at'])
+        && request.resource.data.keys().hasOnly(['at', 'away'])
+        // away — ушёл со вкладки: «в сети» гаснет сразу
+        && request.resource.data.get('away', true) == true
         && request.resource.data.at == request.time;
     }
     // Подписка: id = <кто>_<на кого>. Взаимная подписка отдельно не хранится.
@@ -343,13 +345,18 @@ service cloud.firestore {
         && request.resource.data.n == likesOf(id) + voteDelta('a', id);
     }
 
+    // «Обновление программы» может отметить только автор или соавтор программы из тега поста.
+    function updateOk(data) {
+      return !('update' in data) || (data.update == true && data.appId != ''
+        && (get(/databases/$(database)/documents/apps/$(data.appId)).data.authorUid == request.auth.uid
+          || request.auth.uid in get(/databases/$(database)/documents/apps/$(data.appId)).data.get('coauthors', [])));
+    }
     // Пост на странице автора. appId — необязательная привязка к программе.
     match /posts/{id} {
       allow read: if true;
       allow create: if signedIn() && hasProfile()
         && request.resource.data.keys().hasOnly(['uid', 'title', 'body', 'appId', 'score', 'commentCount', 'createdAt', 'imageRatio', 'images', 'update'])
-        // update — «обновление программы», выделяется синим (проверка, что автор — разработчик, в приложении)
-        && request.resource.data.get('update', true) == true
+        && updateOk(request.resource.data)
         // images — сколько фото, если их больше одного (2–10); вторая и дальше лежат в postimages/<id>_1, _2…
         && (!('images' in request.resource.data)
           || (request.resource.data.images is int && request.resource.data.images >= 2 && request.resource.data.images <= 10
@@ -368,7 +375,7 @@ service cloud.firestore {
         (resource.data.uid == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body', 'editedAt', 'imageRatio', 'images', 'update'])
           && str(request.resource.data.body, 0, 10000)
-          && request.resource.data.get('update', true) == true
+          && updateOk(request.resource.data)
           // При правке можно поменять фото: те же условия, что при создании.
           && (!('images' in request.resource.data)
             || (request.resource.data.images is int && request.resource.data.images >= 2 && request.resource.data.images <= 10
@@ -607,6 +614,17 @@ service cloud.firestore {
         allow delete: if signedIn()
           && (resource == null || resource.data.from == request.auth.uid
             || get(/databases/$(database)/documents/chats/$(id)).data.get('owner', '') == request.auth.uid);
+      }
+      // «Печатает…»: у каждого участника своя отметка, время ставит сервер.
+      match /typing/{uid} {
+        allow read: if signedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/chats/$(id)).data.members;
+        allow create, update: if signedIn() && request.auth.uid == uid
+          && request.auth.uid in get(/databases/$(database)/documents/chats/$(id)).data.members
+          && request.resource.data.keys().hasOnly(['at'])
+          && request.resource.data.at == request.time;
+        allow delete: if signedIn() && (request.auth.uid == uid
+          || get(/databases/$(database)/documents/chats/$(id)).data.get('owner', '') == request.auth.uid);
       }
       match /msgs/{mid} {
         allow read: if signedIn()
