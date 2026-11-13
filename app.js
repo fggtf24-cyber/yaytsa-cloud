@@ -173,8 +173,8 @@ const APPS = [
     file: 'https://github.com/fggtf24-cyber/fig2ae/raw/main/Fig2AE-Setup.exe',
     silent: '/quiet', // самодельный установщик: ключ тихой установки для приложения Яйца Cloud
     macInstall: 'curl -fsSL https://raw.githubusercontent.com/fggtf24-cyber/fig2ae/main/install-mac.sh | bash',
-    size: '264 КБ',
-    sizeEn: '264 KB',
+    size: '266 КБ',
+    sizeEn: '266 KB',
     repo: 'https://github.com/fggtf24-cyber/fig2ae',
     features: [
       'Выделили фрейм в Figma, нажали «Send selection to Ae» — композиция появляется в открытом проекте After Effects',
@@ -193,7 +193,7 @@ const APPS = [
       'Растр по выбору: помеченный слой получает «*» в имени и свой масштаб 1×–4× — запас по качеству, в AE уменьшается обратно',
       'Обводка и фон — один слой; Un-Precomp умеет продлевать вложенные прекомпы до конца композиции',
       'Референсный кадр из Figma поверх, чтобы сверить результат',
-      'Кнопка Log: журнал ошибок копируется одним нажатием; кнопка Report отправляет разработчику жалобу с логом — её разбирают первой',
+      'Кнопка Log: журнал ошибок копируется одним нажатием; кнопка Report (в окне Figma и «Report a problem» в панели AE) отправляет разработчику жалобу с логом — её разбирают первой',
       'Анонимные логи только по согласию: версии, настройки, ошибки — без дизайна, картинок и путей к файлам',
       'Update in Ae — как Dynamic Link: поменяли в Figma, нажали — слои в AE обновились, анимация и эффекты остались, новые элементы встали на место. Растр можно заменить векторами',
       'Обновляется сама, без переустановки и перезапуска After Effects; кнопка Updates в окне Figma перезагружает плагин без закрытия',
@@ -224,7 +224,7 @@ const APPS = [
       'Pixels on demand: a marked layer gets a "*" in its name and its own 1x-4x scale — quality headroom, scaled back in AE',
       'Border and fill in one layer; Un-Precomp can extend nested precomps to the end of the comp',
       'Figma reference frame on top to compare the result',
-      'Log button: the error log is copied in one click; the Report button sends the developer a complaint with the log, looked at first',
+      'Log button: the error log is copied in one click; the Report button (in the Figma window, and Report a problem in the AE panel) sends the developer a complaint with the log, looked at first',
       'Anonymous logs only with your consent: versions, settings, errors — never the design, pictures or file paths',
       'Update in Ae — like Dynamic Link: change it in Figma, press the button — the AE layers update, your animation and effects stay, new elements land in place. A raster can be swapped for vectors',
       'Updates itself, no reinstall and no After Effects restart; the Updates button reloads the Figma plugin without closing it',
