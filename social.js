@@ -1475,6 +1475,7 @@ export function setupSocial(ctx) {
     input.setSelectionRange(head.length, head.length);
     input.focus();
     if (!whole) input.dispatchEvent(new Event('input', { bubbles: true })); // обновит счётчик символов
+    else if (input.form?.matches('.r-submit')) { syncUpdateCheck(input.form); savePostDraft(input.form); } // тег из списка
   }
 
   /* ---------- Поиск в шапке ---------- */
