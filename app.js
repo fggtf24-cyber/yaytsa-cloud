@@ -347,6 +347,44 @@ const APPS = [
       'LibreOffice for some Office and PDF operations, installed separately',
     ],
   },
+  {
+    id: 'sfx-library',
+    name: 'SFX Library',
+    icon: 'assets/sfx-library.png',
+    demo: 'assets/sfx-library-demo.mp4',
+    desc: 'Менеджер звуковых библиотек: быстрый поиск по вашим папкам со звуками, вейвформа и перетаскивание звука или его куска прямо в монтажку.',
+    descEn: 'A sound library manager: fast search across your sound folders, a waveform view and drag-and-drop of a sound or a piece of it straight into your editor.',
+    file: 'https://github.com/fggtf24-cyber/sfx-library/releases/latest/download/SFXLibrary-Setup.exe',
+    size: '116 МБ',
+    sizeEn: '116 MB',
+    repo: 'https://github.com/fggtf24-cyber/sfx-library',
+    features: [
+      'Добавляете папки со звуками, программа их индексирует. Повторный скан перечитывает только изменённые файлы',
+      'Поиск по имени, описанию, категории и ключевым словам, в том числе из метаданных BWF/iXML и UCS',
+      'Вейвформа: протяните мышью — выделится кусок, его тоже можно тащить',
+      'Перетаскивание в Premiere, Reaper, Pro Tools и другие программы. Окно сворачивается, чтобы было видно, куда бросать',
+      'Редактор описания, категории и ключевых слов, в том числе для нескольких файлов сразу, с записью прямо в WAV',
+      'Избранное, громкость, горячие клавиши: пробел, стрелки, Esc',
+      'Обновляется сама',
+    ],
+    needs: [
+      'Windows 10 или 11, 64-бит',
+      'Права администратора не нужны',
+    ],
+    featuresEn: [
+      'Add your sound folders and the app indexes them. Rescans only reread changed files',
+      'Search by name, description, category and keywords, including BWF/iXML and UCS metadata',
+      'Waveform: drag across it to select a piece, which you can drag out too',
+      'Drag into Premiere, Reaper, Pro Tools and other apps. The window minimizes so you can see where to drop',
+      'Edit description, category and keywords, for several files at once too, and write them into the WAV',
+      'Favorites, volume, hotkeys: space, arrows, Esc',
+      'Updates itself',
+    ],
+    needsEn: [
+      'Windows 10 or 11, 64-bit',
+      'No administrator rights needed',
+    ],
+  },
 ];
 
 // Стартовый список «Других проектов». Правки админов лежат в Firestore и накладываются поверх APPS и PROJECTS.
