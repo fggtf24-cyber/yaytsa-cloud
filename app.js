@@ -868,8 +868,8 @@ const card = a => `
       <a class="link" href="#app/${esc(a.id)}" aria-label="${T('Подробнее о {name}', { name: esc(nm(a)) })}">${T('Подробнее')}</a>
       ${siteLink(a)}
       ${editLink('apps', a)}
-      ${downloads[a.id] ? `<span class="card-dls" role="img" title="${dlText(downloads[a.id])}" aria-label="${dlText(downloads[a.id])}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v12M7 12l5 5 5-5M5 20h14"/></svg>${downloads[a.id].toLocaleString(lang === 'en' ? 'en' : 'ru')}</span>` : ''}
-      ${isAndroid && a.androidFile ? androidButton(a) : isLinux && a.linuxFile ? linuxButton(a) : isMac && a.macInstall ? macButton(a) : isMac && a.webApp ? webButton(a) : download(a)}
+      <div class="card-act">${downloads[a.id] ? `<span class="card-dls" role="img" title="${dlText(downloads[a.id])}" aria-label="${dlText(downloads[a.id])}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v12M7 12l5 5 5-5M5 20h14"/></svg>${downloads[a.id].toLocaleString(lang === 'en' ? 'en' : 'ru')}</span>` : ''}
+      ${isAndroid && a.androidFile ? androidButton(a) : isLinux && a.linuxFile ? linuxButton(a) : isMac && a.macInstall ? macButton(a) : isMac && a.webApp ? webButton(a) : download(a)}</div>
     </div>
   </article>`;
 
