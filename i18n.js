@@ -629,6 +629,12 @@ export const EN = {
   'Перетащите фото и выберите масштаб.': 'Drag the photo and pick the zoom.',
   'Область кадрирования. Стрелки двигают фото, плюс и минус меняют масштаб.': 'Crop area. Arrow keys move the photo, plus and minus change the zoom.',
   'Масштаб': 'Zoom',
+  'Кадрировать': 'Crop',
+  'Кадрирование демо': 'Crop demo',
+  'Перетащите демо и выберите масштаб. Что не влезло в рамку, на странице программы обрежется.': 'Drag the demo and pick the zoom. Whatever does not fit in the frame is cut off on the program page.',
+  'Область кадрирования. Стрелки двигают демо, плюс и минус меняют масштаб.': 'Crop area. Arrow keys move the demo, plus and minus change the zoom.',
+  'Сбросить': 'Reset',
+  'Сначала загрузите демо или вставьте ссылку на него.': 'Upload a demo or paste a link to it first.',
 };
 
 

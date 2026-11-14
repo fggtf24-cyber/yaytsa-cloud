@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=76';
+import { EN, TERMS } from './i18n.js?v=77';
 import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=64';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -799,7 +799,19 @@ const siteLink = a => (safeUrl(a.site) ? `<a class="link" href="${safeUrl(a.site
 const editLink = (kind, a) => (isAdmin ? `<a class="link" href="#edit/${kind}/${esc(a.id)}" aria-label="${T('Изменить {name}', { name: esc(nm(a)) })}">${T('Изменить')}</a>` : '');
 // Каждый раз спрашиваем аккаунт: иначе Google молча входит в последний и сменить его нельзя.
 const googleProvider = () => { const p = new fb.GoogleAuthProvider(); p.setCustomParameters({ prompt: 'select_account' }); return p; };
+// Кадр демо «x y zoom»: x, y — какая точка в процентах остаётся видна, zoom — увеличение. Гифку так не перекодируем:
+// анимация и вес файла остаются как были, а кадр задаёт CSS (см. .demo-box).
+const parseCrop = c => {
+  const [x, y, z] = String(c || '').split(' ').map(Number);
+  return [x, y, z].every(Number.isFinite) ? [Math.min(100, Math.max(0, x)), Math.min(100, Math.max(0, y)), Math.min(4, Math.max(1, z))] : null;
+};
+const cropVars = ([x, y, z]) => `--x:${x}%;--y:${y}%;--z:${z}`;
 const media = a => {
+  const crop = parseCrop(a.demoCrop);
+  const html = mediaTag(a);
+  return crop && html ? `<div class="demo-box" style="${cropVars(crop)}">${html}</div>` : html;
+};
+const mediaTag = a => {
   // Файл, загруженный в заявке, лежит в demos/{id}: подставим после отрисовки, каталог его не тянет.
   if (a.demo === 'file') return `<img id="app-demo" data-app="${esc(a.id)}" alt="${T('{name} в работе', { name: esc(nm(a)) })}" hidden>`;
   // Ссылка на страницу файла в GitHub (/blob/) отдаёт HTML, а не картинку: берём сам файл (/raw/).
@@ -1011,7 +1023,7 @@ function renderApp(a) {
   // Горизонтальное демо в колонке 340px обрезается по бокам: даём ему колонку шире (см. .use .wide).
   const shot = view.querySelector('.use img, .use video');
   shot?.addEventListener(shot.tagName === 'VIDEO' ? 'loadedmetadata' : 'load', () => {
-    shot.classList.toggle('wide', (shot.videoWidth || shot.naturalWidth) > (shot.videoHeight || shot.naturalHeight));
+    (shot.closest('.demo-box') || shot).classList.toggle('wide', (shot.videoWidth || shot.naturalWidth) > (shot.videoHeight || shot.naturalHeight));
   });
   social.fillAppThreads(a.id);
   if (a.community) loadAuthorSelfie(a.id);
@@ -1274,7 +1286,7 @@ const FIELDS = {
 };
 
 // Поле формы по описанию из FIELDS. Им же собрана заявка на программу.
-const field = item => ([key, label, type]) => {
+const field = (item, edit = false) => ([key, label, type]) => {
   const required = type.endsWith('*') ? 'required' : '';
   const t = type.replace('*', '');
   const value = Array.isArray(item[key]) ? item[key].join('\n') : item[key] ?? '';
@@ -1295,7 +1307,9 @@ const field = item => ([key, label, type]) => {
         <div class="icon-pick">
           <img id="demo-preview" class="demo-preview" src="assets/favicon.svg" alt="">
           <label class="btn">${T('Загрузить файл')}<input id="demo-file" class="sr" type="file" accept="image/png,image/jpeg,image/webp,image/gif,.heic,.heif"></label>
+          ${edit ? `<button type="button" class="btn" id="demo-crop" data-app="${esc(item.id || '')}">${T('Кадрировать')}</button>` : ''}
         </div>
+        ${edit ? `<input type="hidden" name="demoCrop" value="${esc(item.demoCrop || '')}">` : ''}
         <small class="r-hint">${T('Картинка до 20 МБ: после загрузки выберите, какая часть попадёт в рамку. Гифка до 500 КБ, её края обрежутся по рамке. Видео загрузить нельзя, дайте ссылку на .mp4.')}</small>
         <input type="hidden" name="demoFile">
       </div>`;
@@ -1333,11 +1347,11 @@ function renderEditor(kind, id) {
     <section class="section panel account editor">
       <h1>${id === 'new' ? T('Новая запись') : T('Изменить: {name}', { name: esc(item.name) })}</h1>
       <form id="edit-form" class="account" data-kind="${kind}" data-id="${esc(id)}">
-        ${FIELDS[kind].filter(f => !f[3]).map(field(item)).join('')}
+        ${FIELDS[kind].filter(f => !f[3]).map(field(item, true)).join('')}
         ${[...new Set(FIELDS[kind].map(f => f[3]).filter(Boolean))].map(group => `
           <details class="more">
             <summary>${T(group)}</summary>
-            <div class="more-body">${FIELDS[kind].filter(f => f[3] === group).map(field(item)).join('')}</div>
+            <div class="more-body">${FIELDS[kind].filter(f => f[3] === group).map(field(item, true)).join('')}</div>
           </details>`).join('')}
         <button class="btn primary">${T('Сохранить')}</button>
       </form>
@@ -1967,6 +1981,90 @@ async function demoToDataUrl(file) {
   // Рамка демо на странице программы 540×608 (как у наших гифок): пользователь сам выбирает, что в неё попадёт.
   return cropImage(file, T, { ratio: DEMO_RATIO, out: 810, limit: DEMO_MAX });
 }
+
+// Кадрирование демо в форме программы: двигаем мышью, масштаб ползунком. Работает и для гифки, и для .mp4.
+async function demoSource(btn) {
+  const form = btn.closest('form');
+  const file = form.querySelector('[name=demoFile]').value;
+  if (file) return file;
+  const link = form.querySelector('[name=demo]').value.trim();
+  if (link !== 'file') return /^assets\//.test(link) ? link : safeUrl(link).replace(/^(https:\/\/github\.com\/[^/]+\/[^/]+)\/blob\//, '$1/raw/');
+  const image = (await fs.getDoc(fs.doc(db, 'demos', btn.dataset.app)).catch(() => null))?.data()?.image;
+  return DEMO_IMAGE.test(image || '') ? image : '';
+}
+
+function cropDemo(src, value) {
+  let [x, y, z] = parseCrop(value) || [50, 50, 1];
+  const video = /\.(mp4|webm)(\?|$)/i.test(src);
+  return new Promise(resolve => {
+    const dlg = document.createElement('dialog');
+    dlg.className = 'r-crop';
+    dlg.innerHTML = `
+      <form method="dialog" class="r-crop-box">
+        <h2>${T('Кадрирование демо')}</h2>
+        <p class="empty">${T('Перетащите демо и выберите масштаб. Что не влезло в рамку, на странице программы обрежется.')}</p>
+        <div class="r-crop-stage demo-crop-stage" tabindex="0" aria-label="${T('Область кадрирования. Стрелки двигают демо, плюс и минус меняют масштаб.')}">
+          ${video ? `<video src="${esc(src)}" autoplay muted loop playsinline></video>` : `<img src="${esc(src)}" alt="" draggable="false">`}
+        </div>
+        <label class="r-crop-zoom">
+          <span aria-hidden="true">−</span>
+          <input type="range" min="1" max="4" step="0.01" value="${z}" aria-label="${T('Масштаб')}">
+          <span aria-hidden="true">+</span>
+        </label>
+        <div class="r-crop-bar">
+          <button class="btn" value="reset">${T('Сбросить')}</button>
+          <button class="btn" value="cancel">${T('Отмена')}</button>
+          <button class="btn primary" value="ok">${T('Сохранить')}</button>
+        </div>
+      </form>`;
+    const stage = dlg.querySelector('.r-crop-stage');
+    const range = dlg.querySelector('input[type=range]');
+    const draw = () => {
+      x = Math.min(100, Math.max(0, x)); y = Math.min(100, Math.max(0, y)); z = Math.min(4, Math.max(1, z));
+      stage.style.cssText = cropVars([x, y, z]);
+      range.value = z;
+    };
+    let drag = null;
+    stage.addEventListener('pointerdown', e => { stage.setPointerCapture(e.pointerId); drag = { px: e.clientX, py: e.clientY, x, y }; });
+    stage.addEventListener('pointermove', e => {
+      if (!drag) return;
+      // Тянем демо вправо — видна его левая часть: процент уменьшается.
+      x = drag.x - (e.clientX - drag.px) / stage.clientWidth * 100 / z;
+      y = drag.y - (e.clientY - drag.py) / stage.clientHeight * 100 / z;
+      draw();
+    });
+    const end = () => { drag = null; };
+    stage.addEventListener('pointerup', end);
+    stage.addEventListener('pointercancel', end);
+    stage.addEventListener('wheel', e => { e.preventDefault(); z *= Math.exp(-e.deltaY * 0.0015); draw(); }, { passive: false });
+    stage.addEventListener('keydown', e => {
+      const moves = { ArrowLeft: [-3, 0], ArrowRight: [3, 0], ArrowUp: [0, -3], ArrowDown: [0, 3] };
+      if (moves[e.key]) { x += moves[e.key][0]; y += moves[e.key][1]; draw(); e.preventDefault(); }
+      if (e.key === '+' || e.key === '=') { z *= 1.1; draw(); }
+      if (e.key === '-') { z /= 1.1; draw(); }
+    });
+    range.addEventListener('input', () => { z = +range.value; draw(); });
+    dlg.addEventListener('close', () => {
+      const r = dlg.returnValue;
+      dlg.remove();
+      resolve(r === 'ok' ? `${+x.toFixed(1)} ${+y.toFixed(1)} ${+z.toFixed(2)}` : r === 'reset' ? '' : null);
+    });
+    document.body.append(dlg);
+    draw();
+    dlg.showModal();
+    stage.focus();
+  });
+}
+
+view.addEventListener('click', async e => {
+  const btn = e.target.closest('#demo-crop');
+  if (!btn) return;
+  const src = await demoSource(btn);
+  if (!src) return say(T('Сначала загрузите демо или вставьте ссылку на него.'));
+  const input = btn.closest('form').querySelector('[name=demoCrop]');
+  const value = await cropDemo(src, input.value);
+  if (value !== null) input.value = value;
+});
 
 /* ---------- Баги и идеи ---------- */
 
@@ -2683,6 +2781,8 @@ view.addEventListener('change', e => {
         if (!url) return; // кадрирование отменили
         view.querySelector('[name=demoFile]').value = url;
         view.querySelector('#demo-preview').src = url;
+        const crop = view.querySelector('[name=demoCrop]');
+        if (crop) crop.value = ''; // новый файл — кадр заново
         say('');
       })
       .catch(err => say(T(err.message === 'big-gif' ? 'Гифка больше 500 КБ. Уменьшите её или дайте ссылку.'
