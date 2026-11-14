@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=77';
+import { EN, TERMS } from './i18n.js?v=78';
 import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=64';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -1022,6 +1022,14 @@ function renderApp(a) {
     </div>`;
   // Горизонтальное демо в колонке 340px обрезается по бокам: даём ему колонку шире (см. .use .wide).
   const shot = view.querySelector('.use img, .use video');
+  // На странице демо обрезано рамкой: по нажатию показываем целиком.
+  if (shot) {
+    Object.assign(shot, { tabIndex: 0, title: T('Посмотреть целиком') });
+    shot.setAttribute('role', 'button');
+    shot.classList.add('zoomable');
+    shot.addEventListener('click', () => openDemo(shot));
+    shot.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDemo(shot); } });
+  }
   shot?.addEventListener(shot.tagName === 'VIDEO' ? 'loadedmetadata' : 'load', () => {
     if (!shot.closest('.demo-box')) shot.classList.toggle('wide', (shot.videoWidth || shot.naturalWidth) > (shot.videoHeight || shot.naturalHeight));
   });
@@ -1981,6 +1989,19 @@ async function demoToDataUrl(file) {
   if (file.size > 20 * 1024 * 1024) throw new Error('big');
   // Рамка демо на странице программы 540×608 (как у наших гифок): пользователь сам выбирает, что в неё попадёт.
   return cropImage(file, T, { ratio: DEMO_RATIO, out: 810, limit: DEMO_MAX });
+}
+
+function openDemo(shot) {
+  const dlg = document.createElement('dialog');
+  dlg.className = 'r-view';
+  const src = esc(shot.currentSrc || shot.src);
+  dlg.innerHTML = `
+    <div class="r-view-bar"><button type="button" data-view-close aria-label="${T('Закрыть')}">×</button></div>
+    ${shot.tagName === 'VIDEO' ? `<video src="${src}" autoplay muted loop playsinline controls></video>` : `<img src="${src}" alt="${esc(shot.alt)}">`}`;
+  dlg.addEventListener('click', e => { if (e.target === dlg || e.target.closest('[data-view-close]')) dlg.close(); });
+  dlg.addEventListener('close', () => { dlg.remove(); shot.focus(); });
+  document.body.append(dlg);
+  dlg.showModal();
 }
 
 // Кадрирование демо в форме программы: двигаем мышью, масштаб ползунком. Работает и для гифки, и для .mp4.
