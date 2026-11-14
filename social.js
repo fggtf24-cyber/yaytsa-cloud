@@ -1652,8 +1652,8 @@ export function setupSocial(ctx) {
       await loadPeople(list.map(p => p.uid));
       if (!box()) return;
       box().innerHTML = `
-        <div class="r-list boxed">${list.slice(0, 6).map(p => postCard(p)).join('') || `<p class="empty r-note">${T('Обсуждений пока нет.')}</p>`}</div>
-        <a class="r-pill ghost" href="#submit/${esc(appId)}">${ICON.plus}<span>${T('Начать обсуждение')}</span></a>`;
+        <a class="r-pill ghost" href="#submit/${esc(appId)}">${ICON.plus}<span>${T('Начать обсуждение')}</span></a>
+        <div class="r-list boxed">${list.slice(0, 6).map(p => postCard(p)).join('') || `<p class="empty r-note">${T('Обсуждений пока нет.')}</p>`}</div>`;
     } catch (e) {
       console.error(e);
       if (box()) box().innerHTML = `<p class="empty">${T('Обсуждения сейчас недоступны.')}</p>`;

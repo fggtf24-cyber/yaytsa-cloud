@@ -137,6 +137,8 @@ h1, h2, p, ul { margin: 0; }
 .card p { flex: 1; color: var(--muted); }
 .card-foot { display: flex; align-items: center; gap: 14px; }
 .card-foot .dl, .card-foot .dl-linux, .card-foot .dl-android, .card-foot .dl-web, .card-foot .open { margin-left: auto; }
+.card-dls { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; color: var(--sub); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.card-dls + .dl, .card-dls + .dl-linux, .card-dls + .dl-android, .card-dls + .dl-web, .card-dls + .open, .card-dls + .dl-mac { margin-left: 0; }
 .link { font-weight: 600; color: var(--muted); }
 .link:hover { color: var(--strong); text-decoration: underline; }
 .btn {
