@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=78';
+import { EN, TERMS } from './i18n.js?v=79';
 import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=64';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -796,7 +796,11 @@ const iosButton = (cls = 'btn') => `<button type="button" class="${cls} ios-inst
 const webButton = (a, cls = 'btn') => (/^[a-z-]+\/$/.test(a.webApp || '') ? `<a class="${cls} dl-web" href="${esc(a.webApp)}" target="_blank" rel="noopener">${T('Открыть веб-версию')}</a>` : '');
 const macButton = (a, cls = 'btn') => `<button type="button" class="${cls} dl-mac" data-id="${esc(a.id)}">${T('Скачать для Mac')}</button>`;
 const siteLink = a => (safeUrl(a.site) ? `<a class="link" href="${safeUrl(a.site)}" target="_blank" rel="noopener">${T('Сайт')}</a>` : '');
-const editLink = (kind, a) => (isAdmin ? `<a class="link" href="#edit/${kind}/${esc(a.id)}" aria-label="${T('Изменить {name}', { name: esc(nm(a)) })}">${T('Изменить')}</a>` : '');
+// Автор и соавторы правят карточку своей программы сами (правила базы пускают их только к полям формы).
+const isDev = a => !!user && [a.authorUid, ...(a.coauthors || [])].includes(user.uid);
+const canEdit = (kind, a) => isAdmin || (kind === 'apps' && isDev(a));
+const editFields = kind => FIELDS[kind].filter(f => isAdmin || !['author', 'people'].includes(f[2]));
+const editLink = (kind, a) => (canEdit(kind, a) ? `<a class="link" href="#edit/${kind}/${esc(a.id)}" aria-label="${T('Изменить {name}', { name: esc(nm(a)) })}">${T('Изменить')}</a>` : '');
 // Каждый раз спрашиваем аккаунт: иначе Google молча входит в последний и сменить его нельзя.
 const googleProvider = () => { const p = new fb.GoogleAuthProvider(); p.setCustomParameters({ prompt: 'select_account' }); return p; };
 // Кадр демо «x y zoom»: x, y — какая точка в процентах остаётся видна, zoom — увеличение. Гифку так не перекодируем:
@@ -1348,22 +1352,23 @@ function renderEditor(kind, id) {
   const note = text => { view.innerHTML = `<section class="section panel"><p class="empty">${text}</p></section>`; };
   if (authState === 'loading' || contentState === 'loading') return note(T('Загрузка…'));
   if (contentState === 'failed') return note(T('Не удалось загрузить данные. Обновите страницу.'));
-  if (!isAdmin) return note(T('Редактировать могут только админы, вошедшие через Google.'));
   const item = id === 'new' ? {} : (kind === 'apps' ? apps : projects).find(x => x.id === id);
+  if (!isAdmin && !(item && id !== 'new' && canEdit(kind, item))) return note(T('Редактировать могут админы и авторы программы.'));
   if (!item) return note(T('Такой записи нет.'));
+  const fields = editFields(kind);
   view.innerHTML = `
     <section class="section panel account editor">
       <h1>${id === 'new' ? T('Новая запись') : T('Изменить: {name}', { name: esc(item.name) })}</h1>
       <form id="edit-form" class="account" data-kind="${kind}" data-id="${esc(id)}">
-        ${FIELDS[kind].filter(f => !f[3]).map(field(item, true)).join('')}
-        ${[...new Set(FIELDS[kind].map(f => f[3]).filter(Boolean))].map(group => `
+        ${fields.filter(f => !f[3]).map(field(item, true)).join('')}
+        ${[...new Set(fields.map(f => f[3]).filter(Boolean))].map(group => `
           <details class="more">
             <summary>${T(group)}</summary>
-            <div class="more-body">${FIELDS[kind].filter(f => f[3] === group).map(field(item, true)).join('')}</div>
+            <div class="more-body">${fields.filter(f => f[3] === group).map(field(item, true)).join('')}</div>
           </details>`).join('')}
         <button class="btn primary">${T('Сохранить')}</button>
       </form>
-      ${id === 'new' ? '' : `<button type="button" class="btn danger" id="delete">${T('Удалить')}</button>`}
+      ${id === 'new' || !isAdmin ? '' : `<button type="button" class="btn danger" id="delete">${T('Удалить')}</button>`}
       <p id="msg" class="msg" role="alert"></p>
     </section>`;
 }
@@ -1381,7 +1386,7 @@ async function readFields(form, fields) {
 
 async function saveItem(form) {
   const { kind, id } = form.dataset;
-  const { demoFile, ...data } = await readFields(form, FIELDS[kind]);
+  const { demoFile, ...data } = await readFields(form, editFields(kind));
   if (data.review && !youtubeId(data.review)) return say(T('Нужна ссылка на видео YouTube.'));
   if (demoFile) data.demo = 'file';
   // Для записей из кода (APPS/PROJECTS) в Firestore пишем только то, что отличается от кода.

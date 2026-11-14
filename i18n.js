@@ -226,7 +226,7 @@ export const EN = {
   'Системные требования (один пункт на строку)': 'System requirements (one per line)',
   'Ссылка': 'Link',
   'Не удалось загрузить данные. Обновите страницу.': 'Could not load data. Refresh the page.',
-  'Редактировать могут только админы, вошедшие через Google.': 'Only admins signed in with Google can edit.',
+  'Редактировать могут админы и авторы программы.': 'Only admins and program authors can edit.',
   'Такой записи нет.': 'This entry does not exist.',
   'Не указан': 'Not set',
   'Ссылка должна начинаться с https://': 'The link must start with https://',

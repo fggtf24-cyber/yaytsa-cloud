@@ -205,6 +205,19 @@ await no('автор сам себя одобряет', updateDoc(doc(alice, 'su
 await no('автор пишет в каталог', setDoc(doc(alice, 'apps', 's1'), { name: 'x', community: true }));
 { const b = writeBatch(admin); b.set(doc(admin, 'apps', 's1'), { name: 'App', community: true, authorUid: 'alice' }); b.update(doc(admin, 'submissions', 's1'), { status: 'approved', reason: '' });
   await ok('админ одобряет', b.commit()); }
+await ok('автор меняет описание своей программы', updateDoc(doc(alice, 'apps', 's1'), { desc: 'новое', demoCrop: '50 50 1.2', file: 'https://x.dev/b.exe' }));
+await no('автор меняет автора', updateDoc(doc(alice, 'apps', 's1'), { authorUid: 'bob' }));
+await no('автор снимает «сообщество»', updateDoc(doc(alice, 'apps', 's1'), { community: false }));
+await no('автор добавляет служебное поле', updateDoc(doc(alice, 'apps', 's1'), { silent: '/x' }));
+await no('автор ставит файл не https', updateDoc(doc(alice, 'apps', 's1'), { file: 'http://x.dev/a.exe' }));
+await no('автор удаляет программу', deleteDoc(doc(alice, 'apps', 's1')));
+await no('чужой меняет программу', updateDoc(doc(bob, 'apps', 's1'), { desc: 'x' }));
+await ok('автор загружает демо файлом', setDoc(doc(alice, 'demos', 's1'), { uid: 'alice', image: 'data:image/gif;base64,AA' }));
+await ok('и меняет его', setDoc(doc(alice, 'demos', 's1'), { uid: 'alice', image: 'data:image/png;base64,AA' }));
+await no('чужой не трогает демо', setDoc(doc(bob, 'demos', 's1'), { uid: 'bob', image: 'data:image/png;base64,AA' }));
+await env.withSecurityRulesDisabled(c => updateDoc(doc(c.firestore(), 'apps', 's1'), { coauthors: ['bob'] }));
+await ok('соавтор меняет описание', updateDoc(doc(bob, 'apps', 's1'), { desc: 'от соавтора' }));
+await no('соавтор убирает себя и автора', updateDoc(doc(bob, 'apps', 's1'), { coauthors: [] }));
 await ok('после одобрения селфи видно анониму', getDoc(doc(anon, 'selfies', 's1')));
 await ok('и другому пользователю', getDoc(doc(bob, 'selfies', 's1')));
 const note = (db, from, to, type, appId, id = 'n' + n) => setDoc(doc(db, 'notifications', id), { to, from, fromName: 'A', type, appId, commentId: 's1', text: 'App', createdAt: serverTimestamp(), read: false });
