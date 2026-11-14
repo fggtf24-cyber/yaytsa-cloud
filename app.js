@@ -970,6 +970,11 @@ function renderApp(a) {
         <p id="msg" class="msg" role="alert"></p>
       </div>
     </div>`;
+  // Горизонтальное демо в колонке 340px обрезается по бокам: уводим его под текст на всю ширину.
+  const shot = view.querySelector('.use img, .use video');
+  shot?.addEventListener(shot.tagName === 'VIDEO' ? 'loadedmetadata' : 'load', () => {
+    shot.classList.toggle('wide', (shot.videoWidth || shot.naturalWidth) > (shot.videoHeight || shot.naturalHeight));
+  });
   social.fillAppThreads(a.id);
   if (a.community) loadAuthorSelfie(a.id);
   if (a.demo === 'file') loadDemo(a.id);
