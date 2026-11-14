@@ -864,7 +864,7 @@ const card = a => `
     ${authorLine(a)}
     <p>${esc(tr(a, 'desc'))}</p>
     <div class="card-foot">
-      ${social.likeBox(a.id, likes[a.id])}
+      ${a.community ? social.likeBox(a.id, likes[a.id]) : ''}
       <a class="link" href="#app/${esc(a.id)}" aria-label="${T('Подробнее о {name}', { name: esc(nm(a)) })}">${T('Подробнее')}</a>
       ${siteLink(a)}
       ${editLink('apps', a)}
@@ -945,6 +945,7 @@ function renderApps() {
   const list = all.filter(a => appCat === 'all' || catsOf(a).includes(appCat));
   const onOfficial = cat === 'all';
   if (onCommunity || onOfficial) {
+    if (onOfficial && appSort === 'top') appSort = 'new'; // лайки только у программ сообщества
     const by = { top: likes, dl: downloads }[appSort];
     list.sort(by ? (a, b) => (by[b.id] || 0) - (by[a.id] || 0) || addedAt(b) - addedAt(a) : (a, b) => addedAt(b) - addedAt(a));
     if (realAdmin) fillAddedAt();
@@ -955,7 +956,7 @@ function renderApps() {
       </div>` : '';
   const sorts = (onCommunity || onOfficial) && list.length ? `
       <div class="r-sorts app-sorts" role="group" aria-label="${T('Сортировка')}">
-        ${[['new', 'Новые'], ['top', 'Популярные'], ['dl', 'По скачиваниям']].map(([id, label]) => `<button type="button" class="r-sort" data-csort="${id}" aria-current="${id === appSort ? 'page' : 'false'}">${T(label)}</button>`).join('')}
+        ${[['new', 'Новые'], ...(onCommunity ? [['top', 'Популярные']] : []), ['dl', 'По скачиваниям']].map(([id, label]) => `<button type="button" class="r-sort" data-csort="${id}" aria-current="${id === appSort ? 'page' : 'false'}">${T(label)}</button>`).join('')}
       </div>` : '';
   const tabs = [['all', T('Все приложения')], [COMMUNITY_TAB, T('Сообщество')], [AUTHORS_TAB, T('Топ авторов')], [PROJECTS_TAB, T('Другие проекты')]];
   // В «Сообществе» программу предлагает любой, в остальных вкладках запись сразу добавляет админ.
@@ -1744,7 +1745,6 @@ function merge(base, snap) {
 async function loadContent() {
   const [a, p, people] = await Promise.all(['apps', 'projects', 'authors'].map(c => fs.getDocs(fs.collection(db, c))));
   apps = merge(APPS, a);
-  dbAppIds = new Set(a.docs.map(d => d.id));
   sendCatalog();
   projects = merge(PROJECTS, p);
   people.forEach(d => { authors[d.id] = d.data(); });
@@ -1752,7 +1752,7 @@ async function loadContent() {
   contentState = 'ready';
 }
 
-// Лайки программ: applikes/<id программы> = { n }. Свой лайк — votes/a_<id>_<uid>, как у постов.
+// Лайки программ сообщества: applikes/<id программы> = { n }. Свой лайк — votes/a_<id>_<uid>, как у постов.
 let likes = {};
 let appSort = 'new'; // «Все приложения» и «Сообщество»: new — по дате выхода, top — по лайкам, dl — по скачиваниям
 let appCat = 'all'; // фильтр по типу программы во «Всех приложениях» и «Сообществе»
@@ -1764,14 +1764,9 @@ async function loadLikes() {
 // Дата выхода — когда программу одобрили. У одобренных раньше её нет: браузер админа берёт время заявки.
 const addedAt = a => a.addedAt?.toMillis?.() || Date.parse(a.added) || 0;
 let addedFilled = false;
-let dbAppIds = new Set();
 async function fillAddedAt() {
   if (addedFilled) return;
   addedFilled = true;
-  // Лайк ставится только программе, у которой есть запись в базе. У программ из кода её может не быть — заводим пустую.
-  for (const a of APPS.filter(x => !dbAppIds.has(x.id))) {
-    try { await fs.setDoc(fs.doc(db, 'apps', a.id), {}, { merge: true }); dbAppIds.add(a.id); } catch (e) { console.error(e); }
-  }
   for (const a of apps.filter(x => x.community && !x.addedAt)) {
     try {
       const s = await fs.getDoc(fs.doc(db, 'submissions', a.id));
