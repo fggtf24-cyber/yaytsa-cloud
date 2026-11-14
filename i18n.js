@@ -41,6 +41,7 @@ export const EN = {
   'Проект': 'Project',
   'Вернуть': 'Restore',
   'Вернули на сайт.': 'Restored to the site.',
+  'Яйца Cloud переехали на yaytsacloud.art. Если у вас был аккаунт, войдите заново.': 'Яйца Cloud has moved to yaytsacloud.art. If you had an account, please sign in again.',
   'Авторов пока нет.': 'No authors yet.',
   'По скачиваниям всех программ автора. Соавторам скачивания тоже засчитываются.': 'By downloads of all the author’s apps. Co-authors get the downloads too.',
   'программа': 'app',

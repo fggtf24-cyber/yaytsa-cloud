@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=87';
+import { EN, TERMS } from './i18n.js?v=88';
 import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=67';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -2273,6 +2273,21 @@ function drawBanBar(u) {
     + (b.reason ? ` ${T('Причина')}: ${b.reason}` : '');
 }
 
+// Переезд с github.io на yaytsacloud.art: вход остался на старом адресе, поэтому зовём войти заново.
+// ponytail: после 2027-02-01 плашка не показывается; потом удалить вместе с разметкой.
+function drawMoveBar(u) {
+  const bar = document.getElementById('move-bar');
+  let seen = true;
+  try { seen = !!localStorage.getItem('movedSeen'); if (u) localStorage.setItem('movedSeen', '1'); } catch { /* приватный режим */ }
+  bar.hidden = !!u || seen || Date.now() > Date.UTC(2027, 1, 1);
+  if (bar.hidden) return;
+  bar.innerHTML = `${T('Яйца Cloud переехали на yaytsacloud.art. Если у вас был аккаунт, войдите заново.')} <a href="#account">${T('Войти')}</a> <button type="button" class="move-x" aria-label="${T('Закрыть')}">×</button>`;
+  bar.querySelector('.move-x').onclick = () => {
+    bar.hidden = true;
+    try { localStorage.setItem('movedSeen', '1'); } catch { /* приватный режим */ }
+  };
+}
+
 function savedAdminView() {
   try { return !localStorage.getItem('userView'); } catch { return true; }
 }
@@ -2480,6 +2495,7 @@ async function initFirebase() {
       [realAdmin, profile] = await Promise.all([checkAdmin(u), loadProfile(u), u && social.loadRoles([u.uid], true)]);
       isMod = !!u && social.isModUid(u.uid);
       drawBanBar(u);
+      drawMoveBar(u);
       isAdmin = realAdmin && savedAdminView();
       user = u;
       quietUntil = Date.now() + 4000;

@@ -1281,6 +1281,9 @@ html { -webkit-tap-highlight-color: transparent; }
 .r-tag.ban { background: rgba(255, 79, 122, .18); color: #FF4F7A; vertical-align: middle; }
 h1 .r-tag { font-size: 12px; margin-left: 6px; }
 .ban-bar { padding: 10px 20px; background: rgba(255, 79, 122, .14); color: var(--text); font-size: 14px; text-align: center; }
+.move-bar { background: rgba(20, 115, 230, .14); }
+.move-bar a { color: var(--link); }
+.move-x { margin-left: 8px; border: 0; background: none; color: var(--muted, inherit); font-size: 18px; line-height: 1; cursor: pointer; }
 .mod-acts { display: flex; flex-direction: column; gap: 8px; }
 .table-box td .r-tag { margin-left: 6px; }
 .r-pcard-mod .r-menu, .r-pcard-mod summary { width: 100%; justify-content: center; }
