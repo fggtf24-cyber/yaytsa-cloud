@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=84';
+import { EN, TERMS } from './i18n.js?v=86';
 import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=67';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -7,6 +7,7 @@ import { setupSocial, cropImage, askDialog, readImage, micStream, micError } fro
 const APPS = [
   {
     id: 'yaytsa-cloud',
+    added: '2026-11-08T18:55', // когда появилась на сайте: по ней сортировка «Новые»
     name: 'Яйца Cloud',
     nameEn: 'Yaytsa Cloud',
     icon: 'assets/yaytsa-cloud.png?v=3',
@@ -44,6 +45,7 @@ const APPS = [
   },
   {
     id: 'smooth-cursor',
+    added: '2026-11-05T22:47',
     cat: 'Видео',
     name: 'Smooth Cursor',
     icon: 'assets/smooth-cursor.png',
@@ -85,6 +87,7 @@ const APPS = [
   },
   {
     id: 'voicetype',
+    added: '2026-11-05T22:47',
     cat: 'Звук',
     name: 'VoiceType',
     icon: 'assets/voicetype.png',
@@ -127,6 +130,7 @@ const APPS = [
   },
   {
     id: 'yaytsechist',
+    added: '2026-11-05T23:55',
     cat: 'Утилиты',
     name: 'Яйцечист',
     nameEn: 'Yaytsechist',
@@ -169,6 +173,7 @@ const APPS = [
   },
   {
     id: 'fig2ae',
+    added: '2026-11-06T17:43',
     cat: ['Дизайн', 'Видео'],
     name: 'Fig2AE',
     icon: 'assets/fig2ae.png',
@@ -245,6 +250,7 @@ const APPS = [
   },
   {
     id: 'yaytsa-timer',
+    added: '2026-11-06T18:38',
     cat: 'Утилиты',
     name: 'Яйцетаймер',
     nameEn: 'Яйцетаймер',
@@ -318,6 +324,7 @@ const APPS = [
   },
   {
     id: 'forma',
+    added: '2026-11-07T20:03',
     cat: 'Утилиты',
     name: 'Forma',
     icon: 'assets/forma.png',
@@ -355,6 +362,7 @@ const APPS = [
   },
   {
     id: 'sfx-library',
+    added: '2026-11-14T04:56',
     cat: 'Звук',
     name: 'SFX Library',
     icon: 'assets/sfx-library.png',
@@ -856,7 +864,7 @@ const card = a => `
     ${authorLine(a)}
     <p>${esc(tr(a, 'desc'))}</p>
     <div class="card-foot">
-      ${a.community ? social.likeBox(a.id, likes[a.id]) : ''}
+      ${social.likeBox(a.id, likes[a.id])}
       <a class="link" href="#app/${esc(a.id)}" aria-label="${T('Подробнее о {name}', { name: esc(nm(a)) })}">${T('Подробнее')}</a>
       ${siteLink(a)}
       ${editLink('apps', a)}
@@ -935,8 +943,9 @@ function renderApps() {
   const cats = onProjects || onAuthors ? [] : CATS.filter(c => all.some(a => catsOf(a).includes(c)));
   if (!cats.includes(appCat)) appCat = 'all';
   const list = all.filter(a => appCat === 'all' || catsOf(a).includes(appCat));
-  if (onCommunity) {
-    const by = { top: likes, dl: downloads }[communitySort];
+  const onOfficial = cat === 'all';
+  if (onCommunity || onOfficial) {
+    const by = { top: likes, dl: downloads }[appSort];
     list.sort(by ? (a, b) => (by[b.id] || 0) - (by[a.id] || 0) || addedAt(b) - addedAt(a) : (a, b) => addedAt(b) - addedAt(a));
     if (realAdmin) fillAddedAt();
   }
@@ -944,9 +953,9 @@ function renderApps() {
       <div class="r-sorts app-sorts" role="group" aria-label="${T('Тип программы')}">
         ${[['all', 'Все типы'], ...cats.map(c => [c, c])].map(([id, label]) => `<button type="button" class="r-sort" data-acat="${esc(id)}" aria-current="${id === appCat ? 'page' : 'false'}">${esc(T(label))}</button>`).join('')}
       </div>` : '';
-  const sorts = onCommunity && list.length ? `
+  const sorts = (onCommunity || onOfficial) && list.length ? `
       <div class="r-sorts app-sorts" role="group" aria-label="${T('Сортировка')}">
-        ${[['new', 'Новые'], ['top', 'Популярные'], ['dl', 'По скачиваниям']].map(([id, label]) => `<button type="button" class="r-sort" data-csort="${id}" aria-current="${id === communitySort ? 'page' : 'false'}">${T(label)}</button>`).join('')}
+        ${[['new', 'Новые'], ['top', 'Популярные'], ['dl', 'По скачиваниям']].map(([id, label]) => `<button type="button" class="r-sort" data-csort="${id}" aria-current="${id === appSort ? 'page' : 'false'}">${T(label)}</button>`).join('')}
       </div>` : '';
   const tabs = [['all', T('Все приложения')], [COMMUNITY_TAB, T('Сообщество')], [AUTHORS_TAB, T('Топ авторов')], [PROJECTS_TAB, T('Другие проекты')]];
   // В «Сообществе» программу предлагает любой, в остальных вкладках запись сразу добавляет админ.
@@ -964,7 +973,7 @@ function renderApps() {
       ${types || sorts ? `<div class="app-filters">${types}${sorts}</div>` : ''}
       ${onAuthors ? `<p class="empty top-note">${T('По скачиваниям всех программ автора. Соавторам скачивания тоже засчитываются.')}</p>${authorsList(q)}`
       : list.length
-        ? `<div class="grid">${cat === 'all' && appCat === 'all' && !q ? promo() + list.filter(a => a.id !== 'yaytsa-cloud').map(card).join('') : list.map(onProjects ? projectCard : card).join('')}</div>`
+        ? `<div class="grid">${onOfficial && appCat === 'all' && !q ? promo() + list.filter(a => a.id !== 'yaytsa-cloud').map(card).join('') : list.map(onProjects ? projectCard : card).join('')}</div>`
         : `<p class="empty">${T(onCommunity && !q ? 'Здесь появятся программы участников. Предложите свою первым!' : 'Ничего не нашлось.')}</p>`}
     </section>`;
 }
@@ -1428,6 +1437,7 @@ async function saveItem(form) {
   }
   const col = fs.collection(db, kind);
   const ref = id === 'new' ? fs.doc(col) : fs.doc(col, id);
+  if (kind === 'apps' && id === 'new') data.addedAt = fs.serverTimestamp();
   const batch = fs.writeBatch(db);
   batch.set(ref, data, { merge: true });
   // Новая официальная программа тоже выходит постом: от автора, а если он не указан — от админа.
@@ -1734,6 +1744,7 @@ function merge(base, snap) {
 async function loadContent() {
   const [a, p, people] = await Promise.all(['apps', 'projects', 'authors'].map(c => fs.getDocs(fs.collection(db, c))));
   apps = merge(APPS, a);
+  dbAppIds = new Set(a.docs.map(d => d.id));
   sendCatalog();
   projects = merge(PROJECTS, p);
   people.forEach(d => { authors[d.id] = d.data(); });
@@ -1741,9 +1752,9 @@ async function loadContent() {
   contentState = 'ready';
 }
 
-// Лайки программ сообщества: applikes/<id программы> = { n }. Свой лайк — votes/a_<id>_<uid>, как у постов.
+// Лайки программ: applikes/<id программы> = { n }. Свой лайк — votes/a_<id>_<uid>, как у постов.
 let likes = {};
-let communitySort = 'new'; // new — по дате выхода, top — по лайкам, dl — по скачиваниям
+let appSort = 'new'; // «Все приложения» и «Сообщество»: new — по дате выхода, top — по лайкам, dl — по скачиваниям
 let appCat = 'all'; // фильтр по типу программы во «Всех приложениях» и «Сообществе»
 async function loadLikes() {
   try { (await fs.getDocs(fs.collection(db, 'applikes'))).forEach(d => { likes[d.id] = d.data().n || 0; }); }
@@ -1751,11 +1762,16 @@ async function loadLikes() {
 }
 
 // Дата выхода — когда программу одобрили. У одобренных раньше её нет: браузер админа берёт время заявки.
-const addedAt = a => a.addedAt?.toMillis?.() || 0;
+const addedAt = a => a.addedAt?.toMillis?.() || Date.parse(a.added) || 0;
 let addedFilled = false;
+let dbAppIds = new Set();
 async function fillAddedAt() {
   if (addedFilled) return;
   addedFilled = true;
+  // Лайк ставится только программе, у которой есть запись в базе. У программ из кода её может не быть — заводим пустую.
+  for (const a of APPS.filter(x => !dbAppIds.has(x.id))) {
+    try { await fs.setDoc(fs.doc(db, 'apps', a.id), {}, { merge: true }); dbAppIds.add(a.id); } catch (e) { console.error(e); }
+  }
   for (const a of apps.filter(x => x.community && !x.addedAt)) {
     try {
       const s = await fs.getDoc(fs.doc(db, 'submissions', a.id));
@@ -2685,7 +2701,7 @@ view.addEventListener('click', e => {
   const t = e.target.closest('button, a');
   if (!t) return;
   if (t.dataset.cat) { cat = t.dataset.cat; renderApps(); }
-  if (t.dataset.csort) { communitySort = t.dataset.csort; renderApps(); }
+  if (t.dataset.csort) { appSort = t.dataset.csort; renderApps(); }
   else if (t.dataset.acat) { appCat = t.dataset.acat; renderApps(); }
   else if (t.dataset.mode) { authMode = t.dataset.mode; renderAccount(); }
   else if (t.dataset.dt) {
