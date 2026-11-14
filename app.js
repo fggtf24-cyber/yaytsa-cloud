@@ -1023,7 +1023,7 @@ function renderApp(a) {
   // Горизонтальное демо в колонке 340px обрезается по бокам: даём ему колонку шире (см. .use .wide).
   const shot = view.querySelector('.use img, .use video');
   shot?.addEventListener(shot.tagName === 'VIDEO' ? 'loadedmetadata' : 'load', () => {
-    (shot.closest('.demo-box') || shot).classList.toggle('wide', (shot.videoWidth || shot.naturalWidth) > (shot.videoHeight || shot.naturalHeight));
+    if (!shot.closest('.demo-box')) shot.classList.toggle('wide', (shot.videoWidth || shot.naturalWidth) > (shot.videoHeight || shot.naturalHeight));
   });
   social.fillAppThreads(a.id);
   if (a.community) loadAuthorSelfie(a.id);
