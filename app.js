@@ -1414,10 +1414,10 @@ function renderPublish() {
       <h1>${T('Добавить программу')}</h1>
       <p class="empty">${T('Заявка уйдёт админам на проверку. После одобрения программа появится во вкладке «Сообщество».')}</p>
       <form id="publish-form" class="account">
-        ${PUBLISH_FIELDS.filter(f => !f[3]).map(field({})).join('')}
+        ${PUBLISH_FIELDS.filter(f => !f[3]).map(field({}, true)).join('')}
         <details class="more">
           <summary>${T('Ссылки и демо')}</summary>
-          <div class="more-body">${PUBLISH_FIELDS.filter(f => f[3]).map(field({})).join('')}</div>
+          <div class="more-body">${PUBLISH_FIELDS.filter(f => f[3]).map(field({}, true)).join('')}</div>
           </div>
         </details>
         <div class="field">${T('Ваше селфи (обязательно)')}
@@ -1491,6 +1491,7 @@ async function sendSubmission(form) {
   if (!/^https:\/\//.test(data.file)) return say(T('Ссылка должна начинаться с https://'));
   if (data.review && !youtubeId(data.review)) return say(T('Нужна ссылка на видео YouTube.'));
   if (!data.review) delete data.review;
+  if (!data.demoCrop) delete data.demoCrop;
   if (!await askSelfieConsent(selfie)) return;
   const sub = fs.doc(fs.collection(db, 'submissions'));
   const batch = fs.writeBatch(db);

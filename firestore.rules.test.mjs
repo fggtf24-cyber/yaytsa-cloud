@@ -190,6 +190,9 @@ const sub = (db, id, uid, selfie = true, consent = true) => { const b = writeBat
 await no('заявка без селфи', sub(alice, 's0', 'alice', false));
 await no('заявка без согласия', sub(alice, 's00', 'alice', true, false));
 await ok('заявка с селфи', sub(alice, 's1', 'alice'));
+const subCrop = (id, demoCrop) => { const b = writeBatch(alice); b.set(doc(alice, 'submissions', id), { uid: 'alice', status: 'pending', selfiePublic: true, createdAt: serverTimestamp(), name: 'A', desc: 'd', file: 'https://x.dev/a.exe', demoCrop }); b.set(doc(alice, 'selfies', id), { uid: 'alice', image: 'x' }); return b.commit(); };
+await ok('заявка с кадром демо', subCrop('sc1', '30 40 1.5'));
+await no('кадр демо длиннее 40', subCrop('sc2', 'x'.repeat(41)));
 await no('файл не https', (() => { const b = writeBatch(alice); b.set(doc(alice, 'submissions', 's2'), { uid: 'alice', status: 'pending', selfiePublic: true, createdAt: serverTimestamp(), name: 'A', desc: 'd', file: 'http://x.dev/a.exe' }); b.set(doc(alice, 'selfies', 's2'), { uid: 'alice', image: 'x' }); return b.commit(); })());
 await no('сразу approved', (() => { const b = writeBatch(alice); b.set(doc(alice, 'submissions', 's3'), { uid: 'alice', status: 'approved', selfiePublic: true, createdAt: serverTimestamp(), name: 'A', desc: 'd', file: 'https://x.dev/a.exe' }); b.set(doc(alice, 'selfies', 's3'), { uid: 'alice', image: 'x' }); return b.commit(); })());
 await no('селфи чужому', getDoc(doc(bob, 'selfies', 's1')));

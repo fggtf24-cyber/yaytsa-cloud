@@ -489,7 +489,7 @@ service cloud.firestore {
     match /submissions/{id} {
       allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
       allow create: if signedIn() && hasProfile()
-        && request.resource.data.keys().hasOnly(['uid', 'status', 'createdAt', 'icon', 'name', 'desc', 'file', 'size', 'features', 'needs', 'site', 'repo', 'demo', 'review', 'coauthors', 'selfiePublic'])
+        && request.resource.data.keys().hasOnly(['uid', 'status', 'createdAt', 'icon', 'name', 'desc', 'file', 'size', 'features', 'needs', 'site', 'repo', 'demo', 'review', 'coauthors', 'selfiePublic', 'demoCrop'])
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.status == 'pending'
         && request.resource.data.selfiePublic == true
@@ -504,6 +504,7 @@ service cloud.firestore {
         && str(request.resource.data.get('repo', ''), 0, 500)
         && str(request.resource.data.get('demo', ''), 0, 500)
         && str(request.resource.data.get('review', ''), 0, 500)
+        && str(request.resource.data.get('demoCrop', ''), 0, 40)
         && request.resource.data.get('features', []) is list
         && request.resource.data.get('features', []).size() <= 30
         && request.resource.data.get('needs', []) is list
