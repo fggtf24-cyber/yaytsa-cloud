@@ -420,8 +420,10 @@ export function setupSocial(ctx) {
     else addComment(form, btn.dataset.sticker);
   }
 
+  // Эмодзи идёт в то поле формы, где стоял курсор последним: в заголовок поста или в текст.
   function insertEmoji(btn) {
-    const input = btn.closest('form').querySelector('textarea');
+    const form = btn.closest('form');
+    const input = form.emojiField?.isConnected ? form.emojiField : form.querySelector('textarea');
     input.setRangeText(btn.dataset.emoji, input.selectionStart, input.selectionEnd, 'end');
     btn.closest('details').open = false;
     input.focus();
@@ -2916,7 +2918,10 @@ export function setupSocial(ctx) {
   view.addEventListener('beforeinput', e => {
     if (e.inputType === 'insertLineBreak' && e.target.matches('.r-submit textarea, .r-composer textarea') && continueList(e.target)) e.preventDefault();
   });
-  view.addEventListener('focusin', e => { if (e.target.matches('[data-suggest=app]')) updateSuggest(e.target); });
+  view.addEventListener('focusin', e => {
+    if (e.target.matches('[data-suggest=app]')) updateSuggest(e.target);
+    if (e.target.form && e.target.matches('textarea, input[name=title]')) e.target.form.emojiField = e.target;
+  });
 
   view.addEventListener('keydown', e => {
     if (suggest && e.target === suggest.input) {
