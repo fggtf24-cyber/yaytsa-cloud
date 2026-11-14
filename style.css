@@ -417,7 +417,11 @@ a.r-user:hover, .r-who:hover .r-user, .r-app:hover, .r-ptitle:hover { text-decor
   flex: none; padding: 9px 14px; border-radius: 999px; font-weight: 600; color: var(--soft);
 }
 button.r-sort { border: 0; background: none; font: inherit; cursor: pointer; }
+.cat-pick { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 6px; }
 .app-sorts { margin: -6px 0 16px; }
+/* Типы слева, сортировка справа — одной строкой */
+.app-filters { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; margin: -6px 0 16px; }
+.app-filters .app-sorts { margin: 0; }
 .r-sort:hover, .r-tabs a:hover { background: var(--hover); color: var(--strong); }
 .r-sort[aria-current=page], .r-tabs a[aria-current=page] { background: var(--pill-hover); color: var(--strong); }
 .r-list { display: flex; flex-direction: column; }

@@ -45,7 +45,7 @@ service cloud.firestore {
         && str(request.resource.data.get('demo', ''), 0, 500)
         && str(request.resource.data.get('review', ''), 0, 500)
         && str(request.resource.data.get('demoCrop', ''), 0, 40)
-        && str(request.resource.data.get('cat', ''), 0, 30)
+        && (str(request.resource.data.get('cat', ''), 0, 30) || (request.resource.data.cat is list && request.resource.data.cat.size() <= 6))
         && str(request.resource.data.get('nameEn', ''), 0, 100)
         && str(request.resource.data.get('descEn', ''), 0, 1000)
         && str(request.resource.data.get('sizeEn', ''), 0, 40)
@@ -532,7 +532,7 @@ service cloud.firestore {
         && str(request.resource.data.get('demo', ''), 0, 500)
         && str(request.resource.data.get('review', ''), 0, 500)
         && str(request.resource.data.get('demoCrop', ''), 0, 40)
-        && str(request.resource.data.get('cat', ''), 0, 30)
+        && (str(request.resource.data.get('cat', ''), 0, 30) || (request.resource.data.cat is list && request.resource.data.cat.size() <= 6))
         && request.resource.data.get('features', []) is list
         && request.resource.data.get('features', []).size() <= 30
         && request.resource.data.get('needs', []) is list

@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=81';
+import { EN, TERMS } from './i18n.js?v=82';
 import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=65';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -169,7 +169,7 @@ const APPS = [
   },
   {
     id: 'fig2ae',
-    cat: 'Дизайн',
+    cat: ['Дизайн', 'Видео'],
     name: 'Fig2AE',
     icon: 'assets/fig2ae.png',
     desc: 'Переносит макеты из Figma в After Effects одной кнопкой: фигуры, текст, градиенты и эффекты остаются редактируемыми.',
@@ -927,14 +927,14 @@ const promo = () => {
 
 function renderApps() {
   const q = search.value.trim().toLowerCase();
-  const found = a => !q || `${a.name} ${nm(a)} ${authorName(a)} ${tr(a, 'desc')} ${a.cat ? T(a.cat) : ''}`.toLowerCase().includes(q);
+  const found = a => !q || `${a.name} ${nm(a)} ${authorName(a)} ${tr(a, 'desc')} ${catsOf(a).map(c => T(c)).join(' ')}`.toLowerCase().includes(q);
   const onProjects = cat === PROJECTS_TAB;
   const onCommunity = cat === COMMUNITY_TAB;
   const onAuthors = cat === AUTHORS_TAB;
   const all = (onProjects ? projects : apps.filter(a => !!a.community === onCommunity)).filter(found);
-  const cats = onProjects || onAuthors ? [] : CATS.filter(c => all.some(a => a.cat === c));
+  const cats = onProjects || onAuthors ? [] : CATS.filter(c => all.some(a => catsOf(a).includes(c)));
   if (!cats.includes(appCat)) appCat = 'all';
-  const list = all.filter(a => appCat === 'all' || a.cat === appCat);
+  const list = all.filter(a => appCat === 'all' || catsOf(a).includes(appCat));
   if (onCommunity) {
     list.sort(communitySort === 'top' ? (a, b) => (likes[b.id] || 0) - (likes[a.id] || 0) || addedAt(b) - addedAt(a) : (a, b) => addedAt(b) - addedAt(a));
     if (realAdmin) fillAddedAt();
@@ -960,8 +960,7 @@ function renderApps() {
     </div>
     <section class="section">
       <h1>${T(onProjects ? 'Другие наши проекты' : onCommunity ? 'Программы сообщества' : onAuthors ? 'Топ авторов' : 'Программы с яйцами')}</h1>
-      ${types}
-      ${sorts}
+      ${types || sorts ? `<div class="app-filters">${types}${sorts}</div>` : ''}
       ${onAuthors ? `<p class="empty top-note">${T('По скачиваниям всех программ автора. Соавторам скачивания тоже засчитываются.')}</p>${authorsList(q)}`
       : list.length
         ? `<div class="grid">${cat === 'all' && appCat === 'all' && !q ? promo() + list.filter(a => a.id !== 'yaytsa-cloud').map(card).join('') : list.map(onProjects ? projectCard : card).join('')}</div>`
@@ -1284,13 +1283,15 @@ function toggleBell(open) {
 
 // Типы программ: по ним фильтруются «Все приложения» и «Сообщество».
 const CATS = ['Видео', 'Звук', 'Дизайн', 'Утилиты', 'Игры', 'Другое'];
+// Типов у программы может быть несколько; старые записи хранят один тип строкой.
+const catsOf = a => [a.cat].flat().filter(Boolean);
 
 // [поле, подпись, тип, блок]; * в конце типа — обязательное. Поля с блоком прячутся в сворачиваемую секцию.
 const FIELDS = {
   apps: [
     ['icon', 'Иконка', 'icon'],
     ['name', 'Название', 'text*'],
-    ['cat', 'Тип программы', 'cat*'],
+    ['cat', 'Тип программы (можно несколько)', 'cat*'],
     ['authorUid', 'Автор (аккаунт админа)', 'author'],
     ['coauthors', 'Соавторы', 'people'],
     ['desc', 'Описание', 'area*'],
@@ -1355,12 +1356,13 @@ const field = (item, edit = false) => ([key, label, type]) => {
   }
   // Автор заявки из сообщества не в списке админов, но терять его при сохранении нельзя.
   const outsider = value && !authors[value] ? `<option value="${esc(value)}" selected>${esc(social.nameOf(value) || value)}</option>` : '';
-  const control = t === 'cat' ? `
-    <select name="${key}" ${required}>
-      <option value="">${T('Выберите')}</option>
-      ${CATS.map(c => `<option value="${esc(c)}" ${c === value ? 'selected' : ''}>${esc(T(c))}</option>`).join('')}
-    </select>`
-    : t === 'author' ? `
+  if (t === 'cat') return `
+    <div class="field">${T(label)}
+      <div class="cat-pick">
+        ${CATS.map(c => `<label class="mod-check"><input type="checkbox" name="${key}" value="${esc(c)}" ${catsOf(item).includes(c) ? 'checked' : ''}><span>${esc(T(c))}</span></label>`).join('')}
+      </div>
+    </div>`;
+  const control = t === 'author' ? `
     <select name="${key}">
       <option value="">${T('Не указан')}</option>
       ${outsider}
@@ -1399,9 +1401,11 @@ function renderEditor(kind, id) {
 
 // Значения формы в том виде, в каком они лягут в базу.
 async function readFields(form, fields) {
-  const data = Object.fromEntries(new FormData(form));
+  const fd = new FormData(form);
+  const data = Object.fromEntries(fd);
   for (const [key, , type] of fields) {
-    data[key] = type === 'lines' ? data[key].split('\n').map(l => l.trim()).filter(Boolean)
+    data[key] = type.startsWith('cat') ? fd.getAll(key)
+      : type === 'lines' ? data[key].split('\n').map(l => l.trim()).filter(Boolean)
       : type === 'people' ? await social.uidsByNames(data[key])
       : data[key].trim();
   }
@@ -1411,6 +1415,7 @@ async function readFields(form, fields) {
 async function saveItem(form) {
   const { kind, id } = form.dataset;
   const { demoFile, ...data } = await readFields(form, editFields(kind));
+  if (kind === 'apps' && !data.cat.length) return say(T('Выберите тип программы.'));
   if (data.review && !youtubeId(data.review)) return say(T('Нужна ссылка на видео YouTube.'));
   if (demoFile) data.demo = 'file';
   // Для записей из кода (APPS/PROJECTS) в Firestore пишем только то, что отличается от кода.
@@ -1523,6 +1528,7 @@ function askSelfieConsent(image) {
 
 async function sendSubmission(form) {
   const { selfie, demoFile, ...data } = await readFields(form, PUBLISH_FIELDS);
+  if (!data.cat.length) return say(T('Выберите тип программы.'));
   if (demoFile) data.demo = 'file';
   if (!selfie) return say(T('Добавьте своё селфи: без него заявку не принять.'));
   if (!/^https:\/\//.test(data.file)) return say(T('Ссылка должна начинаться с https://'));
