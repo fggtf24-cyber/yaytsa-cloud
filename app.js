@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=86';
+import { EN, TERMS } from './i18n.js?v=87';
 import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=67';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -945,9 +945,9 @@ function renderApps() {
   const list = all.filter(a => appCat === 'all' || catsOf(a).includes(appCat));
   const onOfficial = cat === 'all';
   if (onCommunity || onOfficial) {
-    if (onOfficial && appSort === 'top') appSort = 'new'; // лайки только у программ сообщества
-    const by = { top: likes, dl: downloads }[appSort];
-    list.sort(by ? (a, b) => (by[b.id] || 0) - (by[a.id] || 0) || addedAt(b) - addedAt(a) : (a, b) => addedAt(b) - addedAt(a));
+    const sort = onCommunity ? communitySort : officialSort;
+    const by = { top: likes, dl: downloads }[sort];
+    if (sort !== 'default') list.sort(by ? (a, b) => (by[b.id] || 0) - (by[a.id] || 0) || addedAt(b) - addedAt(a) : (a, b) => addedAt(b) - addedAt(a));
     if (realAdmin) fillAddedAt();
   }
   const types = cats.length ? `
@@ -956,7 +956,8 @@ function renderApps() {
       </div>` : '';
   const sorts = (onCommunity || onOfficial) && list.length ? `
       <div class="r-sorts app-sorts" role="group" aria-label="${T('Сортировка')}">
-        ${[['new', 'Новые'], ...(onCommunity ? [['top', 'Популярные']] : []), ['dl', 'По скачиваниям']].map(([id, label]) => `<button type="button" class="r-sort" data-csort="${id}" aria-current="${id === appSort ? 'page' : 'false'}">${T(label)}</button>`).join('')}
+        ${(onCommunity ? [['new', 'Новые'], ['top', 'Популярные'], ['dl', 'По скачиваниям']] : [['default', 'Рекомендуемые'], ['new', 'Новые'], ['dl', 'По скачиваниям']])
+          .map(([id, label]) => `<button type="button" class="r-sort" data-${onCommunity ? 'csort' : 'osort'}="${id}" aria-current="${id === (onCommunity ? communitySort : officialSort) ? 'page' : 'false'}">${T(label)}</button>`).join('')}
       </div>` : '';
   const tabs = [['all', T('Все приложения')], [COMMUNITY_TAB, T('Сообщество')], [AUTHORS_TAB, T('Топ авторов')], [PROJECTS_TAB, T('Другие проекты')]];
   // В «Сообществе» программу предлагает любой, в остальных вкладках запись сразу добавляет админ.
@@ -1754,7 +1755,8 @@ async function loadContent() {
 
 // Лайки программ сообщества: applikes/<id программы> = { n }. Свой лайк — votes/a_<id>_<uid>, как у постов.
 let likes = {};
-let appSort = 'new'; // «Все приложения» и «Сообщество»: new — по дате выхода, top — по лайкам, dl — по скачиваниям
+let communitySort = 'new'; // new — по дате выхода, top — по лайкам, dl — по скачиваниям
+let officialSort = 'default'; // «Все приложения»: default — наш порядок из кода, new, dl
 let appCat = 'all'; // фильтр по типу программы во «Всех приложениях» и «Сообществе»
 async function loadLikes() {
   try { (await fs.getDocs(fs.collection(db, 'applikes'))).forEach(d => { likes[d.id] = d.data().n || 0; }); }
@@ -2696,7 +2698,8 @@ view.addEventListener('click', e => {
   const t = e.target.closest('button, a');
   if (!t) return;
   if (t.dataset.cat) { cat = t.dataset.cat; renderApps(); }
-  if (t.dataset.csort) { appSort = t.dataset.csort; renderApps(); }
+  if (t.dataset.csort) { communitySort = t.dataset.csort; renderApps(); }
+  else if (t.dataset.osort) { officialSort = t.dataset.osort; renderApps(); }
   else if (t.dataset.acat) { appCat = t.dataset.acat; renderApps(); }
   else if (t.dataset.mode) { authMode = t.dataset.mode; renderAccount(); }
   else if (t.dataset.dt) {

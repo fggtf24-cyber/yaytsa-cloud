@@ -544,6 +544,7 @@ export const EN = {
   'Новые': 'New',
   'Популярные': 'Popular',
   'По скачиваниям': 'Most downloaded',
+  'Рекомендуемые': 'Featured',
   'Старые': 'Old',
   'Вы смотрите одну ветку.': 'You are viewing a single thread.',
   'Показать все комментарии': 'View all comments',
