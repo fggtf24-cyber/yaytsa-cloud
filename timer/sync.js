@@ -10,7 +10,7 @@
 const SYNC = {
   key: 'AIzaSyB5N_ynBpx9cD8cyy4da_HFMHVc-qZ_YyU',
   db: 'https://yaytsa-cloud-default-rtdb.europe-west1.firebasedatabase.app',
-  site: 'https://fggtf24-cyber.github.io/yaytsa-cloud/',
+  site: 'https://yaytsacloud.art/',
 };
 // Settings that follow the account; the rest (theme, zoom, window options) stay per device.
 const SYNC_SETTINGS = ['work', 'brk', 'longOn', 'longBrk', 'longEvery', 'autoStart', 'goal', 'goalWeek', 'sound', 'popup', 'lang', 'plans'];
