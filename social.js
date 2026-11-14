@@ -196,7 +196,7 @@ export function setupSocial(ctx) {
     // Телефон часто пишет @Neba с большой буквы: имена без учёта регистра.
     .replace(/(^|[\s(])@([a-z0-9_]{1,20})\b/gi, (_, pre, raw) => {
       const n = raw.toLowerCase();
-      return n === 'everyone' ? `${pre}<b class="r-all">@everyone</b>` : `${pre}<a class="r-link" href="#u/${n}">@${raw}</a>`;
+      return n === 'everyone' || n === 'devs' ? `${pre}<b class="r-all">@${n}</b>` : `${pre}<a class="r-link" href="#u/${n}">@${raw}</a>`;
     })
     .replace(TAG_RE, (m, pre, tag) => {
       const app = appByTag(tag);
@@ -1402,7 +1402,7 @@ export function setupSocial(ctx) {
           <span class="r-at"><span aria-hidden="true">#</span><input name="tag" maxlength="60" autocomplete="off" data-suggest="app" placeholder="${T('Программа, необязательно')}" value="${app ? esc(appTag(ctx.nm(app))) : ''}"></span>
         </label>
         ${dev ? `<label class="mod-check r-update-check" hidden><input type="checkbox" name="update"><span>${T('Это обновление программы')}</span></label>` : ''}
-        ${ctx.isAdmin ? `<p class="r-hint">${T('@everyone отметит всех: пост придёт в уведомления.')}</p>` : ''}
+        ${ctx.isAdmin ? `<p class="r-hint">${T('@everyone отметит всех: пост придёт в уведомления.')} ${T('@devs — всех авторов и соавторов программ.')}</p>` : ''}
         <div class="r-submit-bar">
           <button type="button" class="r-pill ghost" data-s-back>${T('Отмена')}</button>
           <button class="r-pill primary">${T('Опубликовать')}</button>
@@ -1476,13 +1476,12 @@ export function setupSocial(ctx) {
   }
 
   // Кого отметили через @имя — тем уведомление «Упоминание от …». skip — кому уже ушло уведомление об ответе.
+  // @devs (только у админа) — все авторы и соавторы программ из каталога.
   async function notifyMentions(text, postId, commentId, skip = '') {
-    const names = [...new Set([...(text || '').matchAll(/(^|[^a-z0-9_])@([a-z0-9_]{1,20})(?![a-z0-9_])/gi)].map(m => m[2].toLowerCase()))]
-      .filter(n => n !== 'everyone').slice(0, 10);
-    for (const n of names) {
-      const uid = await uidByName(n).catch(() => null);
-      if (uid && uid !== me() && uid !== skip) ctx.notify('mention', commentId, uid, postId, text.trim());
-    }
+    const all = [...new Set([...(text || '').matchAll(/(^|[^a-z0-9_])@([a-z0-9_]{1,20})(?![a-z0-9_])/gi)].map(m => m[2].toLowerCase()))];
+    const uids = new Set(ctx.isAdmin && all.includes('devs') ? ctx.apps.flatMap(a => [a.authorUid, ...(a.coauthors || [])]) : []);
+    for (const n of all.filter(n => n !== 'everyone' && n !== 'devs').slice(0, 10)) uids.add(await uidByName(n).catch(() => null));
+    for (const uid of uids) if (uid && uid !== me() && uid !== skip) ctx.notify('mention', commentId, uid, postId, text.trim());
   }
 
   /* ---------- Подсказки # и @ ---------- */
@@ -1535,6 +1534,9 @@ export function setupSocial(ctx) {
       items = found.map(f => ({ insert: f.name, html: personLine(f.uid, f.name) }));
       if (ctx.isAdmin && input.closest('.r-submit') && 'everyone'.startsWith(low)) {
         items.unshift({ insert: 'everyone', html: `<span><b>@everyone</b><small>${T('Отметить всех')}</small></span>` });
+      }
+      if (ctx.isAdmin && input.closest('.r-submit, [data-s-form=comment]') && 'devs'.startsWith(low)) {
+        items.unshift({ insert: 'devs', html: `<span><b>@devs</b><small>${T('Отметить всех разработчиков')}</small></span>` });
       }
     }
     if (!items.length) return closeSuggest();
@@ -2652,7 +2654,7 @@ export function setupSocial(ctx) {
     username = String(username || '').trim().replace(/^@/, '').toLowerCase();
     if (!username && !pub) return;
     if (!USERNAME_RE.test(username)) throw Object.assign(new Error('bad username'), { code: 'username/invalid' });
-    if (username === 'everyone') throw Object.assign(new Error('reserved'), { code: 'username/taken' });
+    if (username === 'everyone' || username === 'devs') throw Object.assign(new Error('reserved'), { code: 'username/taken' });
     const old = pub?.username;
     const batch = F().writeBatch(ctx.db);
     if (username !== old) {

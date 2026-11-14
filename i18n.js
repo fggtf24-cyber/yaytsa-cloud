@@ -631,6 +631,8 @@ export const EN = {
   'Масштаб': 'Zoom',
   'Кадрировать': 'Crop',
   'Посмотреть целиком': 'View full size',
+  '@devs — всех авторов и соавторов программ.': '@devs tags every program author and co-author.',
+  'Отметить всех разработчиков': 'Tag all developers',
   'Кадрирование демо': 'Crop demo',
   'Перетащите демо и выберите масштаб. Что не влезло в рамку, на странице программы обрежется.': 'Drag the demo and pick the zoom. Whatever does not fit in the frame is cut off on the program page.',
   'Область кадрирования. Стрелки двигают демо, плюс и минус меняют масштаб.': 'Crop area. Arrow keys move the demo, plus and minus change the zoom.',
