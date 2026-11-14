@@ -406,6 +406,23 @@ service cloud.firestore {
           || getAfter(/databases/$(database)/documents/postimages/$(id)).data.uid == request.auth.uid)
         && request.resource.data.commentCount == 0
         && request.resource.data.createdAt == request.time;
+      // Пост «Новая программа»: админ добавляет программу или одобряет заявку, и тем же пакетом в ленту уходит пост
+      // от имени автора программы (у официальной без автора — от самого админа). Один на программу: id release_<id программы>.
+      // Программа создаётся тем же пакетом: existsAfter без exists — пост не повесить на уже существующую.
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly(['uid', 'title', 'body', 'appId', 'score', 'commentCount', 'createdAt', 'release'])
+        && request.resource.data.release == true
+        && id == 'release_' + request.resource.data.appId
+        && !exists(/databases/$(database)/documents/apps/$(request.resource.data.appId))
+        && existsAfter(/databases/$(database)/documents/apps/$(request.resource.data.appId))
+        && (getAfter(/databases/$(database)/documents/apps/$(request.resource.data.appId)).data.get('authorUid', '') == request.resource.data.uid
+          || (getAfter(/databases/$(database)/documents/apps/$(request.resource.data.appId)).data.get('authorUid', '') == ''
+            && request.resource.data.uid == request.auth.uid))
+        && str(request.resource.data.title, 1, 300)
+        && str(request.resource.data.body, 0, 10000)
+        && request.resource.data.score == 0
+        && request.resource.data.commentCount == 0
+        && request.resource.data.createdAt == request.time;
       allow update: if signedIn() && (
         (resource.data.uid == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body', 'editedAt', 'imageRatio', 'images', 'update'])

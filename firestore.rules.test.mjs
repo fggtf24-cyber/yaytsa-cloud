@@ -42,6 +42,19 @@ await no('обновление без программы', upd(alice, 'p4n', 'al
 await no('update только true', upd(alice, 'p4f', 'alice', 'app1', 'да'));
 await ok('отметить старый пост обновлением', updateDoc(doc(alice, 'posts', 'pa'), { update: true, editedAt: serverTimestamp() }));
 await no('не разработчик не отметит пост без программы', updateDoc(doc(alice, 'posts', 'p4'), { update: true, editedAt: serverTimestamp() }));
+// Пост «Новая программа» при одобрении заявки
+const release = (db, appId, uid, appData = { name: 'C', authorUid: 'alice', community: true }, id = `release_${appId}`) => { const b = writeBatch(db);
+  b.set(doc(db, 'apps', appId), appData);
+  b.set(doc(db, 'posts', id), { uid, title: 'C', body: '', appId, score: 0, commentCount: 0, createdAt: serverTimestamp(), release: true });
+  return b.commit(); };
+await ok('админ: пост о новой программе от автора', release(admin, 'capp1', 'alice'));
+await no('пост о программе не от её автора', release(admin, 'capp2', 'bob'));
+await ok('официальная программа: пост от автора', release(admin, 'capp3', 'alice', { name: 'C', authorUid: 'alice' }));
+await ok('официальная без автора: пост от админа', release(admin, 'capp5', 'adm', { name: 'C', authorUid: '' }));
+await no('официальная без автора: не от чужого имени', release(admin, 'capp6', 'bob', { name: 'C', authorUid: '' }));
+await no('пост к уже существующей программе', release(admin, 'app1', 'alice', { name: 'A', authorUid: 'alice' }));
+await no('пост о программе под чужим id', release(admin, 'capp4', 'alice', undefined, 'whatever'));
+await no('пользователь не ставит release', setDoc(doc(alice, 'posts', 'release_app1'), { uid: 'alice', title: 'x', body: '', appId: 'app1', score: 0, commentCount: 0, createdAt: serverTimestamp(), release: true }));
 const comment = (db, id, uid, extra = {}, body = 'hi') => { const b = writeBatch(db);
   b.set(doc(db, 'tcomments', id), { postId: 'p0', parentId: '', uid, body, score: 1, deleted: false, createdAt: serverTimestamp(), ...extra });
   b.set(doc(db, 'votes', `c_${id}_${uid}`), { uid, kind: 'c', target: id, v: 1 });

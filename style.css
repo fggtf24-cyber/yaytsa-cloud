@@ -724,6 +724,8 @@ a.r-stat:hover b { text-decoration: underline; }
   display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: 9px;
   background: none; text-align: left; color: var(--text);
 }
+.s-head { padding: 8px 8px 4px; color: var(--sub); font-size: 12px; font-weight: 600; }
+.s-head:not(:first-child) { margin-top: 4px; border-top: 1px solid var(--line); }
 .s-item:hover, .s-item:focus-visible, .s-item[aria-selected=true] { background: var(--pill); }
 .s-item > img { flex: none; width: 28px; height: 28px; border-radius: 7px; object-fit: cover; }
 .s-item > span:last-child { min-width: 0; display: flex; flex-direction: column; }

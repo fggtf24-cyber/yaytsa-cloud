@@ -1509,9 +1509,9 @@ export function setupSocial(ctx) {
   }
 
   function drawSuggest() {
-    suggest.box.innerHTML = suggest.items.map((item, i) => `
+    suggest.box.innerHTML = suggest.items.map((item, i) => `${item.head ? `<div class="s-head">${esc(item.head)}</div>` : ''}
       <button type="button" class="s-item" role="option" tabindex="-1" data-i="${i}" aria-selected="${i === suggest.active}">${item.html}</button>`).join('');
-    if (suggest.active) suggest.box.children[suggest.active]?.scrollIntoView({ block: 'nearest' });
+    if (suggest.active) suggest.box.querySelector(`[data-i="${suggest.active}"]`)?.scrollIntoView({ block: 'nearest' });
   }
 
   // Ищем слово с # или @ прямо перед курсором.
@@ -1525,9 +1525,14 @@ export function setupSocial(ctx) {
     const my = ++suggestSeq;
     let items;
     if (sign === '#') {
+      // Сначала наши программы, потом программы сообщества — под своими заголовками.
       items = ctx.apps.filter(a => `${a.name} ${a.nameEn || ''}`.toLowerCase().includes(low) || appTag(`${a.name} ${a.nameEn || ''}`).toLowerCase().includes(low))
+        .sort((a, b) => !!a.community - !!b.community)
         .slice(0, whole ? Infinity : 6) // в поле «Программа» — все, со скроллом: иначе седьмую и дальше не выбрать
-        .map(a => ({ insert: appTag(ctx.nm(a)), html: `<img src="${ctx.icon(a)}" alt=""><span><b>${esc(ctx.nm(a))}</b><small>#${esc(appTag(ctx.nm(a)))}</small></span>` }));
+        .map((a, i, all) => ({
+          head: !i || !!all[i - 1].community !== !!a.community ? T(a.community ? 'Программы сообщества' : 'Наши программы') : '',
+          insert: appTag(ctx.nm(a)), html: `<img src="${ctx.icon(a)}" alt=""><span><b>${esc(ctx.nm(a))}</b><small>#${esc(appTag(ctx.nm(a)))}</small></span>`,
+        }));
     } else {
       const found = await findPeople(low).catch(e => { console.error(e); return []; });
       if (my !== suggestSeq) return;

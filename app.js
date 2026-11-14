@@ -1,5 +1,5 @@
-import { EN, TERMS } from './i18n.js?v=82';
-import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=65';
+import { EN, TERMS } from './i18n.js?v=84';
+import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=67';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -936,7 +936,8 @@ function renderApps() {
   if (!cats.includes(appCat)) appCat = 'all';
   const list = all.filter(a => appCat === 'all' || catsOf(a).includes(appCat));
   if (onCommunity) {
-    list.sort(communitySort === 'top' ? (a, b) => (likes[b.id] || 0) - (likes[a.id] || 0) || addedAt(b) - addedAt(a) : (a, b) => addedAt(b) - addedAt(a));
+    const by = { top: likes, dl: downloads }[communitySort];
+    list.sort(by ? (a, b) => (by[b.id] || 0) - (by[a.id] || 0) || addedAt(b) - addedAt(a) : (a, b) => addedAt(b) - addedAt(a));
     if (realAdmin) fillAddedAt();
   }
   const types = cats.length ? `
@@ -945,7 +946,7 @@ function renderApps() {
       </div>` : '';
   const sorts = onCommunity && list.length ? `
       <div class="r-sorts app-sorts" role="group" aria-label="${T('Сортировка')}">
-        ${[['new', 'Новые'], ['top', 'Популярные']].map(([id, label]) => `<button type="button" class="r-sort" data-csort="${id}" aria-current="${id === communitySort ? 'page' : 'false'}">${T(label)}</button>`).join('')}
+        ${[['new', 'Новые'], ['top', 'Популярные'], ['dl', 'По скачиваниям']].map(([id, label]) => `<button type="button" class="r-sort" data-csort="${id}" aria-current="${id === communitySort ? 'page' : 'false'}">${T(label)}</button>`).join('')}
       </div>` : '';
   const tabs = [['all', T('Все приложения')], [COMMUNITY_TAB, T('Сообщество')], [AUTHORS_TAB, T('Топ авторов')], [PROJECTS_TAB, T('Другие проекты')]];
   // В «Сообществе» программу предлагает любой, в остальных вкладках запись сразу добавляет админ.
@@ -1427,10 +1428,21 @@ async function saveItem(form) {
   }
   const col = fs.collection(db, kind);
   const ref = id === 'new' ? fs.doc(col) : fs.doc(col, id);
-  await fs.setDoc(ref, data, { merge: true });
+  const batch = fs.writeBatch(db);
+  batch.set(ref, data, { merge: true });
+  // Новая официальная программа тоже выходит постом: от автора, а если он не указан — от админа.
+  if (kind === 'apps' && id === 'new') releasePost(batch, ref.id, data.authorUid || user.uid, data.name, data.desc);
+  await batch.commit();
   if (demoFile) await fs.setDoc(fs.doc(db, 'demos', ref.id), { uid: user.uid, image: demoFile });
   await loadContent();
   location.hash = kind === 'apps' ? `app/${ref.id}` : 'apps';
+}
+
+// Пост о выходе программы в ленту от имени автора. Один на программу: id поста зависит от id программы.
+function releasePost(batch, appId, uid, name, desc) {
+  batch.set(fs.doc(db, 'posts', `release_${appId}`), {
+    uid, title: name, body: desc || '', appId, score: 0, commentCount: 0, createdAt: fs.serverTimestamp(), release: true,
+  });
 }
 
 /* ---------- Заявка на программу ---------- */
@@ -1684,7 +1696,10 @@ async function decide(id, approve) {
   if (!s || reason === null) return;
   const { id: _id, selfie: _selfie, selfiePublic: _public, uid, status: _status, createdAt: _createdAt, reason: _reason, ...fields } = s;
   const batch = fs.writeBatch(db);
-  if (approve) batch.set(fs.doc(db, 'apps', id), { ...fields, authorUid: uid, community: true, addedAt: fs.serverTimestamp() });
+  if (approve) {
+    batch.set(fs.doc(db, 'apps', id), { ...fields, authorUid: uid, community: true, addedAt: fs.serverTimestamp() });
+    releasePost(batch, id, uid, s.name, s.desc);
+  }
   batch.update(fs.doc(db, 'submissions', id), { status: approve ? 'approved' : 'rejected', reason: reason.trim().slice(0, 300) });
   await batch.commit();
   notify('mod', id, uid, approve ? id : '', reason.trim() ? `${s.name}: ${reason.trim()}` : s.name);
@@ -1728,7 +1743,7 @@ async function loadContent() {
 
 // Лайки программ сообщества: applikes/<id программы> = { n }. Свой лайк — votes/a_<id>_<uid>, как у постов.
 let likes = {};
-let communitySort = 'new'; // new — по дате выхода, top — по лайкам
+let communitySort = 'new'; // new — по дате выхода, top — по лайкам, dl — по скачиваниям
 let appCat = 'all'; // фильтр по типу программы во «Всех приложениях» и «Сообществе»
 async function loadLikes() {
   try { (await fs.getDocs(fs.collection(db, 'applikes'))).forEach(d => { likes[d.id] = d.data().n || 0; }); }
