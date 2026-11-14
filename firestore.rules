@@ -33,7 +33,7 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
       allow update: if isAppDev(resource.data)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['icon', 'name', 'desc', 'file', 'size', 'features', 'needs', 'site', 'repo', 'demo', 'review', 'demoCrop', 'nameEn', 'descEn', 'sizeEn', 'featuresEn', 'needsEn'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['icon', 'name', 'cat', 'desc', 'file', 'size', 'features', 'needs', 'site', 'repo', 'demo', 'review', 'demoCrop', 'nameEn', 'descEn', 'sizeEn', 'featuresEn', 'needsEn'])
         && str(request.resource.data.name, 1, 100)
         && str(request.resource.data.get('desc', ''), 0, 1000)
         && str(request.resource.data.file, 9, 500)
@@ -45,6 +45,7 @@ service cloud.firestore {
         && str(request.resource.data.get('demo', ''), 0, 500)
         && str(request.resource.data.get('review', ''), 0, 500)
         && str(request.resource.data.get('demoCrop', ''), 0, 40)
+        && str(request.resource.data.get('cat', ''), 0, 30)
         && str(request.resource.data.get('nameEn', ''), 0, 100)
         && str(request.resource.data.get('descEn', ''), 0, 1000)
         && str(request.resource.data.get('sizeEn', ''), 0, 40)
@@ -515,7 +516,7 @@ service cloud.firestore {
     match /submissions/{id} {
       allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
       allow create: if signedIn() && hasProfile()
-        && request.resource.data.keys().hasOnly(['uid', 'status', 'createdAt', 'icon', 'name', 'desc', 'file', 'size', 'features', 'needs', 'site', 'repo', 'demo', 'review', 'coauthors', 'selfiePublic', 'demoCrop'])
+        && request.resource.data.keys().hasOnly(['uid', 'status', 'createdAt', 'icon', 'name', 'desc', 'file', 'size', 'features', 'needs', 'site', 'repo', 'demo', 'review', 'coauthors', 'selfiePublic', 'demoCrop', 'cat'])
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.status == 'pending'
         && request.resource.data.selfiePublic == true
@@ -531,6 +532,7 @@ service cloud.firestore {
         && str(request.resource.data.get('demo', ''), 0, 500)
         && str(request.resource.data.get('review', ''), 0, 500)
         && str(request.resource.data.get('demoCrop', ''), 0, 40)
+        && str(request.resource.data.get('cat', ''), 0, 30)
         && request.resource.data.get('features', []) is list
         && request.resource.data.get('features', []).size() <= 30
         && request.resource.data.get('needs', []) is list

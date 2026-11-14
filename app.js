@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=80';
+import { EN, TERMS } from './i18n.js?v=81';
 import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=65';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -44,6 +44,7 @@ const APPS = [
   },
   {
     id: 'smooth-cursor',
+    cat: 'Видео',
     name: 'Smooth Cursor',
     icon: 'assets/smooth-cursor.png',
     demo: 'assets/smooth-cursor-demo.mp4',
@@ -84,6 +85,7 @@ const APPS = [
   },
   {
     id: 'voicetype',
+    cat: 'Звук',
     name: 'VoiceType',
     icon: 'assets/voicetype.png',
     desc: 'Голосовой ввод в любое окно по горячей клавише. Работает на вашем компьютере, без облака и лимитов.',
@@ -125,6 +127,7 @@ const APPS = [
   },
   {
     id: 'yaytsechist',
+    cat: 'Утилиты',
     name: 'Яйцечист',
     nameEn: 'Yaytsechist',
     icon: 'assets/yaytsechist.png',
@@ -166,6 +169,7 @@ const APPS = [
   },
   {
     id: 'fig2ae',
+    cat: 'Дизайн',
     name: 'Fig2AE',
     icon: 'assets/fig2ae.png',
     desc: 'Переносит макеты из Figma в After Effects одной кнопкой: фигуры, текст, градиенты и эффекты остаются редактируемыми.',
@@ -241,6 +245,7 @@ const APPS = [
   },
   {
     id: 'yaytsa-timer',
+    cat: 'Утилиты',
     name: 'Яйцетаймер',
     nameEn: 'Яйцетаймер',
     icon: 'assets/yaytsa-timer.png?v=3',
@@ -313,6 +318,7 @@ const APPS = [
   },
   {
     id: 'forma',
+    cat: 'Утилиты',
     name: 'Forma',
     icon: 'assets/forma.png',
     demo: 'assets/forma-demo.mp4',
@@ -349,6 +355,7 @@ const APPS = [
   },
   {
     id: 'sfx-library',
+    cat: 'Звук',
     name: 'SFX Library',
     icon: 'assets/sfx-library.png',
     demo: 'assets/sfx-library-demo.mp4',
@@ -920,15 +927,22 @@ const promo = () => {
 
 function renderApps() {
   const q = search.value.trim().toLowerCase();
-  const found = a => !q || `${a.name} ${nm(a)} ${authorName(a)} ${tr(a, 'desc')}`.toLowerCase().includes(q);
+  const found = a => !q || `${a.name} ${nm(a)} ${authorName(a)} ${tr(a, 'desc')} ${a.cat ? T(a.cat) : ''}`.toLowerCase().includes(q);
   const onProjects = cat === PROJECTS_TAB;
   const onCommunity = cat === COMMUNITY_TAB;
   const onAuthors = cat === AUTHORS_TAB;
-  const list = (onProjects ? projects : apps.filter(a => !!a.community === onCommunity)).filter(found);
+  const all = (onProjects ? projects : apps.filter(a => !!a.community === onCommunity)).filter(found);
+  const cats = onProjects || onAuthors ? [] : CATS.filter(c => all.some(a => a.cat === c));
+  if (!cats.includes(appCat)) appCat = 'all';
+  const list = all.filter(a => appCat === 'all' || a.cat === appCat);
   if (onCommunity) {
     list.sort(communitySort === 'top' ? (a, b) => (likes[b.id] || 0) - (likes[a.id] || 0) || addedAt(b) - addedAt(a) : (a, b) => addedAt(b) - addedAt(a));
     if (realAdmin) fillAddedAt();
   }
+  const types = cats.length ? `
+      <div class="r-sorts app-sorts" role="group" aria-label="${T('Тип программы')}">
+        ${[['all', 'Все типы'], ...cats.map(c => [c, c])].map(([id, label]) => `<button type="button" class="r-sort" data-acat="${esc(id)}" aria-current="${id === appCat ? 'page' : 'false'}">${esc(T(label))}</button>`).join('')}
+      </div>` : '';
   const sorts = onCommunity && list.length ? `
       <div class="r-sorts app-sorts" role="group" aria-label="${T('Сортировка')}">
         ${[['new', 'Новые'], ['top', 'Популярные']].map(([id, label]) => `<button type="button" class="r-sort" data-csort="${id}" aria-current="${id === communitySort ? 'page' : 'false'}">${T(label)}</button>`).join('')}
@@ -946,10 +960,11 @@ function renderApps() {
     </div>
     <section class="section">
       <h1>${T(onProjects ? 'Другие наши проекты' : onCommunity ? 'Программы сообщества' : onAuthors ? 'Топ авторов' : 'Программы с яйцами')}</h1>
+      ${types}
       ${sorts}
       ${onAuthors ? `<p class="empty top-note">${T('По скачиваниям всех программ автора. Соавторам скачивания тоже засчитываются.')}</p>${authorsList(q)}`
       : list.length
-        ? `<div class="grid">${cat === 'all' && !q ? promo() + list.filter(a => a.id !== 'yaytsa-cloud').map(card).join('') : list.map(onProjects ? projectCard : card).join('')}</div>`
+        ? `<div class="grid">${cat === 'all' && appCat === 'all' && !q ? promo() + list.filter(a => a.id !== 'yaytsa-cloud').map(card).join('') : list.map(onProjects ? projectCard : card).join('')}</div>`
         : `<p class="empty">${T(onCommunity && !q ? 'Здесь появятся программы участников. Предложите свою первым!' : 'Ничего не нашлось.')}</p>`}
     </section>`;
 }
@@ -1267,11 +1282,15 @@ function toggleBell(open) {
 
 /* ---------- Редактор (только админы) ---------- */
 
+// Типы программ: по ним фильтруются «Все приложения» и «Сообщество».
+const CATS = ['Видео', 'Звук', 'Дизайн', 'Утилиты', 'Игры', 'Другое'];
+
 // [поле, подпись, тип, блок]; * в конце типа — обязательное. Поля с блоком прячутся в сворачиваемую секцию.
 const FIELDS = {
   apps: [
     ['icon', 'Иконка', 'icon'],
     ['name', 'Название', 'text*'],
+    ['cat', 'Тип программы', 'cat*'],
     ['authorUid', 'Автор (аккаунт админа)', 'author'],
     ['coauthors', 'Соавторы', 'people'],
     ['desc', 'Описание', 'area*'],
@@ -1336,7 +1355,12 @@ const field = (item, edit = false) => ([key, label, type]) => {
   }
   // Автор заявки из сообщества не в списке админов, но терять его при сохранении нельзя.
   const outsider = value && !authors[value] ? `<option value="${esc(value)}" selected>${esc(social.nameOf(value) || value)}</option>` : '';
-  const control = t === 'author' ? `
+  const control = t === 'cat' ? `
+    <select name="${key}" ${required}>
+      <option value="">${T('Выберите')}</option>
+      ${CATS.map(c => `<option value="${esc(c)}" ${c === value ? 'selected' : ''}>${esc(T(c))}</option>`).join('')}
+    </select>`
+    : t === 'author' ? `
     <select name="${key}">
       <option value="">${T('Не указан')}</option>
       ${outsider}
@@ -1406,7 +1430,7 @@ async function saveItem(form) {
 
 /* ---------- Заявка на программу ---------- */
 
-const PUBLISH_FIELDS = ['icon', 'name', 'coauthors', 'desc', 'file', 'size', 'features', 'needs', 'site', 'repo', 'demo', 'review']
+const PUBLISH_FIELDS = ['icon', 'name', 'cat', 'coauthors', 'desc', 'file', 'size', 'features', 'needs', 'site', 'repo', 'demo', 'review']
   .map(key => FIELDS.apps.find(f => f[0] === key));
 
 const STATUS = {
@@ -1699,6 +1723,7 @@ async function loadContent() {
 // Лайки программ сообщества: applikes/<id программы> = { n }. Свой лайк — votes/a_<id>_<uid>, как у постов.
 let likes = {};
 let communitySort = 'new'; // new — по дате выхода, top — по лайкам
+let appCat = 'all'; // фильтр по типу программы во «Всех приложениях» и «Сообществе»
 async function loadLikes() {
   try { (await fs.getDocs(fs.collection(db, 'applikes'))).forEach(d => { likes[d.id] = d.data().n || 0; }); }
   catch (e) { console.error(e); } // правила ещё не опубликованы: лайков просто не видно
@@ -2640,6 +2665,7 @@ view.addEventListener('click', e => {
   if (!t) return;
   if (t.dataset.cat) { cat = t.dataset.cat; renderApps(); }
   if (t.dataset.csort) { communitySort = t.dataset.csort; renderApps(); }
+  else if (t.dataset.acat) { appCat = t.dataset.acat; renderApps(); }
   else if (t.dataset.mode) { authMode = t.dataset.mode; renderAccount(); }
   else if (t.dataset.dt) {
     const id = t.dataset.dtId;
