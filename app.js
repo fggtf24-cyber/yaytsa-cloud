@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=88';
+import { EN, TERMS } from './i18n.js?v=89';
 import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=68';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -1768,6 +1768,18 @@ async function decide(id, approve) {
 
 /* ---------- Соглашение и куки ---------- */
 
+function renderDonate() {
+  view.innerHTML = `
+    <section class="section panel donate">
+      <h1>${T('Поддержать проект')}</h1>
+      <p class="empty">${T('Все программы бесплатные. Если они вам пригодились, можно закинуть автору на яйца.')}</p>
+      <div class="donate-btns">
+        <a class="btn primary" href="https://www.donationalerts.com/r/n3ba090" target="_blank" rel="noopener">DonationAlerts</a>
+        <a class="btn primary" href="https://donatepay.ru/don/1543630" target="_blank" rel="noopener">DonatePay</a>
+      </div>
+    </section>`;
+}
+
 function renderTerms() {
   view.innerHTML = `
     <section class="section panel terms">
@@ -2319,21 +2331,6 @@ function drawBanBar(u) {
     + (b.reason ? ` ${T('Причина')}: ${b.reason}` : '');
 }
 
-// Переезд с github.io на yaytsacloud.art: вход остался на старом адресе, поэтому зовём войти заново.
-// ponytail: после 2027-02-01 плашка не показывается; потом удалить вместе с разметкой.
-function drawMoveBar(u) {
-  const bar = document.getElementById('move-bar');
-  let seen = true;
-  try { seen = !!localStorage.getItem('movedSeen'); if (u) localStorage.setItem('movedSeen', '1'); } catch { /* приватный режим */ }
-  bar.hidden = !!u || seen || Date.now() > Date.UTC(2027, 1, 1);
-  if (bar.hidden) return;
-  bar.innerHTML = `${T('Яйца Cloud переехали на yaytsacloud.art. Если у вас был аккаунт, войдите заново.')} <a href="#account">${T('Войти')}</a> <button type="button" class="move-x" aria-label="${T('Закрыть')}">×</button>`;
-  bar.querySelector('.move-x').onclick = () => {
-    bar.hidden = true;
-    try { localStorage.setItem('movedSeen', '1'); } catch { /* приватный режим */ }
-  };
-}
-
 function savedAdminView() {
   try { return !localStorage.getItem('userView'); } catch { return true; }
 }
@@ -2541,7 +2538,6 @@ async function initFirebase() {
       [realAdmin, profile] = await Promise.all([checkAdmin(u), loadProfile(u), u && social.loadRoles([u.uid], true)]);
       isMod = !!u && social.isModUid(u.uid);
       drawBanBar(u);
-      drawMoveBar(u);
       isAdmin = realAdmin && savedAdminView();
       user = u;
       quietUntil = Date.now() + 4000;
@@ -2579,7 +2575,7 @@ function route() {
   const s = social.route(parts);
   if (s) return s;
   const [name, a, b] = parts;
-  if (['account', 'stats', 'inbox', 'publish', 'terms', 'settings'].includes(name)) return { name };
+  if (['account', 'stats', 'inbox', 'publish', 'terms', 'settings', 'donate'].includes(name)) return { name };
   if (name === 'admin') return { name, tab: a };
   if (name === 'report') return { name, appId: a };
   if (name === 'timer-login' || name === 'app-login') return { name, target: a, state: b };
@@ -2588,7 +2584,7 @@ function route() {
   return app ? { name: 'app', app } : { name: 'apps' };
 }
 
-const RAIL = { 'timer-login': 'account', 'app-login': 'account', feed: 'feed', post: 'feed', submit: 'feed', u: 'account', uid: 'account', chat: 'inbox', inbox: 'inbox', account: 'account', stats: 'stats', report: 'report', admin: 'admin', settings: 'settings' };
+const RAIL = { 'timer-login': 'account', 'app-login': 'account', feed: 'feed', post: 'feed', submit: 'feed', u: 'account', uid: 'account', chat: 'inbox', inbox: 'inbox', account: 'account', stats: 'stats', report: 'report', admin: 'admin', settings: 'settings', donate: 'donate' };
 
 function render() {
   const r = route();
@@ -2607,6 +2603,7 @@ function render() {
   else if (r.name === 'publish') renderPublish();
   else if (r.name === 'admin') renderAdmin(r.tab);
   else if (r.name === 'terms') renderTerms();
+  else if (r.name === 'donate') renderDonate();
   else if (r.name === 'settings') renderSettings();
   else if (r.name === 'edit') renderEditor(r.kind, r.id);
   else if (r.name === 'app') renderApp(r.app);

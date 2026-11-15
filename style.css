@@ -1283,9 +1283,6 @@ html { -webkit-tap-highlight-color: transparent; }
 .r-tag.ban { background: rgba(255, 79, 122, .18); color: #FF4F7A; vertical-align: middle; }
 h1 .r-tag { font-size: 12px; margin-left: 6px; }
 .ban-bar { padding: 10px 20px; background: rgba(255, 79, 122, .14); color: var(--text); font-size: 14px; text-align: center; }
-.move-bar { background: rgba(20, 115, 230, .14); }
-.move-bar a { color: var(--link); }
-.move-x { margin-left: 8px; border: 0; background: none; color: var(--muted, inherit); font-size: 18px; line-height: 1; cursor: pointer; }
 .mod-acts { display: flex; flex-direction: column; gap: 8px; }
 .table-box td .r-tag { margin-left: 6px; }
 .r-pcard-mod .r-menu, .r-pcard-mod summary { width: 100%; justify-content: center; }
@@ -1302,3 +1299,7 @@ html[data-theme=light] .r-tag.admin { color: #A86A00; }
 .mod-term-row input { width: 90px; flex: none; }
 .mod-term-row select { flex: 1; }
 .mod-term-row input, .mod-term-row select { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
+
+/* Донат */
+.donate-btns { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 8px; }
+.donate-btns .btn { width: auto; }
