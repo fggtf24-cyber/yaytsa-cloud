@@ -434,3 +434,15 @@ input[type="range"] { flex: 1; accent-color: var(--accent); height: 32px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* A− / A+ in the top right corner */
+.sizes { display: flex; gap: 4px; margin-left: 4px; }
+.sz {
+  width: 46px; height: 44px; border: 0; border-radius: 12px; background: var(--bg-3); color: var(--text-strong);
+  font: 600 16px/1 var(--font); display: grid; place-items: center; transition: background-color 0.12s, transform 0.1s var(--ease);
+}
+.sz.big { font-size: 20px; }
+.sz sup { font-size: 0.6em; margin-left: 1px; }
+.sz:active { transform: scale(0.92); background: var(--active); }
+@media (hover: hover) { .sz:hover { background: var(--active); } }
+@media (max-width: 400px) { .clock small { display: none; } }

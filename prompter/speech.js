@@ -4,9 +4,52 @@
 import { normWord } from './align.js';
 
 const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
-export const speechSupported = !!Rec;
 
-export class Listener {
+// Inside the Яйца Cloud app for Android the page lives in a WebView, which has no speech
+// recognition of its own. From version 1.5 the app recognizes speech with Android's own
+// recognizer and passes the words in: YaytsaAndroid.speech(json) to start and stop, results
+// come back as 'yaytsa-app' events { type: 'speech', text, final } / 'speech-state' / 'speech-error'.
+export const inApp = /YaytsaCloudAndroid\//.test(navigator.userAgent);
+const bridge = window.YaytsaAndroid;
+export const nativeSpeech = inApp && typeof bridge?.speech === 'function';
+export const speechSupported = nativeSpeech || (!!Rec && !inApp);
+
+class NativeListener {
+  constructor({ lang = 'ru-RU', onWords, onState, onError }) {
+    Object.assign(this, { lang, onWords, onState, onError });
+    this.active = false;
+    this.carry = [];
+    this.session = [];
+    this.onEvent = e => {
+      const m = e.detail || {};
+      if (!this.active) return;
+      if (m.type === 'speech') {
+        const words = String(m.text || '').split(/\s+/).map(normWord).filter(Boolean);
+        this.session = words;
+        this.onWords?.(this.carry.concat(words));
+        // a finished phrase becomes context for the next one
+        if (m.final) { this.carry = this.carry.concat(words).slice(-8); this.session = []; }
+      } else if (m.type === 'speech-state') this.onState?.(m.state);
+      else if (m.type === 'speech-error') { this.onError?.(m.error); this.stop(); }
+    };
+  }
+
+  start() {
+    if (this.active) return;
+    this.active = true;
+    addEventListener('yaytsa-app', this.onEvent);
+    bridge.speech(JSON.stringify({ type: 'start', lang: this.lang }));
+  }
+
+  stop() {
+    if (this.active) bridge.speech(JSON.stringify({ type: 'stop' }));
+    this.active = false;
+    removeEventListener('yaytsa-app', this.onEvent);
+    this.onState?.('off');
+  }
+}
+
+class WebListener {
   constructor({ lang = 'ru-RU', onWords, onState, onError }) {
     Object.assign(this, { lang, onWords, onState, onError });
     this.active = false;
@@ -84,3 +127,5 @@ export class Listener {
     }, 5000);
   }
 }
+
+export const Listener = nativeSpeech ? NativeListener : WebListener;

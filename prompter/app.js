@@ -1,10 +1,10 @@
 // Яйца Суфлёр — a teleprompter that listens and scrolls the text by itself.
 // Phone first: everything that is pressed while recording sits low on the right, under the thumb.
 import { tokenize, Tracker, sentenceStart } from './align.js';
-import { Listener, speechSupported } from './speech.js';
+import { Listener, speechSupported, inApp } from './speech.js';
 import { googleDocId, fetchGoogleDoc, readFile, titleFrom, htmlToText, cleanMarkdown, isGoogleLink } from './importer.js';
 
-const VERSION = '1.2.0';
+const VERSION = '1.3.0';
 const NAME = 'Яйца Суфлёр'; // the name is always in Cyrillic, whatever the interface language
 const $ = (s, el = document) => el.querySelector(s);
 const view = $('#view');
@@ -70,7 +70,9 @@ const EN = {
   'Настройки': 'Settings',
   'Текст': 'Text',
   'Размер': 'Size',
-  'Или щипком двумя пальцами по тексту': 'Or pinch the text with two fingers',
+  'Или кнопками A− и A+ вверху справа': 'Or with the A− and A+ buttons at the top right',
+  'Меньше текст': 'Smaller text',
+  'Больше текст': 'Larger text',
   'Интервал': 'Line spacing',
   'Поля': 'Margins',
   'Шрифт': 'Font',
@@ -113,7 +115,8 @@ const EN = {
   'Нажмите ▶ и читайте: текст листается за голосом. Своими словами — можно, суфлёр подождёт.': 'Press ▶ and read: the text follows your voice. Ad-libbing is fine, it waits.',
   '↺ — назад к началу фразы (дубль), ↻ — вперёд к следующей.': '↺ goes back to the start of the sentence (a retake), ↻ forward to the next one.',
   'Сбился? Протяните текст пальцем до нужной строки или дважды нажмите на слово.': 'Out of sync? Drag the text to the right line or double-tap a word.',
-  'Размер текста — щипком двумя пальцами. Касание — показать или спрятать кнопки.': 'Pinch to change the text size. Tap to show or hide the controls.',
+  'Размер текста — кнопками A− и A+ вверху справа. Касание — показать или спрятать кнопки.': 'Text size: the A− and A+ buttons at the top right. Tap to show or hide the controls.',
+  'Чтобы суфлёр слышал голос в приложении, обновите Яйца Cloud до версии 1.5. Пока листаю ровно.': 'To hear your voice in the app, update Яйца Cloud to version 1.5. Scrolling steadily for now.',
   'Браузер не умеет распознавать речь. Откройте суфлёр в Chrome (Android, ПК) или Safari (iPhone, Mac). Пока листаю ровно.': 'This browser can’t recognize speech. Open it in Chrome (Android, PC) or Safari (iPhone, Mac). Scrolling steadily for now.',
   'Нет доступа к микрофону. Разрешите его в настройках сайта в браузере.': 'No microphone access. Allow it in the browser’s site settings.',
   'Распознаванию речи нужен интернет. Продолжаю, как только он появится.': 'Speech recognition needs the internet. It will continue once it’s back.',
@@ -522,6 +525,7 @@ function renderPrompter(script) {
       <a class="icon-btn" href="#" aria-label="${T('Назад')}">${icon('back')}</a>
       <div class="bar-title"><b>${esc(script.title)}</b><span class="status" id="status"></span></div>
       <div class="clock"><b id="clock">0:00</b><small id="left"></small></div>
+      <div class="sizes"><button class="sz" data-sz="-2" aria-label="${T('Меньше текст')}" title="${T('Меньше текст')} (−)">A<sup>−</sup></button><button class="sz big" data-sz="2" aria-label="${T('Больше текст')}" title="${T('Больше текст')} (+)">A<sup>+</sup></button></div>
     </header>
     <footer class="bar bottom-bar">
       <div class="progress"><i id="prog"></i></div>
@@ -546,7 +550,7 @@ function renderPrompter(script) {
   let wpm = settings.wpm, lastProg = null;
   let clockStart = null, clockPaused = 0;
   let barsTimer, saveTimer, wakeLock = null, sheet = null;
-  let mode = settings.mode === 'speed' || !speechSupported ? 'speed' : 'voice';
+  let mode = settings.mode === 'speed' ? 'speed' : 'voice';
   let size = settings.size; // the size on screen right now (animates towards settings.size)
   tracker.pos = pos;
 
@@ -668,46 +672,39 @@ function renderPrompter(script) {
     apply();
   };
 
-  /* text size: animated, the current word stays on the reading line while the text reflows */
-  const pinned = () => spans[Math.max(0, Math.min(N - 1, pos + 1))];
-  const startZoom = () => {
-    const el = pinned();
-    zooming = { off: el ? T0 - (readY() - (el.offsetTop + el.offsetHeight / 2)) : 0, from: size };
+  /* text size: the text fades out for a moment, reflows once while hidden and fades back with the
+     current word on the reading line. One reflow instead of one per frame: smooth on long texts too.
+     Quick presses add up and are applied together. */
+  let sizeGoal = null, sizeTimer, pillTimer;
+  const setSize = px => {
+    sizeGoal = Math.max(16, Math.min(96, Math.round(px)));
+    zoomPill.textContent = sizeGoal;
     zoomPill.classList.add('on');
+    sheet?.body.querySelector('[data-size]')?.replaceChildren(String(sizeGoal));
+    zooming = true;
+    textEl.classList.add('hide');
+    clearTimeout(sizeTimer);
+    sizeTimer = setTimeout(() => {
+      size = settings.size = sizeGoal;
+      sizeGoal = null;
+      saveSettings();
+      view.style.setProperty('--p-size', `${size}px`);
+      measure();
+      T0 = target();
+      v = 0;
+      apply();
+      zooming = null;
+      textEl.classList.remove('hide');
+      clearTimeout(pillTimer);
+      pillTimer = setTimeout(() => zoomPill.classList.remove('on'), 700);
+    }, 180);
   };
-  const liveSize = px => {
-    size = Math.max(16, Math.min(96, px));
-    view.style.setProperty('--p-size', `${size.toFixed(2)}px`);
-    zoomPill.textContent = Math.round(size);
-    const el = pinned();
-    if (el) { T0 = readY() - (el.offsetTop + el.offsetHeight / 2) + zooming.off * (size / zooming.from); v = 0; apply(); }
-  };
-  const endZoom = () => {
-    settings.size = Math.round(size);
-    size = settings.size;
-    view.style.setProperty('--p-size', `${size}px`);
-    saveSettings();
-    measure();
-    zooming = null;
-    zoomGoal = null;
-    v = 0;
-    setTimeout(() => zoomPill.classList.remove('on'), 500);
-    sheet?.body.querySelector('[data-size]')?.replaceChildren(String(settings.size));
-  };
-  let zoomAnim, zoomGoal = null; // zoomGoal: where an animation is heading, so quick presses add up
-  const zoomTo = (px, ms = 260) => {
-    px = Math.max(16, Math.min(96, px));
-    zoomGoal = px;
-    cancelAnimationFrame(zoomAnim);
-    if (!zooming) startZoom();
-    const from = size, t0 = performance.now();
-    const step = now => {
-      const k = Math.min(1, (now - t0) / ms);
-      liveSize(from + (px - from) * (1 - (1 - k) ** 3));
-      if (k < 1) zoomAnim = requestAnimationFrame(step); else endZoom();
-    };
-    zoomAnim = requestAnimationFrame(step);
-  };
+  const sizeStep = d => setSize((sizeGoal ?? settings.size) + d);
+  view.querySelectorAll('[data-sz]').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation();
+    sizeStep(+b.dataset.sz);
+    if (running) hideBarsSoon();
+  }));
 
   /* speech */
   const listener = new Listener({
@@ -777,7 +774,7 @@ function renderPrompter(script) {
   /* start / stop */
   function start() {
     if (!N) return;
-    if (mode === 'voice' && !speechSupported) { mode = 'speed'; toast(T('Браузер не умеет распознавать речь. Откройте суфлёр в Chrome (Android, ПК) или Safari (iPhone, Mac). Пока листаю ровно.'), 7000); }
+    if (mode === 'voice' && !speechSupported) { mode = 'speed'; toast(T(inApp ? 'Чтобы суфлёр слышал голос в приложении, обновите Яйца Cloud до версии 1.5. Пока листаю ровно.' : 'Браузер не умеет распознавать речь. Откройте суфлёр в Chrome (Android, ПК) или Safari (iPhone, Mac). Пока листаю ровно.'), 7000); }
     if (pos >= N - 1) setPos(-1);
     running = true;
     view.classList.add('running');
@@ -808,35 +805,24 @@ function renderPrompter(script) {
   const hideBarsSoon = () => { clearTimeout(barsTimer); barsTimer = setTimeout(() => { if (running && !sheet) view.classList.add('bare'); }, 2800); };
   view.addEventListener('pointerdown', e => { if (e.target.closest('.bar')) { showBars(); if (running) hideBarsSoon(); } });
 
-  /* touch: one finger drags the text ("I'm here"), two fingers change the text size,
-     a tap shows or hides the controls, a double tap on a word continues from it */
+  /* touch: one finger drags the text ("I'm here"), a tap shows or hides the controls,
+     a double tap on a word continues from it. Two fingers do nothing (size is on the A−/A+ buttons). */
   const pointers = new Map();
-  let lastTap = { t: 0, i: -1 }, tapTimer, noTapUntil = 0, pinchRaf = 0, pinchWant = 0;
-  const dist = () => { const [a, b] = [...pointers.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+  let lastTap = { t: 0, i: -1 }, tapTimer, noTapUntil = 0, multi = false;
   stage.addEventListener('pointerdown', e => {
     if (e.button > 0) return;
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     try { stage.setPointerCapture(e.pointerId); } catch { /* synthetic pointer */ }
-    if (pointers.size === 2) {
+    if (pointers.size >= 2) {
       if (drag) { T0 = drag.T; apply(); drag = null; view.classList.remove('dragging'); }
-      cancelAnimationFrame(zoomAnim);
-      if (!zooming) startZoom();
-      zooming.d0 = dist();
-      zooming.s0 = size;
+      multi = true;
       noTapUntil = Date.now() + 400;
       return;
     }
-    if (pointers.size === 1) drag = { y: e.clientY, T: T0, moved: false, id: e.pointerId };
+    drag = { y: e.clientY, T: T0, moved: false, id: e.pointerId };
   });
   stage.addEventListener('pointermove', e => {
-    const p = pointers.get(e.pointerId);
-    if (!p) return;
-    p.x = e.clientX; p.y = e.clientY;
-    if (zooming && pointers.size >= 2) {
-      pinchWant = zooming.s0 * dist() / Math.max(20, zooming.d0);
-      if (!pinchRaf) pinchRaf = requestAnimationFrame(() => { pinchRaf = 0; if (zooming) liveSize(pinchWant); });
-      return;
-    }
+    if (!pointers.has(e.pointerId) || multi) return;
     if (!drag || e.pointerId !== drag.id) return;
     const dy = e.clientY - drag.y;
     if (!drag.moved && Math.abs(dy) < 8) return;
@@ -847,10 +833,7 @@ function renderPrompter(script) {
   });
   const endPointer = e => {
     if (!pointers.delete(e.pointerId)) return;
-    if (zooming && zooming.d0 != null) {
-      if (pointers.size === 0) { cancelAnimationFrame(pinchRaf); pinchRaf = 0; endZoom(); }
-      return;
-    }
+    if (multi) { if (pointers.size === 0) multi = false; return; }
     if (!drag || e.pointerId !== drag.id) return;
     const d = drag;
     drag = null;
@@ -885,16 +868,12 @@ function renderPrompter(script) {
     setPos(L.first - 1, T('Продолжаю отсюда'));
     v = 0;
   }
-  let wheelTimer, wheelZoom = 0;
+  let wheelTimer, wheelAcc = 0;
   stage.addEventListener('wheel', e => {
     e.preventDefault();
-    if (e.ctrlKey) { // trackpad pinch or Ctrl + wheel: text size
-      cancelAnimationFrame(zoomAnim);
-      if (!zooming) startZoom();
-      wheelZoom = size * Math.exp(-e.deltaY / 120);
-      liveSize(wheelZoom);
-      clearTimeout(wheelTimer);
-      wheelTimer = setTimeout(endZoom, 250);
+    if (e.ctrlKey) { // trackpad pinch or Ctrl + wheel: text size, in steps
+      wheelAcc += e.deltaY;
+      if (Math.abs(wheelAcc) >= 40) { sizeStep(wheelAcc < 0 ? 2 : -2); wheelAcc = 0; }
       return;
     }
     T0 -= e.deltaY;
@@ -915,8 +894,8 @@ function renderPrompter(script) {
       const li = lineOf[Math.max(0, Math.min(N - 1, pos + 1))] + (e.code === 'ArrowDown' ? 1 : -1);
       const L = lines[Math.max(0, Math.min(lines.length - 1, li))];
       if (L) setPos(L.first - 1);
-    } else if (e.key === '+' || e.key === '=') zoomTo((zoomGoal ?? settings.size) + 4);
-    else if (e.key === '-') zoomTo((zoomGoal ?? settings.size) - 4);
+    } else if (e.key === '+' || e.key === '=') sizeStep(2);
+    else if (e.key === '-') sizeStep(-2);
     else if (e.code === 'Escape') location.hash = '#';
   };
   document.addEventListener('keydown', onKey);
@@ -966,9 +945,9 @@ function renderPrompter(script) {
         <ul><li>${T('Нажмите ▶ и читайте: текст листается за голосом. Своими словами — можно, суфлёр подождёт.')}</li>
         <li>${T('↺ — назад к началу фразы (дубль), ↻ — вперёд к следующей.')}</li>
         <li>${T('Сбился? Протяните текст пальцем до нужной строки или дважды нажмите на слово.')}</li>
-        <li>${T('Размер текста — щипком двумя пальцами. Касание — показать или спрятать кнопки.')}</li></ul></details>
+        <li>${T('Размер текста — кнопками A− и A+ вверху справа. Касание — показать или спрятать кнопки.')}</li></ul></details>
       <h3>${T('Текст')}</h3>
-      <div class="set"><span>${T('Размер')}<small>${T('Или щипком двумя пальцами по тексту')}</small></span>
+      <div class="set"><span>${T('Размер')}<small>${T('Или кнопками A− и A+ вверху справа')}</small></span>
         <div class="stepper"><button data-size-step="-2" aria-label="−">${icon('minus')}</button><b data-size>${settings.size}</b><button data-size-step="2" aria-label="+">${icon('plus')}</button></div></div>
       ${toggle('format', T('Заголовки и списки'), T('Как в документе'))}
       <div class="set col"><span>${T('Выделять')}</span>${seg('highlight', [['sentence', T('Фразу')], ['two', T('Две')], ['para', T('Абзац')], ['none', T('Нет')]])}</div>
@@ -1025,13 +1004,7 @@ function renderPrompter(script) {
       const b = e.target.closest('button, a');
       if (!b) return;
       if ('close' in b.dataset) { sh.close(); return; }
-      if (b.dataset.sizeStep) {
-        const to = Math.max(16, Math.min(96, settings.size + +b.dataset.sizeStep));
-        settings.size = to;
-        $('[data-size]', body).textContent = to;
-        zoomTo(to);
-        return;
-      }
+      if (b.dataset.sizeStep) { sizeStep(+b.dataset.sizeStep); return; }
       const segEl = b.closest('.seg');
       if (segEl) {
         const k = segEl.dataset.key;
@@ -1069,7 +1042,7 @@ function renderPrompter(script) {
 
   cleanup = () => {
     cancelAnimationFrame(raf);
-    cancelAnimationFrame(zoomAnim);
+    clearTimeout(sizeTimer);
     clearInterval(clockTimer);
     clearTimeout(barsTimer);
     listener.stop();
