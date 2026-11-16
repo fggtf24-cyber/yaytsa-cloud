@@ -1,6 +1,6 @@
 // Яйца Суфлёр: opens offline. App files are cached per version (the old cache is dropped on
 // update); fonts are cached as they are used. Speech recognition itself still needs the network.
-const VERSION = '1.1.0';
+const VERSION = '1.1.1';
 const CACHE = `sufler-${VERSION}`;
 const FILES = ['./', 'index.html', 'style.css', 'app.js', 'align.js', 'speech.js', 'importer.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 

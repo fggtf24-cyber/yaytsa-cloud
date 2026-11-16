@@ -40,6 +40,9 @@ export class Listener {
     r.continuous = true;
     r.interimResults = true;
     r.maxAlternatives = 1;
+    // Always the browser's cloud service: no on-device language pack, so the browser has no
+    // reason to offer a large model download.
+    if ('processLocally' in r) r.processLocally = false;
     this.carry = this.carry.concat(this.session).slice(-8);
     this.session = [];
     this.last = Date.now();

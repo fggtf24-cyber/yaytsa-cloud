@@ -4,7 +4,7 @@ import { tokenize, Tracker, sentenceStart } from './align.js';
 import { Listener, speechSupported } from './speech.js';
 import { googleDocId, fetchGoogleDoc, readFile, titleFrom, htmlToText, cleanMarkdown, isGoogleLink } from './importer.js';
 
-const VERSION = '1.1.0';
+const VERSION = '1.1.1';
 const NAME = 'Яйца Суфлёр'; // the name is always in Cyrillic, whatever the interface language
 const $ = (s, el = document) => el.querySelector(s);
 const view = $('#view');
