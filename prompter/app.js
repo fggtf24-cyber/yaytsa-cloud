@@ -4,7 +4,7 @@ import { tokenize, Tracker, sentenceStart } from './align.js';
 import { Listener, speechSupported } from './speech.js';
 import { googleDocId, fetchGoogleDoc, readFile, titleFrom, htmlToText, cleanMarkdown, isGoogleLink } from './importer.js';
 
-const VERSION = '1.1.1';
+const VERSION = '1.2.0';
 const NAME = 'Яйца Суфлёр'; // the name is always in Cyrillic, whatever the interface language
 const $ = (s, el = document) => el.querySelector(s);
 const view = $('#view');
@@ -134,6 +134,11 @@ const EN = {
   'Не получилось открыть PDF: нужен интернет при первой загрузке.': 'Couldn’t open the PDF: the first time needs the internet.',
   'Отпустите файл': 'Drop the file',
   'Содержание': 'Contents',
+  'Мои тексты': 'My scripts',
+  'Ссылка, файл или вставка. Перетащите файл в любое место окна.': 'A link, a file or pasted text. Drop a file anywhere in the window.',
+  'Перетащите файл сюда или нажмите, чтобы добавить': 'Drop a file here or click to add one',
+  'Светлая тема': 'Light theme',
+  'Тёмная тема': 'Dark theme',
   'Закрыть': 'Close',
 };
 const T = (s, vars = {}) => (lang === 'en' ? EN[s] ?? s : s).replace(/\{(\w+)\}/g, (_, k) => vars[k]);
@@ -288,24 +293,41 @@ addEventListener('hashchange', route);
 function renderHome() {
   document.title = NAME;
   view.className = 'home';
+  // One page for both: on a phone a list with a + button under the thumb; on a computer
+  // (see style.css) a sidebar and a full-width grid of cards with a drop strip on top.
   view.innerHTML = `
-    <header class="home-top">
-      <a class="brand" href="../" aria-label="Яйца Cloud"><img src="icon-192.png" alt=""></a>
-      <button class="icon-btn" id="theme" aria-label="${T('Тема')}">${icon(isDark() ? 'sun' : 'moon')}</button>
-    </header>
-    <h1 class="large">${NAME}</h1>
-    <div id="list"></div>
-    <p class="foot">${T('Тексты хранятся только в этом браузере')} · ${esc(VERSION)}</p>
-    <button class="fab" id="add" aria-label="${T('Добавить текст')}">${icon('plus')}</button>`;
+    <aside class="side">
+      <a class="side-brand" href="../" title="Яйца Cloud"><img src="icon-192.png" alt=""><span>${NAME}</span></a>
+      <button class="btn primary big" data-add>${icon('plus')}${T('Добавить текст')}</button>
+      <p class="side-hint">${T('Ссылка, файл или вставка. Перетащите файл в любое место окна.')}</p>
+      <span class="grow"></span>
+      <button class="side-theme" data-theme>${icon(isDark() ? 'sun' : 'moon')}<span>${T(isDark() ? 'Светлая тема' : 'Тёмная тема')}</span></button>
+      <p class="side-foot">${T('Тексты хранятся только в этом браузере')} · ${esc(VERSION)}</p>
+    </aside>
+    <section class="home-main">
+      <header class="home-top">
+        <a class="brand" href="../" aria-label="Яйца Cloud"><img src="icon-192.png" alt=""></a>
+        <button class="icon-btn" data-theme aria-label="${T('Тема')}">${icon(isDark() ? 'sun' : 'moon')}</button>
+      </header>
+      <h1 class="large"><span class="m-only">${NAME}</span><span class="d-only">${T('Мои тексты')}</span></h1>
+      ${list.length ? `<button class="drop-strip" data-add>${icon('upload')}<span>${T('Перетащите файл сюда или нажмите, чтобы добавить')}</span><small>PDF, Word, Notion, Google Docs, txt, md, rtf, odt</small></button>` : ''}
+      <div id="list"></div>
+      <p class="foot">${T('Тексты хранятся только в этом браузере')} · ${esc(VERSION)}</p>
+    </section>
+    <button class="fab" data-add aria-label="${T('Добавить текст')}">${icon('plus')}</button>`;
   drawList();
-  $('#theme').addEventListener('click', () => {
+  view.querySelectorAll('[data-theme]').forEach(b => b.addEventListener('click', () => {
     settings.theme = isDark() ? 'light' : 'dark';
     saveSettings();
     applyTheme();
-    $('#theme').innerHTML = icon(isDark() ? 'sun' : 'moon');
-  });
-  $('#add').addEventListener('click', addSheet);
+    renderHome();
+  }));
+  view.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', addSheet));
 }
+
+// A few first lines of a script for its card on a computer.
+const excerpt = id => textOf(id).replace(/^\s*(#{1,6}|[-*•]|\d+[.)])\s+/gm, '').replace(/\[[^\]]*\]/g, '').replace(/\s+/g, ' ').trim().slice(0, 260);
+const fmtDate = t => new Date(t).toLocaleDateString(lang === 'en' ? 'en' : 'ru', { day: 'numeric', month: 'short' });
 
 // Any file: PDF, Word, Notion export, OpenDocument, RTF, Markdown, HTML, plain text.
 const FILE_ERRORS = {
@@ -400,7 +422,8 @@ function drawList() {
     return `<div class="row" data-id="${esc(s.id)}">
       <a class="row-main" href="#read/${esc(s.id)}">
         <b>${esc(s.title)}</b>
-        <small>${s.words.toLocaleString(lang)} ${T('слов')} · ${fmtDur(s.words)}${pct ? ` · ${pct}%` : ''}</small>
+        <small>${s.words.toLocaleString(lang)} ${T('слов')} · ${fmtDur(s.words)}${pct ? ` · ${pct}%` : ''}<span class="d-only"> · ${fmtDate(s.updated || Date.now())}</span></small>
+        <span class="row-ex">${esc(excerpt(s.id))}</span>
         ${pct ? `<span class="row-bar"><i style="width:${pct}%"></i></span>` : ''}
       </a>
       <button class="icon-btn row-more" aria-label="${T('Ещё')}">${icon('more')}</button>
