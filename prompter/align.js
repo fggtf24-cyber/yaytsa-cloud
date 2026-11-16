@@ -9,16 +9,28 @@ export function normWord(w) {
   return w.toLowerCase().replace(/ё/g, 'е').replace(/[^\p{L}\p{N}]+/gu, '');
 }
 
-// Text → paragraphs of display tokens + the list of spoken words.
-// Words in [square brackets] are notes for the speaker: shown, never expected to be heard.
+// Text → blocks of display tokens + the list of spoken words.
+// Lines may carry light markdown: "# " … "### " headings, "- " / "1. " list items (indented
+// with spaces for nesting). Words in [square brackets] are notes for the speaker: shown,
+// never expected to be heard.
 export function tokenize(text) {
   const paras = [];
   const words = [];
   let depth = 0;
   let sentEnd = true;
-  for (const line of text.replace(/\r/g, '').split(/\n/)) {
+  for (let line of text.replace(/\r/g, '').split(/\n/)) {
     if (!line.trim()) { sentEnd = true; continue; }
-    const toks = [];
+    const block = { kind: 'p', toks: [] };
+    let m;
+    if ((m = /^\s*(#{1,6})\s+(.*)$/.exec(line))) { block.kind = 'h'; block.level = Math.min(3, m[1].length); line = m[2]; }
+    else if ((m = /^(\s*)([-*•–]|\d{1,3}[.)])\s+(.*)$/.exec(line))) {
+      block.kind = 'li';
+      block.marker = /^\d/.test(m[2]) ? m[2] : '•';
+      block.depth = Math.min(4, Math.floor(m[1].replace(/\t/g, '  ').length / 2));
+      line = m[3];
+    }
+    if (!line.trim()) continue;
+    const toks = block.toks;
     for (const raw of line.trim().split(/\s+/)) {
       const opens = (raw.match(/\[/g) || []).length;
       const closes = (raw.match(/\]/g) || []).length;
@@ -31,7 +43,7 @@ export function tokenize(text) {
       toks.push({ raw, i });
       sentEnd = /[.!?…]["»”')\]]*$/.test(raw);
     }
-    paras.push(toks);
+    paras.push(block);
     sentEnd = true;
   }
   return { paras, words };
