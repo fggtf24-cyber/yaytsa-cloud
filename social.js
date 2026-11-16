@@ -1,5 +1,6 @@
 // Соцчасть: профили с @именем, посты с ветками комментариев, голоса, подписки, личные чаты.
 // Сервера нет: всё пишет браузер, а честность записей проверяют правила в firestore.rules.
+import { openImage as viewImages } from './viewer.js?v=1';
 
 const USERNAME_RE = /^[a-z0-9_]{1,20}$/;
 // Картинки хранятся строкой в базе. Показываем только такие, SVG и прочее сюда не пройдёт.
@@ -585,12 +586,6 @@ export function setupSocial(ctx) {
 
   /* ---------- Карточки постов ---------- */
 
-  function relation(uid) {
-    if (!ctx.user || uid === me()) return '';
-    if (isMutual(uid)) return `<span class="r-tag mutual">${T('подписан(а) на вас')}</span>`;
-    if (following.has(uid)) return `<span class="r-tag">${T('подписка')}</span>`;
-    return '';
-  }
 
   // Хэштег программы стоит под текстом поста отдельной меткой.
   function tagChip(appId) {
@@ -653,48 +648,16 @@ export function setupSocial(ctx) {
     if (DATA_IMAGE.test(url || '')) box.innerHTML = `<img class="r-media-bg" src="${url}" alt=""><img class="r-media-img" src="${url}" alt="${T(chat ? 'Фото в сообщении' : 'Картинка в посте')}"${box.closest(FEED_CARD) ? '' : ' tabindex="0" role="button"'}>`;
   }
 
-  // Просмотр картинки поверх страницы, как на Reddit. Картинки у нас data:, поэтому сохранить можно прямо из src.
+  // Просмотр картинки поверх страницы, как в Telegram (viewer.js). Листать можно все картинки на экране:
+  // в чате — фото переписки, в посте — картинку поста и комментариев. Аватарка в профиле открывается так же.
+  const VIEWABLE = '.c-image, .attach-preview img, .r-media-img:not(' + FEED_CARD + ' *), .r-pava .r-ava img';
   function openImage(source) {
-    const dlg = document.createElement('dialog');
-    dlg.className = 'r-view';
-    dlg.innerHTML = `
-      <div class="r-view-bar">
-        <button type="button" data-view-copy>${T('Скопировать')}</button>
-        <a data-view-save>${T('Сохранить')}</a>
-        <button type="button" data-view-close aria-label="${T('Закрыть')}">×</button>
-      </div>
-      <img alt="">`;
-    const image = dlg.querySelector('img');
-    image.src = source.src;
-    image.alt = source.alt;
-    const save = dlg.querySelector('[data-view-save]');
-    save.href = source.src;
-    save.download = `yaytsa-cloud.${source.src.slice(11, source.src.indexOf(';'))}`;
-    const copy = dlg.querySelector('[data-view-copy]');
-    copy.addEventListener('click', async () => {
-      // В буфер браузеры принимают только PNG. Промис внутри ClipboardItem нужен Safari: иначе он теряет нажатие.
-      const png = new Promise((done, fail) => {
-        const canvas = document.createElement('canvas');
-        canvas.width = image.naturalWidth;
-        canvas.height = image.naturalHeight;
-        canvas.getContext('2d').drawImage(image, 0, 0);
-        canvas.toBlob(blob => (blob ? done(blob) : fail(new Error('png'))));
-      });
-      try {
-        await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
-        copy.textContent = T('Скопировано');
-      } catch {
-        copy.textContent = T('Не удалось скопировать');
-      }
-    });
-    dlg.addEventListener('click', e => {
-      if (e.target === dlg || e.target.closest('[data-view-close]')) dlg.close();
-    });
-    dlg.addEventListener('close', () => dlg.remove());
-    document.body.append(dlg);
-    dlg.showModal();
+    const avatar = !!source.closest('.r-pava');
+    const list = avatar ? [source] : [...view.querySelectorAll(VIEWABLE)].filter(img => img.src && img.offsetParent !== null && !img.closest('.r-pava'));
+    if (!list.includes(source)) list.unshift(source);
+    viewImages(list, source, T, { avatar });
   }
-  const viewable = el => el.closest('.c-image, .attach-preview img, .r-media-img:not(' + FEED_CARD + ' *)');
+  const viewable = el => el.closest(VIEWABLE);
   view.addEventListener('keydown', e => {
     if (e.key === 'Enter' && viewable(e.target)) openImage(e.target);
   });
@@ -721,7 +684,7 @@ export function setupSocial(ctx) {
     <article class="r-post${isUpdatePost(p) ? ' dev' : ''}" data-href="#post/${esc(p.id)}">
       ${devBadge(p)}
       <div class="r-meta">
-        ${author ? `<a class="r-who" href="${profileHref(p.uid)}">${ava(p.uid, 32)}${names(p.uid)}</a>${relation(p.uid)}<span class="r-dot">•</span>` : ''}
+        ${author ? `<a class="r-who" href="${profileHref(p.uid)}">${ava(p.uid, 32)}${names(p.uid)}</a><span class="r-dot">•</span>` : ''}
         ${time(p.createdAt)}
       </div>
       <h2 class="r-title"><a href="#post/${esc(p.id)}">${esc(p.title)}</a></h2>
@@ -892,7 +855,7 @@ export function setupSocial(ctx) {
           <button type="button" class="r-iconbtn r-backbtn" data-s-back aria-label="${T('Назад')}">${ICON.back}</button>
           <a href="${profileHref(post.uid)}">${ava(post.uid, 32)}</a>
           <div class="r-full-who">
-            <div class="r-meta"><a class="r-user strong" href="${profileHref(post.uid)}">${esc(shownName(post.uid))}</a>${relation(post.uid)}<span class="r-dot">•</span>${time(post.createdAt)}${post.editedAt ? `<span class="r-dot">•</span><span>${T('изменено')}</span>` : ''}</div>
+            <div class="r-meta"><a class="r-user strong" href="${profileHref(post.uid)}">${esc(shownName(post.uid))}</a><span class="r-dot">•</span>${time(post.createdAt)}${post.editedAt ? `<span class="r-dot">•</span><span>${T('изменено')}</span>` : ''}</div>
             ${sub ? `<div class="r-sub">${sub}</div>` : ''}
           </div>
           ${menu}
@@ -981,7 +944,6 @@ export function setupSocial(ctx) {
           <div class="r-c-head r-meta">
             ${c.deleted ? `<span class="r-muted">${T('[удалено]')}</span>` : `<a class="r-user strong" href="${profileHref(c.uid)}">${userLabel(c.uid)}</a>`}
             ${!c.deleted && c.uid === post.uid ? `<span class="r-tag op" title="${T('Автор поста')}">${T('ОП')}</span>` : ''}
-            ${!c.deleted ? relation(c.uid) : ''}
             <span class="r-dot">•</span>${time(c.createdAt)}
             ${c.editedAt && !c.deleted ? `<span class="r-dot">•</span><span>${T('изменено')}</span>` : ''}
             <span class="r-c-hidden">${T('(+{n})', { n: count(c) })}</span>
@@ -1324,11 +1286,12 @@ export function setupSocial(ctx) {
         <header class="r-phead">
           <div class="r-pava">
             ${ava(uid, 116)}
+            ${isMe ? `<label class="r-pava-edit" title="${T('Изменить аватар')}"><span class="sr">${T('Изменить аватар')}</span>${ICON.edit}<input type="file" class="sr" accept="image/*" data-photo-input></label>` : ''}
             ${isOnline(lastSeen, isMe, seen.away) ? `<span class="r-online" role="img" title="${T('В сети')}" aria-label="${T('В сети')}"></span>` : ''}
           </div>
           <div class="r-phead-text">
             <h1>${esc(p.name || p.username)}${roleTags(uid)}</h1>
-            <p class="r-sub">@${esc(p.username)}${!isOnline(lastSeen, isMe, seen.away) && ms(lastSeen) ? `<span class="r-dot">•</span><span>${T('Был(а) в сети {when}', { when: ago(lastSeen) })}</span>` : ''}${!isMe && followers.has(uid) && !isMutual(uid) ? ` <span class="r-tag">${T('подписан(а) на вас')}</span>` : ''}</p>
+            <p class="r-sub">@${esc(p.username)}${!isOnline(lastSeen, isMe, seen.away) && ms(lastSeen) ? `<span class="r-dot">•</span><span>${T('Был(а) в сети {when}', { when: ago(lastSeen) })}</span>` : ''}${!isMe && followers.has(uid) ? ` <span class="r-tag">${T('подписан(а) на вас')}</span>` : ''}</p>
           </div>
           ${netLinks(uid)}
         </header>
@@ -1895,7 +1858,6 @@ export function setupSocial(ctx) {
             <header class="r-room-head">
               <a class="r-iconbtn r-room-back" href="#chat" aria-label="${T('Все чаты')}">${ICON.back}</a>
               <a class="r-who" href="${profileHref(peer)}">${ava(peer, 36)}<span><b>${esc(shownName(peer))}</b><small data-room-default>${handle(peer) ? `@${esc(handle(peer))}` : ''}</small>${roomStatusTag}</span></a>
-              ${relation(peer)}
               ${muteBtn()}
             </header>
             <div class="r-msgs" id="chat-msgs" aria-live="polite"></div>

@@ -344,6 +344,8 @@ await ok('день рождения без года', setDoc(doc(alice, 'users',
 await ok('убрать день рождения', setDoc(doc(alice, 'users', 'alice'), { birthday: '' }, { merge: true }));
 await ok('обращение в поздравлении', setDoc(doc(alice, 'users', 'alice'), { bdayName: 'Логика' }, { merge: true }));
 await no('слишком длинное обращение', setDoc(doc(alice, 'users', 'alice'), { bdayName: 'x'.repeat(41) }, { merge: true }));
+await ok('отметка прочитанных @everyone', setDoc(doc(alice, 'users', 'alice'), { seenBroadcasts: 1763300000000 }, { merge: true }));
+await no('отметка @everyone не числом', setDoc(doc(alice, 'users', 'alice'), { seenBroadcasts: 'вчера' }, { merge: true }));
 await no('кривая дата',setDoc(doc(alice, 'users', 'alice'), { birthday: '10 ноября' }, { merge: true }));
 await no('чужой день рождения не прочитать', getDoc(doc(bob, 'users', 'alice')));
 await no('чужой день рождения не записать', setDoc(doc(bob, 'users', 'alice'), { birthday: '2001-01-01' }, { merge: true }));
@@ -378,6 +380,22 @@ await ok('сообщение автору', report());
 await ok('сообщение со скриншотом', report({ image: 'data:image/jpeg;base64,AAAA' }));
 await no('скриншот больше 800 КБ', report({ image: 'x'.repeat(800001) }));
 await no('скриншот не строкой', report({ image: 5 }));
+
+// Скачивание считается один раз на человека: +1 только вместе с новой отметкой dlby
+const dl = (db, app, who) => { const b = writeBatch(db); const mark = `${app}_${who}`;
+  b.set(doc(db, 'dlby', mark), { app, who, at: serverTimestamp() });
+  b.set(doc(db, 'downloads', app), { n: increment(1), last: mark }, { merge: true });
+  return b.commit(); };
+await ok('первое скачивание вошедшего', dl(bob, 'dlapp', 'bob'));
+await no('второе скачивание того же человека', dl(bob, 'dlapp', 'bob'));
+await ok('первое скачивание без входа', dl(anon, 'dlapp', 'd_0123456789abcdef0123'));
+await no('без входа повторно', dl(anon, 'dlapp', 'd_0123456789abcdef0123'));
+await no('отметка за чужой аккаунт', dl(bob, 'dlapp', 'alice'));
+await no('+1 без отметки', setDoc(doc(bob, 'downloads', 'dlapp'), { n: increment(1) }, { merge: true }));
+await no('+1 со старой отметкой', setDoc(doc(bob, 'downloads', 'dlapp'), { n: increment(1), last: 'dlapp_bob' }, { merge: true }));
+await no('отметку не прочитать', getDoc(doc(bob, 'dlby', 'dlapp_bob')));
+await ok('админ выставляет число', setDoc(doc(admin, 'downloads', 'dlapp'), { n: 5 }));
+await env.withSecurityRulesDisabled(async c => assert.equal((await getDoc(doc(c.firestore(), 'downloads', 'dlapp'))).data().n, 5));
 
 await env.cleanup();
 assert.ok(n > 30);

@@ -1,5 +1,6 @@
-import { EN, TERMS } from './i18n.js?v=90';
-import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=68';
+import { EN, TERMS } from './i18n.js?v=91';
+import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=69';
+import { openImage } from './viewer.js?v=1';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
 // file — прямая ссылка на .exe. Для GitHub-релиза: .../releases/latest/download/<имя>.exe (всегда свежая версия).
@@ -770,18 +771,32 @@ let installed = {}; // id -> { state: installed | update | busy, progress, open 
 const desktopButton = (a, cls = 'btn') => {
   const s = installed[a.id];
   const [act, label] = !s ? ['install', 'Установить'] : s.state === 'update' ? ['install', 'Обновить'] : s.state === 'busy' ? ['', s.progress >= 0 ? T('Установка {n}%', { n: Math.round(s.progress * 100) }) : s.progress === -2 ? 'Удаление…' : 'Установка…'] : s.open ? ['open', 'Открыть'] : ['', 'Установлено'];
-  // «Открыть» и «Обновить» синие: это главное действие для уже установленной программы.
-  const blue = s && (act === 'open' || s.state === 'update') && !cls.includes('primary') ? ' primary' : '';
-  return `<button type="button" class="${cls}${blue} dt" data-dt="${act}" data-dt-id="${esc(a.id)}" data-cls="${cls}"${act ? '' : ' disabled'}>${T(label)}</button>`;
+  // «Открыть» и «Обновить» синие: это главное действие для уже установленной программы. Пока идёт установка,
+  // кнопка остаётся синей, а внутри неё заполняется полоска — без смены цвета туда-обратно.
+  const busy = s?.state === 'busy';
+  const blue = s && (act === 'open' || s.state === 'update' || busy) && !cls.includes('primary') ? ' primary' : '';
+  const p = busy && s.progress >= 0 ? ` style="--p:${Math.round(s.progress * 100)}%"` : '';
+  return `<button type="button" class="${cls}${blue} dt${busy ? ' dt-busy' : ''}" data-dt="${act}" data-dt-id="${esc(a.id)}" data-cls="${cls}"${p}${act ? '' : ' disabled'}>${T(label)}</button>`;
 };
 const removeButton = a => (installed[a.id] && installed[a.id].state !== 'busy' && installed[a.id].removable !== false
   ? `<button type="button" class="btn dt-rm" data-dt="remove" data-dt-id="${esc(a.id)}">${T('Удалить')}</button>`
   : `<span class="dt-rm" data-dt-id="${esc(a.id)}" hidden></span>`);
-// Состояние поменялось: перерисовываем только кнопки, а не страницу.
+// Состояние поменялось: обновляем сами кнопки на месте, а не создаём новые. Приложение присылает состояние
+// на каждый процент загрузки; новая кнопка теряла наведение и анимацию, и «Обновить» мигала.
 function drawDesktop() {
   view.querySelectorAll('[data-dt-id]').forEach(b => {
     const a = apps.find(x => x.id === b.dataset.dtId);
-    if (a) b.outerHTML = b.classList.contains('dt-rm') ? removeButton(a) : desktopButton(a, b.dataset.cls);
+    if (!a) return;
+    const html = b.classList.contains('dt-rm') ? removeButton(a) : desktopButton(a, b.dataset.cls);
+    const next = document.createRange().createContextualFragment(html).firstElementChild;
+    if (next.tagName !== b.tagName) { b.replaceWith(next); return; }
+    if (b.className !== next.className) b.className = next.className;
+    for (const name of ['data-dt', 'style', 'hidden', 'disabled']) {
+      const v = next.getAttribute(name);
+      if (v === null) b.removeAttribute(name);
+      else if (b.getAttribute(name) !== v) b.setAttribute(name, v);
+    }
+    if (b.textContent !== next.textContent) b.textContent = next.textContent;
   });
 }
 const sendCatalog = () => desktop?.postMessage({ type: 'catalog', apps: apps.filter(a => safeUrl(a.file) && a.id !== 'yaytsa-cloud').map(a => ({ id: a.id, name: a.name, file: a.file, silent: a.silent || '' })) });
@@ -1281,10 +1296,23 @@ function watchNotifications(u) {
   drawBell();
 }
 
-// @everyone: один документ на всех, поэтому прочитанность каждый браузер помнит сам.
-// ponytail: на другом устройстве такой пост снова будет новым. Для общей отметки её надо хранить в users/<uid>.
+// @everyone: один документ на всех, поэтому время «прочитал всё до этого» хранится у человека в users/<uid>.
+// Раньше оно жило только в браузере: после выхода, на другом устройстве или в приложении со сброшенными данными
+// все последние посты @everyone снова считались новыми, и на колокольчике было «9+».
 function seenBroadcasts() {
-  try { return +localStorage.getItem('seenBroadcasts') || 0; } catch { return 0; }
+  let local = 0;
+  try { local = +localStorage.getItem('seenBroadcasts') || 0; } catch { /* приватный режим */ }
+  return Math.max(local, +profile.seenBroadcasts || 0);
+}
+
+// Переход на общую отметку: у кого её в аккаунте ещё нет, берём время из этого браузера,
+// а если и там пусто — «прочитано до сейчас», чтобы старые посты @everyone не всплыли разом как новые.
+function syncSeenBroadcasts() {
+  if (+profile.seenBroadcasts) return;
+  let local = 0;
+  try { local = +localStorage.getItem('seenBroadcasts') || 0; } catch { /* приватный режим */ }
+  profile.seenBroadcasts = local || Date.now();
+  fs.setDoc(fs.doc(db, 'users', user.uid), { seenBroadcasts: profile.seenBroadcasts }, { merge: true }).catch(console.error);
 }
 
 function allNotes() {
@@ -1383,7 +1411,13 @@ function toggleBell(open) {
   notifications.filter(n => !n.read && n.type !== 'dm').forEach(n => {
     fs.updateDoc(fs.doc(db, 'notifications', n.id), { read: true }).catch(console.error);
   });
-  try { localStorage.setItem('seenBroadcasts', Date.now()); } catch { /* приватный режим */ }
+  const now = Date.now();
+  const fresh = allNotes().some(n => n.type === 'everyone' && !n.read); // пишем в базу, только если было что отмечать
+  try { localStorage.setItem('seenBroadcasts', now); } catch { /* приватный режим */ }
+  if (fresh) {
+    profile.seenBroadcasts = now;
+    fs.setDoc(fs.doc(db, 'users', user.uid), { seenBroadcasts: now }, { merge: true }).catch(console.error);
+  }
 }
 
 /* ---------- Редактор (только админы) ---------- */
@@ -2120,12 +2154,14 @@ async function saveBanner(banner) {
   say(T('Сохранено.'), true);
 }
 
-async function saveProfile(data) {
+// stay — меняли со своей страницы: остаёмся на ней, а не переходим в настройки.
+async function saveProfile(data, stay = false) {
   await fs.setDoc(fs.doc(db, 'users', user.uid), data, { merge: true });
   profile = { ...profile, ...data };
   await social.mirror({ name: myName(), photo: myPhoto().length <= 100000 ? myPhoto() : '' });
   if (realAdmin) await syncAuthor();
   drawAvatar(avatar);
+  if (stay) { render(); toast(T('Аватар обновлён.')); return; }
   renderAccount();
   say(T('Сохранено.'), true);
 }
@@ -2163,6 +2199,7 @@ async function demoToDataUrl(file) {
 }
 
 function openDemo(shot) {
+  if (shot.tagName !== 'VIDEO') return openImage([shot], shot, T); // картинку можно приближать и двигать
   const dlg = document.createElement('dialog');
   dlg.className = 'r-view';
   const src = esc(shot.currentSrc || shot.src);
@@ -2476,13 +2513,42 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 // ponytail: счётчики пишет браузер, поэтому накрутить их можно. Для честных цифр нужен сервер.
 function count(key) {
+  if (key.startsWith('dl_')) return countDownload(key.slice(3));
   fs?.setDoc(fs.doc(db, 'stats', `${key}_${today()}`), { n: fs.increment(1) }, { merge: true })
     .catch(console.error);
-  if (key.startsWith('dl_')) {
-    const id = key.slice(3);
-    downloads[id] = (downloads[id] || 0) + 1;
-    fs?.setDoc(fs.doc(db, 'downloads', id), { n: fs.increment(1) }, { merge: true }).catch(console.error);
-  }
+}
+
+// Кто скачивает: вошедший — по аккаунту, без входа — по метке этого браузера.
+function downloader() {
+  if (user) return user.uid;
+  try {
+    let d = localStorage.getItem('dlId');
+    if (!d) localStorage.setItem('dlId', d = 'd_' + crypto.randomUUID().replace(/-/g, ''));
+    return d;
+  } catch { return 'd_' + crypto.randomUUID().replace(/-/g, ''); } // приватный режим: считаем как нового
+}
+
+// Скачивание считается один раз на человека: скачал, удалил, скачал снова или обновил — цифра та же.
+// Отметка dlby/<программа>_<кто> создаётся вместе с +1 к счётчику, второй раз правила её создать не дадут.
+// Этот браузер дополнительно помнит свои скачивания, чтобы не пробовать зря и не считать вход/выход за двоих.
+function countDownload(id) {
+  let mine = [];
+  try { mine = JSON.parse(localStorage.getItem('dlDone') || '[]'); } catch { /* приватный режим */ }
+  if (!fs || mine.includes(id)) return;
+  const remember = () => { try { localStorage.setItem('dlDone', JSON.stringify([...mine, id])); } catch { /* приватный режим */ } };
+  const who = downloader();
+  const mark = `${id}_${who}`;
+  const batch = fs.writeBatch(db);
+  batch.set(fs.doc(db, 'dlby', mark), { app: id, who, at: fs.serverTimestamp() });
+  batch.set(fs.doc(db, 'downloads', id), { n: fs.increment(1), last: mark }, { merge: true });
+  batch.commit()
+    .then(() => {
+      remember();
+      downloads[id] = (downloads[id] || 0) + 1;
+      fs.setDoc(fs.doc(db, 'stats', `dl_${id}_${today()}`), { n: fs.increment(1) }, { merge: true }).catch(console.error);
+    })
+    // Отметка уже есть: этот человек скачивал раньше (с другого устройства или до входа). Больше не пробуем.
+    .catch(e => { if (e.code === 'permission-denied') remember(); else console.error(e); });
 }
 
 function countVisit() {
@@ -2519,14 +2585,6 @@ async function renderStats() {
   const periods = [[T('Сегодня'), today()], [T('7 дней'), since(7)], [T('30 дней'), since(30)], [T('Всё время'), '']];
   const line = (name, test) => `<tr><th scope="row">${esc(name)}</th>${periods.map(([, from]) => `<td>${sum(test, from)}</td>`).join('')}</tr>`;
   const ids = [...new Set([...apps.map(a => a.id), ...rows.filter(isDownload).map(r => r.app)])];
-  // Открытые счётчики появились позже статистики: догоняем их до суммы за всё время.
-  ids.forEach(id => {
-    const total = sum(r => r.app === id);
-    if (total > (downloads[id] || 0)) {
-      downloads[id] = total;
-      fs.setDoc(fs.doc(db, 'downloads', id), { n: total }).catch(console.error);
-    }
-  });
   const appName = id => { const a = apps.find(x => x.id === id); return a ? nm(a) : id; };
   const days = [...Array(14)].map((_, i) => since(i + 1));
 
@@ -2552,6 +2610,8 @@ async function renderStats() {
 
 function say(text, ok = false) {
   const msg = view.querySelector('#msg');
+  // Нет строки для сообщений (например, на странице профиля) — показываем всплывашкой.
+  if (!msg) { if (text) toast(text); return; }
   msg.textContent = text;
   msg.classList.toggle('ok', ok);
 }
@@ -2592,6 +2652,7 @@ async function initFirebase() {
       quietUntil = Date.now() + 4000;
       authState = 'ready';
       await social.onUser(u);
+      if (u) syncSeenBroadcasts();
       watchNotifications(u);
       watchMessages(u);
       // Android-приложение само проверяет уведомления, пока закрыто: ему нужен вход (refreshToken живёт долго).
@@ -3004,10 +3065,12 @@ view.addEventListener('change', e => {
       .catch(() => say(T('Не получилось открыть эту картинку. Попробуйте JPG или PNG.')));
     return;
   }
-  if (e.target.id !== 'photo' || !file) return;
+  // Аватарка: из настроек аккаунта (#photo) или карандашом на своей странице (data-photo-input).
+  const fromProfile = e.target.matches('[data-photo-input]');
+  if ((e.target.id !== 'photo' && !fromProfile) || !file) return;
   e.target.value = ''; // чтобы тот же файл можно было выбрать снова
   cropImage(file, T)
-    .then(photo => photo && attempt(() => saveProfile({ photo })))
+    .then(photo => photo && attempt(() => saveProfile({ photo }, fromProfile)))
     .catch(() => say(T('Не получилось открыть эту картинку. Попробуйте JPG или PNG.')));
 });
 

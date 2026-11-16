@@ -1303,3 +1303,51 @@ html[data-theme=light] .r-tag.admin { color: #A86A00; }
 /* Донат */
 .donate-btns { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 8px; }
 .donate-btns .btn { width: auto; }
+
+/* Своя аватарка: при наведении в углу карандаш, как у шапки профиля. Нажатие на саму аватарку открывает её целиком. */
+.r-pava .r-ava img { cursor: zoom-in; }
+.r-pava-edit {
+  position: absolute; right: 2px; top: 2px; width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0, 0, 0, .55); color: #fff; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  opacity: 0; transform: scale(.85); transition: opacity .15s ease, transform .15s ease, background .15s ease;
+}
+.r-pava:hover .r-pava-edit, .r-pava-edit:focus-within { opacity: 1; transform: none; }
+.r-pava-edit:hover { background: rgba(0, 0, 0, .75); }
+.r-pava-edit:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* На телефоне наведения нет: карандаш виден всегда. */
+@media (hover: none) { .r-pava-edit { opacity: 1; transform: none; } }
+
+/* Просмотр картинок (viewer.js): приближение, перетаскивание, листание */
+.r-view.zoom { user-select: none; -webkit-user-select: none; }
+.r-view-stage { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; touch-action: none; }
+.r-view-stage img {
+  max-width: calc(100vw - 32px); max-height: calc(100dvh - 88px); margin-top: 56px; border-radius: 10px; object-fit: contain;
+  transform-origin: center; cursor: zoom-in; will-change: transform;
+}
+.r-view-stage img.smooth { transition: transform .2s ease; }
+.r-view-stage img.avatar { width: min(560px, calc(100vw - 32px), calc(100dvh - 88px)); height: auto; }
+.r-view.zoomed .r-view-stage img { cursor: grab; }
+.r-view.zoomed .r-view-stage img:active { cursor: grabbing; }
+.r-view-bar { z-index: 2; align-items: center; }
+.r-view-count { padding: 0 8px; color: rgba(255, 255, 255, .8); font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.r-view-nav {
+  position: absolute; top: 50%; z-index: 2; width: 46px; height: 46px; margin-top: -23px; border: 0; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  background: rgba(255, 255, 255, .14); color: #fff; transition: background .15s ease, opacity .15s ease;
+}
+.r-view-nav:hover { background: rgba(255, 255, 255, .26); }
+.r-view-nav.prev { left: 16px; }
+.r-view-nav.next { right: 16px; }
+.r-view.zoomed .r-view-nav { opacity: 0; pointer-events: none; }
+@media (max-width: 640px) { .r-view-nav { display: none; } }
+
+/* Кнопка программы в приложении для Windows. Во время установки она синяя, а прогресс — светлая полоска внутри.
+   Неактивная кнопка («Установлено», «Установка…») не реагирует на наведение — раньше она вспыхивала под курсором. */
+.btn.dt:disabled { cursor: default; }
+.btn.dt:disabled:not(.primary):hover { background: none; color: inherit; }
+.btn.dt-busy, .btn.dt-busy:hover { background: #1473E6 linear-gradient(90deg, rgba(255, 255, 255, .26) var(--p, 0%), transparent var(--p, 0%)) no-repeat; border-color: #1473E6; color: #fff; cursor: progress; }
+/* Кнопки просмотра на тёмной подложке: на светлой или приближенной картинке белые полупрозрачные терялись. */
+.r-view.zoom .r-view-bar a, .r-view.zoom .r-view-bar button, .r-view-nav { background: rgba(18, 18, 18, .72); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.r-view.zoom .r-view-bar a:hover, .r-view.zoom .r-view-bar button:hover, .r-view-nav:hover { background: rgba(48, 48, 48, .9); }
+.r-view-count { padding: 7px 12px; border-radius: 999px; background: rgba(18, 18, 18, .72); }
