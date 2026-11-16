@@ -182,8 +182,8 @@ const APPS = [
     file: 'https://github.com/fggtf24-cyber/fig2ae/raw/main/Fig2AE-Setup.exe',
     silent: '/quiet', // самодельный установщик: ключ тихой установки для приложения Яйца Cloud
     macInstall: 'curl -fsSL https://raw.githubusercontent.com/fggtf24-cyber/fig2ae/main/install-mac.sh | bash',
-    size: '266 КБ',
-    sizeEn: '266 KB',
+    size: '284 КБ',
+    sizeEn: '284 KB',
     repo: 'https://github.com/fggtf24-cyber/fig2ae',
     features: [
       'Выделили фрейм в Figma, нажали «Send selection to Ae» — композиция появляется в открытом проекте After Effects',
@@ -204,7 +204,8 @@ const APPS = [
       'Референсный кадр из Figma поверх, чтобы сверить результат',
       'Кнопка Log: журнал ошибок копируется одним нажатием; кнопка Report (в окне Figma и «Report a problem» в панели AE) отправляет разработчику жалобу с логом — её разбирают первой',
       'Анонимные логи только по согласию: версии, настройки, ошибки — без дизайна, картинок и путей к файлам',
-      'Update in Ae — как Dynamic Link: поменяли в Figma, нажали — слои в AE обновились, анимация и эффекты остались, новые элементы встали на место. Растр можно заменить векторами',
+      'Update in Ae — как Dynamic Link: поменяли в Figma, нажали — слои в AE обновились, анимация и эффекты остались, новые элементы встали на место, сдвинутое вами в AE и ваши Trim Paths остаются. Звёздочка в Figma превращает группу в картинку и обратно — прямо в готовой композиции',
+      'Текст ближе к Figma: тот же оптический размер у переменных шрифтов и обводка поверх всего текста',
       'Обновляется сама, без переустановки и перезапуска After Effects; кнопка Updates в окне Figma перезагружает плагин без закрытия',
     ],
     needs: [
@@ -235,7 +236,8 @@ const APPS = [
       'Figma reference frame on top to compare the result',
       'Log button: the error log is copied in one click; the Report button (in the Figma window, and Report a problem in the AE panel) sends the developer a complaint with the log, looked at first',
       'Anonymous logs only with your consent: versions, settings, errors — never the design, pictures or file paths',
-      'Update in Ae — like Dynamic Link: change it in Figma, press the button — the AE layers update, your animation and effects stay, new elements land in place. A raster can be swapped for vectors',
+      'Update in Ae — like Dynamic Link: change it in Figma, press the button — the AE layers update, your animation and effects stay, new elements land in place, layers you moved in AE and your Trim Paths stay. The star in Figma turns a group into a picture and back — right in the finished comp',
+      'Text closer to Figma: the same optical size of variable fonts and the stroke over the whole text',
       'Updates itself, no reinstall and no After Effects restart; the Updates button reloads the Figma plugin without closing it',
     ],
     needsEn: [
