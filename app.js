@@ -333,7 +333,7 @@ const APPS = [
     descEn: 'A teleprompter for lectures and video lessons that listens to you and smoothly scrolls the text by itself. Opens in your phone’s browser, nothing to install.',
     cat: 'Видео',
     webApp: 'prompter/', // только веб-версия на этом сайте, без .exe
-    repo: 'https://github.com/fggtf24-cyber/yaytsa-prompter',
+    repo: 'https://github.com/brlk33/yaytsa-prompter',
     features: [
       'Листает по голосу: телефон распознаёт речь и находит, где вы в тексте. Текст плавно едет за вами слово за словом, прочитанное приглушается',
       'Не боится импровизации: сказали что-то своими словами — суфлёр подождёт и ничего не отмотает. Пересказали предложение иначе — подвинется по ключевым словам',
