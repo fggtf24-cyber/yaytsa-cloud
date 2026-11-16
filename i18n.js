@@ -180,6 +180,7 @@ export const EN = {
 
   // Страница программы
   'Настольные ПК': 'Desktop',
+  'В браузере: телефон и компьютер': 'In the browser: phone and computer',
   'Работает на этом устройстве': 'Works on this device',
   'Только для Windows': 'Windows only',
   '{size} после установки': '{size} after installation',

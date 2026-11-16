@@ -1,4 +1,4 @@
-import { EN, TERMS } from './i18n.js?v=89';
+import { EN, TERMS } from './i18n.js?v=90';
 import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=68';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -325,6 +325,47 @@ const APPS = [
     ],
   },
   {
+    id: 'prompter',
+    name: 'Яйца Суфлёр',
+    nameEn: 'Yaytsa Prompter',
+    icon: 'assets/prompter.png',
+    desc: 'Суфлёр для записи лекций и видеоуроков, который слушает вас и сам плавно листает текст. Открывается в браузере телефона, ставить ничего не нужно.',
+    descEn: 'A teleprompter for lectures and video lessons that listens to you and smoothly scrolls the text by itself. Opens in your phone’s browser, nothing to install.',
+    cat: 'Видео',
+    webApp: 'prompter/', // только веб-версия на этом сайте, без .exe
+    repo: 'https://github.com/fggtf24-cyber/yaytsa-prompter',
+    features: [
+      'Листает по голосу: телефон распознаёт речь и находит, где вы в тексте. Текст плавно едет за вами слово за словом, прочитанное приглушается',
+      'Не боится импровизации: сказали что-то своими словами — суфлёр подождёт и ничего не отмотает. Пересказали предложение иначе — подвинется по ключевым словам',
+      'Дубли: начали отрывок заново вслух — суфлёр сам вернётся туда. Кнопка «Дубль» — назад к началу фразы. Журнал дублей со временем от старта для монтажа',
+      'Ручная поправка: прокрутите текст пальцем до нужной строки или дважды нажмите на слово — суфлёр продолжит оттуда',
+      'Импорт из Google Документов по ссылке и обновление в один клик. Файлы .docx, .txt, .md или просто вставка текста',
+      'Читаемый шрифт Golos Text, настраиваемые размер, интервал, поля и линия чтения',
+      'Светлая и тёмная тема, зеркальный режим для стекла суфлёра, экран не гаснет',
+      'Заметки в [квадратных скобках] видны, но суфлёр не ждёт, что вы их произнесёте',
+    ],
+    needs: [
+      'Android: Chrome. iPhone и iPad: Safari. Компьютер: Chrome, Edge или Safari',
+      'Интернет: речь распознаёт сам браузер через сервис Google или Apple',
+      'Свободный микрофон: если снимаете на этот же телефон, суфлёр держите на другом устройстве',
+    ],
+    featuresEn: [
+      'Scrolls by voice: the phone recognizes your speech and finds where you are in the text. The text glides along word by word, what you’ve read is dimmed',
+      'Ad-libbing is fine: say something in your own words and it waits without rewinding. Rephrase a sentence and it follows the key words',
+      'Retakes: start a passage again aloud and it jumps back there. A Retake button goes back to the start of the sentence. A retake log with times for editing',
+      'Manual fix: drag the text to the right line or double-tap a word and it continues from there',
+      'Import from Google Docs by link and update in one click. .docx, .txt, .md files or plain pasted text',
+      'The readable Golos Text font, adjustable size, line spacing, margins and reading line',
+      'Light and dark theme, a mirror mode for teleprompter glass, the screen stays on',
+      'Notes in [square brackets] are shown but not expected to be spoken',
+    ],
+    needsEn: [
+      'Android: Chrome. iPhone and iPad: Safari. Computer: Chrome, Edge or Safari',
+      'Internet: the browser recognizes speech through Google’s or Apple’s service',
+      'A free microphone: if you film on the same phone, keep the prompter on another device',
+    ],
+  },
+  {
     id: 'forma',
     added: '2026-11-07T20:03',
     cat: 'Утилиты',
@@ -619,7 +660,9 @@ const OS_ICON = {
   Linux: 'M12 2C9.5 2 8 4 8 7c0 1.5-.5 2.5-1.5 4S4 14.5 5 17c.5 1.3 2 2 3 3 1 .8 2.3 2 4 2s3-1.2 4-2c1-1 2.5-1.7 3-3 1-2.5-.5-4.5-1.5-6S16 8.5 16 7c0-3-1.5-5-4-5z',
   Android: 'M6 18v-8h12v8a1 1 0 0 1-1 1h-1v2.5a1.5 1.5 0 0 1-3 0V19h-2v2.5a1.5 1.5 0 0 1-3 0V19H7a1 1 0 0 1-1-1zM3.5 10A1.5 1.5 0 0 1 5 11.5v5a1.5 1.5 0 0 1-3 0v-5A1.5 1.5 0 0 1 3.5 10zm17 0a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1-3 0v-5a1.5 1.5 0 0 1 1.5-1.5zM6 9a6 6 0 0 1 12 0z',
 };
-const platform = a => `<span class="platforms">${['Windows', (a.macInstall || a.webApp) && 'macOS', a.linuxFile && 'Linux', a.androidFile && 'Android'].filter(Boolean)
+// Программа только в браузере (webApp без file): работает везде, кнопка одна — «Открыть».
+const webOnly = a => !!a.webApp && !a.file;
+const platform = a => `<span class="platforms">${(webOnly(a) ? ['Windows', 'macOS', 'Linux', 'Android'] : ['Windows', (a.macInstall || a.webApp) && 'macOS', a.linuxFile && 'Linux', a.androidFile && 'Android']).filter(Boolean)
   .map(os => `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" role="img" aria-label="${os}"><title>${os}</title><path d="${OS_ICON[os]}"/></svg>`).join('')}</span>`;
 const isMac = /Macintosh/.test(navigator.userAgent);
 const isLinux = /Linux/.test(navigator.userAgent) && !/Android/.test(navigator.userAgent);
@@ -855,7 +898,7 @@ const linuxButton = (a, cls = 'btn') => `<a class="${cls} dl-linux" data-id="${e
 const androidButton = (a, cls = 'btn') => android && a.id === 'yaytsa-cloud' ? '' : `<a class="${cls} dl-android" data-id="${esc(a.id)}" href="${safeUrl(a.androidFile)}">${T('Скачать для Android')}</a>`;
 const iosButton = (cls = 'btn') => `<button type="button" class="${cls} ios-install">${T('Установить на iPhone')}</button>`;
 // Веб-версия программы на этом же сайте (например, Яйцетаймер для Mac): только свой путь, без внешних ссылок
-const webButton = (a, cls = 'btn') => (/^[a-z-]+\/$/.test(a.webApp || '') ? `<a class="${cls} dl-web" href="${esc(a.webApp)}" target="_blank" rel="noopener">${T('Открыть веб-версию')}</a>` : '');
+const webButton = (a, cls = 'btn') => (/^[a-z-]+\/$/.test(a.webApp || '') ? `<a class="${cls} dl-web" href="${esc(a.webApp)}" target="_blank" rel="noopener">${T(webOnly(a) ? 'Открыть' : 'Открыть веб-версию')}</a>` : '');
 const macButton = (a, cls = 'btn') => `<button type="button" class="${cls} dl-mac" data-id="${esc(a.id)}">${T('Скачать для Mac')}</button>`;
 const siteLink = a => (safeUrl(a.site) ? `<a class="link" href="${safeUrl(a.site)}" target="_blank" rel="noopener">${T('Сайт')}</a>` : '');
 // Автор и соавторы правят карточку своей программы сами (правила базы пускают их только к полям формы).
@@ -916,7 +959,7 @@ const card = a => `
       ${siteLink(a)}
       ${editLink('apps', a)}
       <div class="card-act">${downloads[a.id] ? `<span class="card-dls" role="img" title="${dlText(downloads[a.id])}" aria-label="${dlText(downloads[a.id])}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v12M7 12l5 5 5-5M5 20h14"/></svg>${downloads[a.id].toLocaleString(lang === 'en' ? 'en' : 'ru')}</span>` : ''}
-      ${isAndroid && a.androidFile ? androidButton(a) : isLinux && a.linuxFile ? linuxButton(a) : isMac && a.macInstall ? macButton(a) : isMac && a.webApp ? webButton(a) : download(a)}</div>
+      ${webOnly(a) ? webButton(a) : isAndroid && a.androidFile ? androidButton(a) : isLinux && a.linuxFile ? linuxButton(a) : isMac && a.macInstall ? macButton(a) : isMac && a.webApp ? webButton(a) : download(a)}</div>
     </div>
   </article>`;
 
@@ -1061,17 +1104,17 @@ function renderApp(a) {
         </div>
         <div class="app-platform">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M9 20h6M12 16v4"/></svg>
-          ${T('Настольные ПК')}
+          ${T(webOnly(a) ? 'В браузере: телефон и компьютер' : 'Настольные ПК')}
         </div>
         <p class="app-desc">${esc(tr(a, 'desc'))}</p>
         <ul class="app-meta">
-          <li>${isWindows || (isMac && (a.macInstall || a.webApp)) || (isLinux && a.linuxFile) || (isAndroid && a.androidFile) || (ios && isIOS) ? `${metaIcon('ok')}${T('Работает на этом устройстве')}` : `${metaIcon('warn')}${T(a.macInstall ? 'Только для Windows и Mac' : a.linuxFile ? 'Только для Windows и Linux' : a.androidFile ? 'Только для Windows и Android' : 'Только для Windows')}`}</li>
+          <li>${webOnly(a) || isWindows || (isMac && (a.macInstall || a.webApp)) || (isLinux && a.linuxFile) || (isAndroid && a.androidFile) || (ios && isIOS) ? `${metaIcon('ok')}${T('Работает на этом устройстве')}` : `${metaIcon('warn')}${T(a.macInstall ? 'Только для Windows и Mac' : a.linuxFile ? 'Только для Windows и Linux' : a.androidFile ? 'Только для Windows и Android' : 'Только для Windows')}`}</li>
           ${size ? `<li>${metaIcon('down')}${T(a.portable ? '{size}, установка не нужна' : '{size} после установки', { size: esc(size) })}</li>` : ''}
           ${authorText(a) ? `<li>${metaIcon('at')}<span>${authorText(a)}</span></li>` : ''}
           ${a.community ? `<li>${metaIcon('warn')}${T('Программу добавил участник. Админ проверил заявку, но файл вы скачиваете на свой риск.')}</li>` : ''}
         </ul>
-        ${ios && isIOS ? iosButton('btn primary') + download(a) + androidButton(a) : (a.androidFile ? (isAndroid ? androidButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + androidButton(a)) : a.linuxFile ? (isLinux ? linuxButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + linuxButton(a)) : !a.macInstall ? download(a, 'btn primary') : isMac ? macButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + macButton(a)) + (ios ? iosButton() : '')}
-        ${a.webApp ? webButton(a, isMac ? 'btn primary' : 'btn') : ''}
+        ${webOnly(a) ? webButton(a, 'btn primary') : ios && isIOS ? iosButton('btn primary') + download(a) + androidButton(a) : (a.androidFile ? (isAndroid ? androidButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + androidButton(a)) : a.linuxFile ? (isLinux ? linuxButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + linuxButton(a)) : !a.macInstall ? download(a, 'btn primary') : isMac ? macButton(a, 'btn primary') + download(a) : download(a, 'btn primary') + macButton(a)) + (ios ? iosButton() : '')}
+        ${a.webApp && !webOnly(a) ? webButton(a, isMac ? 'btn primary' : 'btn') : ''}
         ${desktop ? removeButton(a) : ''}
         ${a.community ? `<figure id="author-selfie" class="author-selfie" data-app="${esc(a.id)}" hidden></figure>` : ''}
         ${authorName(a) ? `<a class="btn report-link" href="#report/${esc(a.id)}">${T('Сообщить о баге или идее')}</a>` : ''}
