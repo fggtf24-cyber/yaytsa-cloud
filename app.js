@@ -1,5 +1,5 @@
 import { EN, TERMS } from './i18n.js?v=91';
-import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=69';
+import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=70';
 import { openImage } from './viewer.js?v=1';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.

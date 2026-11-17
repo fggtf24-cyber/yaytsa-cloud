@@ -34,8 +34,11 @@ function cleanLink(hosts, raw) {
 
 const EMOJI = '😀 😂 🤣 😅 😊 😍 🥰 😘 😎 🤩 🤔 😏 🙄 😭 🥲 😡 🤯 😱 🤡 💀 👀 👍 👎 👏 🙏 🤝 💪 🫡 ❤️ 🔥 ✨ 🎉 💯 🚀 🥚 🐣 🍳 🐔 🍆 💩'.split(' ');
 
-// Стикеры с яйцами: файлы лежат в assets/stickers/<id>.svg, в базе хранится только id.
-const STICKERS = ['happy', 'laugh', 'love', 'cool', 'wink', 'party', 'think', 'shock', 'cry', 'angry', 'sleepy', 'dead'];
+// Стикеры с яйцами: файлы лежат в assets/stickers, в базе хранится только id.
+// В выборе пак egg01..egg51 (.webp); старые .svg остаются, чтобы показывались уже отправленные.
+const STICKERS = Array.from({ length: 51 }, (_, i) => `egg${String(i + 1).padStart(2, '0')}`);
+const OLD_STICKERS = ['happy', 'laugh', 'love', 'cool', 'wink', 'party', 'think', 'shock', 'cry', 'angry', 'sleepy', 'dead'];
+const stickerSrc = id => (STICKERS.includes(id) ? `assets/stickers/${id}.webp` : OLD_STICKERS.includes(id) ? `assets/stickers/${id}.svg` : '');
 
 // Соцсеть узнаём по самой ссылке.
 const netOf = raw => NETS.find(([, , hosts]) => cleanLink(hosts, raw));
@@ -401,7 +404,7 @@ export function setupSocial(ctx) {
   const stickerBtn = () => `
     <details class="emoji">
       <summary class="r-iconbtn" title="${T('Стикеры')}" aria-label="${T('Стикеры')}">${ICON.sticker}</summary>
-      <div class="pop emoji-panel sticker-panel">${STICKERS.map(id => `<button type="button" data-sticker="${id}" aria-label="${T('Стикер')}"><img src="assets/stickers/${id}.svg" alt="" loading="lazy"></button>`).join('')}</div>
+      <div class="pop emoji-panel sticker-panel">${STICKERS.map(id => `<button type="button" data-sticker="${id}" aria-label="${T('Стикер')}"><img src="${stickerSrc(id)}" alt="" loading="lazy"></button>`).join('')}</div>
     </details>`;
 
   // Сообщение только из эмодзи показываем крупно, как в Телеграме: чем их меньше, тем крупнее (до 3 штук).
@@ -411,7 +414,7 @@ export function setupSocial(ctx) {
     const parts = [...graphemes.segment(text.replace(/\s+/g, ''))].map(x => x.segment);
     return parts.length <= 3 && parts.length && parts.every(x => EMOJI_RE.test(x)) ? parts.length : 0;
   }
-  const stickerTag = id => (STICKERS.includes(id) ? `<img class="c-sticker" src="assets/stickers/${id}.svg" alt="${T('Стикер')}">` : '');
+  const stickerTag = id => (stickerSrc(id) ? `<img class="c-sticker" src="${stickerSrc(id)}" alt="${T('Стикер')}">` : '');
 
   // Стикер уходит сразу по нажатию, как в мессенджерах.
   function sendSticker(btn) {
