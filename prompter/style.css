@@ -446,3 +446,8 @@ input[type="range"] { flex: 1; accent-color: var(--accent); height: 32px; }
 .sz:active { transform: scale(0.92); background: var(--active); }
 @media (hover: hover) { .sz:hover { background: var(--active); } }
 @media (max-width: 400px) { .clock small { display: none; } }
+
+/* upside down: the phone stands on its head, the prompter with its sheets and toasts turns 180° */
+body.upside { transform: rotate(180deg); overflow: hidden; }
+body.turning { transition: transform 0.4s var(--ease); }
+.ctl.on { color: var(--accent); background: var(--accent-soft); }

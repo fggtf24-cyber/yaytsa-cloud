@@ -4,7 +4,7 @@ import { tokenize, Tracker, sentenceStart } from './align.js';
 import { Listener, speechSupported, inApp } from './speech.js';
 import { googleDocId, fetchGoogleDoc, readFile, titleFrom, htmlToText, cleanMarkdown, isGoogleLink } from './importer.js';
 
-const VERSION = '1.3.0';
+const VERSION = '1.4.0';
 const NAME = 'Яйца Суфлёр'; // the name is always in Cyrillic, whatever the interface language
 const $ = (s, el = document) => el.querySelector(s);
 const view = $('#view');
@@ -18,7 +18,7 @@ const store = {
 const DEFAULTS = {
   theme: 'auto', font: 'golos', size: 0, line: 1.5, margin: 6, readLine: 32, smooth: 'soft',
   mirror: false, mode: 'voice', wpm: 130, lang: 'auto', retakes: true, back: 600, wake: true, fullscreen: true,
-  uiLang: '', highlight: 'sentence', format: true,
+  uiLang: '', highlight: 'sentence', format: true, upside: false,
 };
 const settings = Object.assign({}, DEFAULTS, store.get('sufler.settings', {}));
 // first run: big text on a phone, a bit smaller on a computer so more of it fits
@@ -88,6 +88,9 @@ const EN = {
   'Авто': 'Auto',
   'Светлая': 'Light',
   'Тёмная': 'Dark',
+  'Перевернуть': 'Turn upside down',
+  'Вверх ногами': 'Upside down',
+  'Чтобы поставить телефон зарядкой вверх': 'To stand the phone with the charger on top',
   'Зеркально': 'Mirror',
   'Для стекла суфлёра': 'For teleprompter glass',
   'Листать': 'Scrolling',
@@ -166,6 +169,7 @@ const ICON = {
   moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   minus: '<path d="M5 12h14"/>',
+  flip: '<path d="M12 3v18"/><path d="m8 7 4-4 4 4"/><path d="m8 17 4 4 4-4"/>',
   x: '<path d="M18 6 6 18M6 6l12 12"/>',
   lines: '<path d="M6 8h12M6 12h12M6 16h8"/>',
   upload: '<path d="M12 15V3M7 8l5-5 5 5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>',
@@ -180,6 +184,7 @@ function applyTheme() {
 }
 applyTheme();
 document.body.dataset.dropText = T('Отпустите файл');
+const flipSign = () => (document.body.classList.contains('upside') ? -1 : 1);
 const isDark = () => settings.theme === 'dark' || (settings.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
 
 function toast(msg, ms = 2400) {
@@ -221,7 +226,7 @@ function openSheet(html, { label = '', onClose } = {}) {
   sheet.addEventListener('touchstart', e => { if (body.scrollTop <= 0 || e.target.closest('.grab')) { sy = e.touches[0].clientY; dy = 0; } }, { passive: true });
   sheet.addEventListener('touchmove', e => {
     if (sy == null) return;
-    dy = e.touches[0].clientY - sy;
+    dy = (e.touches[0].clientY - sy) * (document.body.classList.contains('upside') ? -1 : 1);
     if (dy > 0) { sheet.style.transition = 'none'; sheet.style.transform = `translateY(${dy}px)`; }
   }, { passive: true });
   sheet.addEventListener('touchend', () => {
@@ -530,6 +535,7 @@ function renderPrompter(script) {
     <footer class="bar bottom-bar">
       <div class="progress"><i id="prog"></i></div>
       <button class="ctl" id="open-settings" aria-label="${T('Настройки')}" title="${T('Настройки')}">${icon('sliders')}</button>
+      <button class="ctl" id="upside" aria-label="${T('Перевернуть')}" title="${T('Перевернуть')}">${icon('flip')}</button>
       <span class="grow"></span>
       <button class="ctl round" id="prev" aria-label="${T('Назад к началу фразы')}" title="${T('Назад к началу фразы')} (←)">${icon('prev')}</button>
       <button class="ctl round" id="next" aria-label="${T('Вперёд к следующей фразе')}" title="${T('Вперёд к следующей фразе')} (→)">${icon('next')}</button>
@@ -827,7 +833,7 @@ function renderPrompter(script) {
     const dy = e.clientY - drag.y;
     if (!drag.moved && Math.abs(dy) < 8) return;
     if (!drag.moved) { drag.moved = true; view.classList.add('dragging'); }
-    T0 = drag.T + dy;
+    T0 = drag.T + dy * flipSign();
     v = 0;
     apply();
   });
@@ -876,7 +882,7 @@ function renderPrompter(script) {
       if (Math.abs(wheelAcc) >= 40) { sizeStep(wheelAcc < 0 ? 2 : -2); wheelAcc = 0; }
       return;
     }
-    T0 -= e.deltaY;
+    T0 -= e.deltaY * flipSign();
     v = 0;
     apply();
     manualUntil = performance.now() + 100000;
@@ -931,6 +937,23 @@ function renderPrompter(script) {
   setStatus('off');
   if (!store.get('sufler.helped2', false)) { openSettings(true); store.set('sufler.helped2', true); }
 
+  /* upside down: the phone can stand on its head (charger on top); the whole prompter, its
+     sheets and toasts turn 180°, and finger movement is read the other way round */
+  const applyUpside = () => {
+    document.body.classList.toggle('upside', !!settings.upside);
+    $('#upside').classList.toggle('on', !!settings.upside);
+  };
+  applyUpside();
+  $('#upside').addEventListener('click', e => {
+    e.stopPropagation();
+    settings.upside = !settings.upside;
+    saveSettings();
+    document.body.classList.add('turning');
+    applyUpside();
+    setTimeout(() => document.body.classList.remove('turning'), 450);
+    if (running) hideBarsSoon();
+  });
+
   /* settings */
   $('#open-settings').addEventListener('click', e => { e.stopPropagation(); openSettings(); });
   function openSettings(helpFirst = false) {
@@ -957,6 +980,7 @@ function renderPrompter(script) {
       <div class="set col"><span>${T('Шрифт')}</span>${seg('font', [['golos', 'Golos'], ['inter', 'Inter'], ['serif', 'Serif'], ['system', 'System']])}</div>
       <div class="set col"><span>${T('Тема')}</span>${seg('theme', [['auto', T('Авто')], ['light', T('Светлая')], ['dark', T('Тёмная')]])}</div>
       ${toggle('mirror', T('Зеркально'), T('Для стекла суфлёра'))}
+      ${toggle('upside', T('Вверх ногами'), T('Чтобы поставить телефон зарядкой вверх'))}
       <h3>${T('Листать')}</h3>
       <div class="set col">${seg('mode', [['voice', T('По голосу')], ['speed', T('Ровно')]])}</div>
       <div class="set" data-show="speed"><span>${T('Слов в минуту')}</span>${range('wpm', 60, 220, 5)}</div>
@@ -997,6 +1021,7 @@ function renderPrompter(script) {
       applyLook();
       if (k === 'format') { script.pos = pos; saveList(); sh.close(); if (running) stop(); route(); return; }
       if (k === 'mirror') relayout();
+      if (k === 'upside') applyUpside();
       if (k === 'retakes') tracker.retakes = settings.retakes;
       if (k === 'wake') { if (settings.wake) wake(); else { wakeLock?.release().catch(() => {}); wakeLock = null; } }
     });
@@ -1054,6 +1079,7 @@ function renderPrompter(script) {
     script.pos = pos;
     saveList();
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    document.body.classList.remove('upside'); // the list and editor are always upright
   };
 }
 
