@@ -248,6 +248,7 @@ input[type="range"] { flex: 1; accent-color: var(--accent); height: 32px; }
 .text span { transition: color 0.45s ease; }
 .text.hl { color: var(--p-ahead); }
 .text span.f { color: var(--p-text); }
+.text span.k { color: color-mix(in srgb, var(--p-text) 78%, var(--bg)); }
 .text span.r { color: var(--p-read); }
 .text .note, .text .note.r, .text .note.f { color: var(--p-note); font-size: 0.8em; font-weight: 400; }
 .text .end { height: 100vh; padding-top: 1em; color: var(--text-3); font-size: 0.45em; text-align: center; }
@@ -263,7 +264,7 @@ input[type="range"] { flex: 1; accent-color: var(--accent); height: 32px; }
 .text .li + p, .text .li + .h2, .text .li + .h3 { margin-top: 0.8em; }
 
 .fade { position: absolute; left: 0; right: 0; pointer-events: none; }
-.fade.top { top: 0; height: calc(var(--read) * 0.75); background: linear-gradient(var(--bg) 10%, transparent); }
+.fade.top { top: 0; height: calc(var(--read) * 0.3); background: linear-gradient(var(--bg) 15%, transparent); }
 .fade.bottom { bottom: 0; height: 12%; background: linear-gradient(transparent, var(--bg) 90%); }
 .read-line { position: absolute; left: 0; right: 0; top: var(--read); pointer-events: none; }
 .read-line i { position: absolute; top: calc(var(--p-size) * -0.42); width: 4px; height: calc(var(--p-size) * 0.84); border-radius: 2px; background: var(--accent); opacity: 0.85; }

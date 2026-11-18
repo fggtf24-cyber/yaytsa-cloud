@@ -4,7 +4,7 @@ import { tokenize, Tracker, sentenceStart } from './align.js';
 import { Listener, speechSupported, inApp } from './speech.js';
 import { googleDocId, fetchGoogleDoc, readFile, titleFrom, htmlToText, cleanMarkdown, isGoogleLink } from './importer.js';
 
-const VERSION = '1.4.0';
+const VERSION = '1.5.0';
 const NAME = 'Яйца Суфлёр'; // the name is always in Cyrillic, whatever the interface language
 const $ = (s, el = document) => el.querySelector(s);
 const view = $('#view');
@@ -16,11 +16,12 @@ const store = {
   del(k) { try { localStorage.removeItem(k); } catch { /* private mode */ } },
 };
 const DEFAULTS = {
-  theme: 'auto', font: 'golos', size: 0, line: 1.5, margin: 6, readLine: 32, smooth: 'soft',
+  theme: 'auto', font: 'golos', size: 0, line: 1.5, margin: 6, readLine: 42, smooth: 'soft',
   mirror: false, mode: 'voice', wpm: 130, lang: 'auto', retakes: true, back: 600, wake: true, fullscreen: true,
-  uiLang: '', highlight: 'sentence', format: true, upside: false,
+  uiLang: '', highlight: 'para', format: true, upside: false, keepBack: true,
 };
 const settings = Object.assign({}, DEFAULTS, store.get('sufler.settings', {}));
+if (!settings.v2) { if (settings.readLine === 32) settings.readLine = 42; if (settings.highlight === 'sentence') settings.highlight = 'para'; settings.v2 = true; store.set('sufler.settings', settings); }
 // first run: big text on a phone, a bit smaller on a computer so more of it fits
 if (!settings.size) settings.size = innerWidth >= 1024 ? 34 : Math.round(Math.min(46, Math.max(28, innerWidth / 11)));
 const saveSettings = () => store.set('sufler.settings', settings);
@@ -79,6 +80,8 @@ const EN = {
   'Заголовки и списки': 'Headings and lists',
   'Как в документе': 'As in the document',
   'Выделять': 'Highlight',
+  'Прочитанное не гасить': 'Keep what was read bright',
+  'Абзац назад остаётся ярким, чтобы вернуться и переговорить': 'The paragraph behind stays bright, to go back and say it again',
   'Фразу': 'Sentence',
   'Две': 'Two',
   'Абзац': 'Paragraph',
@@ -609,21 +612,33 @@ function renderPrompter(script) {
     if (hl === 'sentence' && j - from < 4) { j++; while (j + 1 < N && !words[j + 1].sent) j++; }
     return Math.min(N - 1, j);
   };
-  const markFocus = from => {
+  // The text just read stays bright: the paragraph being read and the one before it (at least
+  // ~40 words back), so going back to say something again finds it at once. Older text dims.
+  const keepFrom = next => {
+    if (!settings.keepBack || next <= 0) return Math.max(0, next);
+    const i = Math.min(N - 1, next);
+    let j = i;
+    while (j > 0 && words[j - 1].para >= words[i].para - 1) j--;
+    return Math.max(0, next - 160, Math.min(j, next - 40));
+  };
+  let dimmed = -1; // words up to here are faint
+  const markFocus = (from, upto) => {
     const on = settings.highlight !== 'none';
     textEl.classList.toggle('hl', on);
-    for (let i = focus[0]; i <= focus[1]; i++) spans[i]?.classList.remove('f');
+    for (let i = focus[0]; i <= focus[1]; i++) spans[i]?.classList.remove('f', 'k');
     if (!on) { focus = [0, -1]; return; }
-    const e = focusEnd(from);
-    for (let i = from; i <= e; i++) spans[i].classList.add('f');
+    const e = focusEnd(upto + 1);
+    for (let i = from; i <= e; i++) spans[i].classList.add(i <= upto ? 'k' : 'f');
     focus = [from, e];
   };
   const markRead = (upto, force) => {
     if (upto === shown && !force) return;
-    if (upto > shown) for (let i = Math.max(0, shown + 1); i <= upto && i < N; i++) spans[i].classList.add('r');
-    else for (let i = Math.max(0, upto + 1); i <= shown && i < N; i++) spans[i].classList.remove('r');
+    const dim = keepFrom(upto + 1) - 1;
+    if (dim > dimmed) for (let i = Math.max(0, dimmed + 1); i <= dim && i < N; i++) spans[i].classList.add('r');
+    else for (let i = Math.max(0, dim + 1); i <= dimmed && i < N; i++) spans[i].classList.remove('r');
+    dimmed = dim;
     shown = upto;
-    markFocus(upto + 1);
+    markFocus(dim + 1, upto);
     if (heads.length > 1) {
       let cur = -1;
       heads.forEach((h, k) => { if (h.first <= upto + 1) cur = k; });
@@ -752,7 +767,7 @@ function renderPrompter(script) {
     const snippet = spans.slice(idx, idx + 6).map(s => s.textContent).join(' ');
     script.takes.push({ at: Math.round(clockNow()), idx, kind, snippet });
     saveList();
-    toast(`${T('Дубль {n}', { n: script.takes.length })} · «${snippet}…»`, 2000);
+    // no pop-up: a retake is noted quietly in the log (settings → Журнал дублей)
   }
   let lastPrev = { at: 0, idx: 0 };
   $('#prev').addEventListener('click', () => {
@@ -974,6 +989,7 @@ function renderPrompter(script) {
         <div class="stepper"><button data-size-step="-2" aria-label="−">${icon('minus')}</button><b data-size>${settings.size}</b><button data-size-step="2" aria-label="+">${icon('plus')}</button></div></div>
       ${toggle('format', T('Заголовки и списки'), T('Как в документе'))}
       <div class="set col"><span>${T('Выделять')}</span>${seg('highlight', [['sentence', T('Фразу')], ['two', T('Две')], ['para', T('Абзац')], ['none', T('Нет')]])}</div>
+      ${toggle('keepBack', T('Прочитанное не гасить'), T('Абзац назад остаётся ярким, чтобы вернуться и переговорить'))}
       <div class="set"><span>${T('Интервал')}</span>${range('line', 1.2, 2.2, 0.05, x => (+x).toFixed(2))}</div>
       <div class="set"><span>${T('Поля')}</span>${range('margin', 0, 25, 1, x => `${x}%`)}</div>
       <div class="set"><span>${T('Линия чтения')}</span>${range('readLine', 15, 60, 1, x => `${x}%`)}</div>
@@ -1022,6 +1038,7 @@ function renderPrompter(script) {
       if (k === 'format') { script.pos = pos; saveList(); sh.close(); if (running) stop(); route(); return; }
       if (k === 'mirror') relayout();
       if (k === 'upside') applyUpside();
+      if (k === 'keepBack') markRead(pos, true);
       if (k === 'retakes') tracker.retakes = settings.retakes;
       if (k === 'wake') { if (settings.wake) wake(); else { wakeLock?.release().catch(() => {}); wakeLock = null; } }
     });
