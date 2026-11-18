@@ -15,7 +15,7 @@ const APPS = [
     desc: 'Приложение Яйца Cloud для Windows: ставит и обновляет все программы с сайта в один клик, а сообщения и ответы приходят уведомлениями.',
     descEn: 'The Yaytsa Cloud app for Windows: installs and updates every program from the site in one click, with messages and replies as notifications.',
     file: 'https://github.com/fggtf24-cyber/yaytsa-cloud-desktop/releases/latest/download/YaytsaCloud.exe',
-    androidFile: 'https://github.com/fggtf24-cyber/yaytsa-cloud-android/releases/latest/download/YaytsaCloud.apk',
+    androidFile: 'https://yaytsacloud.art/YaytsaCloud.apk', // 1.5+: APK лежит на сайте
     size: '1 МБ',
     sizeEn: '1 MB',
     repo: 'https://github.com/fggtf24-cyber/yaytsa-cloud-desktop',

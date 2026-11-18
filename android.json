@@ -1,6 +1,6 @@
 {
-  "versionCode": 5,
-  "versionName": "1.4",
-  "url": "https://github.com/fggtf24-cyber/yaytsa-cloud-android/releases/download/v1.4/YaytsaCloud.apk",
-  "notes": "Новый адрес сайта: yaytsacloud.art"
+  "versionCode": 6,
+  "versionName": "1.5",
+  "url": "https://yaytsacloud.art/YaytsaCloud.apk",
+  "notes": "Суфлёр слышит голос прямо в приложении.\n\nЕсли Android напишет «Приложение не установлено»: удалите Яйца Cloud и установите заново по этой же кнопке (или скачайте с сайта). Новая версия подписана другим ключом, поэтому поверх старой не ставится. После переустановки войдите в аккаунт ещё раз."
 }
