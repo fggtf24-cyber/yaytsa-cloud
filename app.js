@@ -1267,11 +1267,11 @@ function soundOn() {
   try { return !localStorage.getItem('muted'); } catch { return true; }
 }
 
-// Звук уведомления — assets/notify.ogg. Не сыграл (старый Safari без ogg, ещё не было нажатия) — запасные две ноты.
+// Звук уведомления — assets/notify.wav. Не сыграл (ещё не было нажатия на странице) — запасные две ноты.
 let notifySound = null;
 function ping() {
   if (!soundOn()) return;
-  notifySound ||= new Audio('assets/notify.ogg?v=1');
+  notifySound ||= new Audio('assets/notify.wav?v=1');
   notifySound.currentTime = 0;
   notifySound.play().catch(beep);
 }
