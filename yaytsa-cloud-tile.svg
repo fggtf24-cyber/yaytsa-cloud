@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="640" height="640">
+  <!-- Яйца Cloud, after the Creative Cloud icon: a rainbow mesh tile and a white mark with a colour band —
+       two eggs, the big one in front on the left, the small one behind on the right. -->
+  <defs>
+    <radialGradient id="ycR" gradientUnits="userSpaceOnUse" cx="21" cy="-4" r="21"><stop offset="0" stop-color="#FF0A0A"/><stop offset="1" stop-color="#FF0A0A" stop-opacity="0"/></radialGradient>
+    <radialGradient id="ycO" gradientUnits="userSpaceOnUse" cx="44" cy="8" r="22"><stop offset="0" stop-color="#FF4E00"/><stop offset="1" stop-color="#FF4E00" stop-opacity="0"/></radialGradient>
+    <radialGradient id="ycY" gradientUnits="userSpaceOnUse" cx="44" cy="31" r="17"><stop offset="0" stop-color="#FFCF12"/><stop offset="1" stop-color="#FFCF12" stop-opacity="0"/></radialGradient>
+    <radialGradient id="ycG" gradientUnits="userSpaceOnUse" cx="42" cy="46" r="27"><stop offset="0" stop-color="#3EE04E"/><stop offset="1" stop-color="#3EE04E" stop-opacity="0"/></radialGradient>
+    <radialGradient id="ycB" gradientUnits="userSpaceOnUse" cx="-4" cy="44" r="34"><stop offset="0" stop-color="#2E86FF"/><stop offset="1" stop-color="#2E86FF" stop-opacity="0"/></radialGradient>
+    <radialGradient id="ycP" gradientUnits="userSpaceOnUse" cx="-4" cy="26" r="18"><stop offset="0" stop-color="#A04CFF"/><stop offset="1" stop-color="#A04CFF" stop-opacity="0"/></radialGradient>
+    <radialGradient id="ycM" gradientUnits="userSpaceOnUse" cx="-4" cy="9" r="20"><stop offset="0" stop-color="#FF1FB0"/><stop offset="1" stop-color="#FF1FB0" stop-opacity="0"/></radialGradient>
+    <linearGradient id="ycBand" gradientUnits="userSpaceOnUse" x1="6" y1="12" x2="32" y2="34"><stop offset="0" stop-color="#E54CFF"/><stop offset=".45" stop-color="#FF6A4A"/><stop offset="1" stop-color="#FFC21A"/></linearGradient>
+  </defs>
+  
+    <rect width="40" height="40" rx="10" fill="#EC3D7A"/>
+    <rect width="40" height="40" rx="10" fill="url(#ycR)"/><rect width="40" height="40" rx="10" fill="url(#ycM)"/>
+    <rect width="40" height="40" rx="10" fill="url(#ycO)"/><rect width="40" height="40" rx="10" fill="url(#ycP)"/>
+    <rect width="40" height="40" rx="10" fill="url(#ycY)"/><rect width="40" height="40" rx="10" fill="url(#ycG)"/>
+    <rect width="40" height="40" rx="10" fill="url(#ycB)"/>
+  
+  
+</svg>
+
