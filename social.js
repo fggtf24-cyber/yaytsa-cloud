@@ -2540,6 +2540,13 @@ export function setupSocial(ctx) {
     remember(me(), pub);
   }
 
+  // У кого из взаимных подписок день рождения в этот ММ-ДД. Видна только открытая дата (profiles.birthday).
+  async function mutualBirthdays(md) {
+    const uids = [...following].filter(isMutual);
+    await loadPeople(uids);
+    return uids.filter(uid => people.get(uid)?.birthday === md).map(uid => ({ uid, name: shownName(uid) }));
+  }
+
   // Строка в профиле: «🎂 10 ноября» или «Сегодня день рождения!».
   function birthdayLine(p) {
     const m = /^(\d{2})-(\d{2})$/.exec(p?.birthday || '');
@@ -2952,6 +2959,7 @@ export function setupSocial(ctx) {
     netFields,
     privacyFields,
     syncBirthday,
+    mutualBirthdays,
     loadRoles,
     roleTags,
     banOf,

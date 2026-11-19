@@ -497,6 +497,7 @@ export const EN = {
   'Баги и идеи': 'Bugs & ideas',
   'Чаты': 'Chats',
   '{name} подписался(-ась) на вас': '{name} started following you',
+  'Завтра день рождения у {name}': "Tomorrow is {name}'s birthday",
   'Имя пользователя: 1–20 символов, латиница, цифры и _.': 'Username: 1–20 characters, Latin letters, digits and _.',
   'Это имя уже занято. Попробуйте другое.': 'This username is taken. Try another one.',
 

@@ -1,5 +1,5 @@
-import { EN, TERMS } from './i18n.js?v=91';
-import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=70';
+import { EN, TERMS } from './i18n.js?v=92';
+import { setupSocial, cropImage, askDialog, readImage, micStream, micError } from './social.js?v=71';
 import { openImage } from './viewer.js?v=1';
 
 // Программы добавляют админы прямо на сайте. APPS — стартовый список.
@@ -674,6 +674,7 @@ let stopMessages = [];
 let notifications = [];
 let stopNotifications = [];
 let broadcasts = []; // посты с @everyone
+let bdayNotes = [];  // «завтра день рождения»: считаются в браузере, в базу не пишутся
 let contentReady = null; // промис загрузки каталога из базы
 let profile = {};  // users/<uid>: name, photo, birthday (ГГГГ-ММ-ДД или ММ-ДД, видит только владелец)
 let apps = APPS;
@@ -1266,9 +1267,18 @@ function soundOn() {
   try { return !localStorage.getItem('muted'); } catch { return true; }
 }
 
-// Две мягкие ноты вверх. Файл не нужен: звук собирается здесь же.
+// Звук уведомления — assets/notify.ogg. Не сыграл (старый Safari без ogg, ещё не было нажатия) — запасные две ноты.
+let notifySound = null;
 function ping() {
-  if (!audio || !soundOn()) return;
+  if (!soundOn()) return;
+  notifySound ||= new Audio('assets/notify.ogg?v=1');
+  notifySound.currentTime = 0;
+  notifySound.play().catch(beep);
+}
+
+// Две мягкие ноты вверх: собираются здесь же, без файла.
+function beep() {
+  if (!audio) return;
   [[880, 0], [1175, 0.11]].forEach(([freq, delay]) => {
     const start = audio.currentTime + delay;
     const tone = audio.createOscillator();
@@ -1325,6 +1335,7 @@ function watchNotifications(u) {
   stopNotifications = [];
   notifications = [];
   broadcasts = [];
+  bdayNotes = [];
   if (u) {
     // ponytail: тянем все уведомления человека и сортируем в браузере, индекс не нужен.
     stopNotifications = [
@@ -1379,7 +1390,7 @@ function allNotes() {
       createdAt: b.createdAt, read: (b.createdAt?.toMillis() || 0) <= seen,
     }));
   // Сообщения считает красный значок у «Сообщений», в колокольчике их нет.
-  return [...notifications.filter(n => n.type !== 'dm'), ...everyone].sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+  return [...notifications.filter(n => n.type !== 'dm'), ...everyone, ...bdayNotes].sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
 }
 
 // Лайки одного комментария сливаются в одну строку, как на YouTube. Список уже отсортирован: первым идёт самый новый.
@@ -1415,6 +1426,7 @@ const noteTitle = n => {
     like: 'Лайк от {name}',
     follow: '{name} подписался(-ась) на вас',
     everyone: '{name} отметил(а) всех в посте',
+    bday: 'Завтра день рождения у {name}',
     mention: 'Упоминание от {name}',
     mod: n.appId ? 'Админ одобрил вашу программу' : 'Админ отклонил вашу программу',
   }[n.type] || 'Ответ от {name}';
@@ -1427,6 +1439,7 @@ const noteTitle = n => {
 // fromName и text пишут посетители: только через esc.
 const noteHref = n => ({
   follow: `#uid/${esc(n.from)}`,
+  bday: `#uid/${esc(n.from)}`,
   treply: `#post/${esc(n.appId)}/${esc(n.commentId)}`,
   everyone: `#post/${esc(n.appId)}`,
   mention: n.commentId ? `#post/${esc(n.appId)}/${esc(n.commentId)}` : `#post/${esc(n.appId)}`,
@@ -1465,6 +1478,11 @@ function toggleBell(open) {
   notifications.filter(n => !n.read && n.type !== 'dm').forEach(n => {
     fs.updateDoc(fs.doc(db, 'notifications', n.id), { read: true }).catch(console.error);
   });
+  if (bdayNotes.some(n => !n.read)) {
+    bdayNotes.forEach(n => { n.read = true; });
+    try { localStorage.setItem(`bdaySeen-${user.uid}`, JSON.stringify(bdayNotes.map(n => n.id))); } catch { /* приватный режим */ }
+    drawBell();
+  }
   const now = Date.now();
   const fresh = allNotes().some(n => n.type === 'everyone' && !n.read); // пишем в базу, только если было что отмечать
   try { localStorage.setItem('seenBroadcasts', now); } catch { /* приватный режим */ }
@@ -1472,6 +1490,26 @@ function toggleBell(open) {
     profile.seenBroadcasts = now;
     fs.setDoc(fs.doc(db, 'users', user.uid), { seenBroadcasts: now }, { merge: true }).catch(console.error);
   }
+}
+
+// Как в Телеграме: за день до дня рождения взаимной подписки — строка в колокольчике, звук и системное уведомление.
+// Работает при открытом сайте: сервера, который бы будил заранее, нет. Дата берётся из открытого профиля человека.
+async function remindBirthdays(u) {
+  if (!u) return;
+  const t = new Date();
+  t.setDate(t.getDate() + 1);
+  const md = `${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+  const day = `${t.getFullYear()}-${md}`;
+  const list = await social.mutualBirthdays(md);
+  if (user !== u) return; // за время загрузки вышли или сменили аккаунт
+  let seen = [];
+  try { seen = JSON.parse(localStorage.getItem(`bdaySeen-${u.uid}`)) || []; } catch { /* приватный режим */ }
+  const now = Date.now();
+  bdayNotes = list.map(p => {
+    const id = `bday_${p.uid}_${day}`;
+    return { id, type: 'bday', from: p.uid, fromName: p.name, read: seen.includes(id), createdAt: { toMillis: () => now, toDate: () => new Date(now) } };
+  });
+  drawBell();
 }
 
 /* ---------- Редактор (только админы) ---------- */
@@ -2158,19 +2196,15 @@ const birthdayField = (value = '') => `
     <small class="r-hint">${T('Видите только вы. В этот день сайт вас поздравит.')}</small>
   </label>`;
 
-// Поздравление показываем при первом заходе в течение месяца после дня рождения, по разу на устройстве в год.
+// Поздравление показываем только в сам день рождения, по разу на устройстве в год.
 async function greetBirthday(u) {
   const m = /(\d{2})-(\d{2})$/.exec(profile.birthday || '');
   if (!u || !m) return;
   const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const year = [now.getFullYear(), now.getFullYear() - 1].find(y => {
-    let d = new Date(y, +m[1] - 1, +m[2]);
-    if (d.getMonth() !== +m[1] - 1) d = new Date(y, 1, 28); // 29 февраля в невисокосный год
-    const days = (today - d) / 864e5;
-    return days >= 0 && days <= 30;
-  });
-  if (!year) return;
+  const year = now.getFullYear();
+  let d = new Date(year, +m[1] - 1, +m[2]);
+  if (d.getMonth() !== +m[1] - 1) d = new Date(year, 1, 28); // 29 февраля в невисокосный год
+  if (d.getMonth() !== now.getMonth() || d.getDate() !== now.getDate()) return;
   const key = `bday-${u.uid}`;
   try { if (localStorage.getItem(key) === String(year)) return; } catch { /* без хранилища покажем как есть */ }
   // Автору программы сообщества — его селфи из заявки, остальным — аватарка.
@@ -2708,6 +2742,7 @@ async function initFirebase() {
       await social.onUser(u);
       if (u) syncSeenBroadcasts();
       watchNotifications(u);
+      remindBirthdays(u).catch(console.error);
       watchMessages(u);
       // Android-приложение само проверяет уведомления, пока закрыто: ему нужен вход (refreshToken живёт долго).
       android?.postMessage({ type: 'auth', uid: u?.uid || '', refresh: u?.refreshToken || '' });
