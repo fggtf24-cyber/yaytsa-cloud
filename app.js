@@ -338,7 +338,7 @@ const APPS = [
     repo: 'https://github.com/brlk33/Yaitserez',
     features: [
       'Перетащите видео и запись с микрофона: звук синхронизируется сам, точно до миллисекунды, хлопушка не нужна',
-      'Неудачные дубли: оборванные фразы выкидываются, перезаписанные мысли — даже другими словами — остаётся последний вариант',
+      'Неудачные дубли: оборванные фразы выкидываются, перезаписанные мысли — даже другими словами — остаётся последний вариант. Пауза посреди предложения обрывом не считается, реплики в сторону («заново скажу») уходят целиком',
       'Склейки по звуковой волне: одинаковая пауза везде, от «свободно» до «встык» и с наездом',
       'Вдохи находит нейросеть — даже дыхание в микрофон; согласные на краях слов остаются',
       'Мат, «э-э» и свои слова вырезаются по отдельности, фраза остаётся',
@@ -347,7 +347,8 @@ const APPS = [
       'Автозумы через клип: обычный и крупный план чередуются на склейках и переносятся в Premiere',
       'Работает и только со звуком — для подкастов и озвучки',
       'Несколько камер и скринкаст: всё синхронизируется и режется одинаково, каждая запись на своей дорожке',
-      'XML для Premiere Pro и DaVinci Resolve: видео, звук микрофона, звук камеры и дорожки экрана',
+      'XML для Premiere Pro и DaVinci Resolve: видео, звук микрофона, звук камеры, дорожки экрана и их звук — даже отдельная дорожка звука компьютера из OBS',
+      'Учится на ваших правках: сравнивает свою нарезку с вашим финалом из Premiere и подстраивает разбор дублей под ваш стиль',
       'Распознавание речи на вашем компьютере, русский и английский',
     ],
     needs: [
@@ -358,7 +359,7 @@ const APPS = [
     ],
     featuresEn: [
       'Drop in the video and the microphone recording: the audio syncs by itself to the millisecond, no clapper needed',
-      'Failed takes: broken-off phrases are dropped; when an idea is re-recorded — even in other words — the last version stays',
+      'Failed takes: broken-off phrases are dropped; when an idea is re-recorded — even in other words — the last version stays. A pause mid-sentence is not a break-off, and asides ("let me say it again") go entirely',
       'Cuts by the waveform: the same pause everywhere, from loose to butt cuts and overlaps',
       'A neural network finds breaths — even breathing into the mic; consonants at word edges are kept',
       'Swearing, filler sounds and your own words are cut out on their own, the phrase stays',
@@ -367,7 +368,8 @@ const APPS = [
       'Auto zoom every other clip: wide and close shots alternate at edits and carry over to Premiere',
       'Works with audio only too — for podcasts and voice-overs',
       'Several cameras and a screencast: everything syncs and is cut the same way, each recording on its own track',
-      'XML for Premiere Pro and DaVinci Resolve: video, microphone audio, camera audio and screen tracks',
+      'XML for Premiere Pro and DaVinci Resolve: video, microphone audio, camera audio, screen tracks and their audio — even a separate OBS desktop-audio track',
+      'Learns from your edits: compares its cut with your Premiere final and tunes take detection to your style',
       'Speech recognition runs on your computer, Russian and English',
     ],
     needsEn: [
