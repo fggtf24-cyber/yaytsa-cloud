@@ -80,7 +80,15 @@ scale: 'Масштаб', appsPickTitle: 'Добавить программу', a
     stopHint: 'Стоп — заход от 10 минут сохранится', goalWeek: 'Цель на неделю', goalWeekDesc: 'Часов работы за неделю (с понедельника)', goalWeekL: 'Цель на неделю',
     pWeekL7: '7 дней', editEntry: 'Изменить запись', saveL: 'Сохранить', edited: 'Запись изменена', newProjOnly: 'Такого проекта нет. Откройте список ▾ и нажмите «Создать новый проект»', newProjBtn: 'Создать новый проект', createNamed: n => `Создать «${n}»`, newProjPh: 'Название нового проекта', projCreated: n => `Проект «${n}» создан`,
     adPerHour: 'активных минут в каждые 10 минут', adPerDay: 'активных часов в день', adToHist: 'В историю', adAddQ: (d, a, b) => `Добавить ${d} работы (${a}–${b}) в историю?`, adAdded: d => `Добавлено: ${d}`,
-    planSkipNext: 'Пропустить ближайший', untilShort: 'до', taQ: 'Над чем вы сейчас работаете?', taSub: tm => `Таймер идёт по плану с ${tm}. Выберите задачу — она запишется ко всем заходам этой серии.`, taNewPh: 'Или новая задача', taLater: 'Позже', quickOff: 'Убрать', schedL: 'Весь план…', taSet: n => `Задача: ${n}`, scTaskL: 'Задача', scNameQ: 'Как назвать эту серию?', scNameSub: 'Название запишется ко всем её заходам.', skipToday: 'пропустить сегодня', planRemove: 'удалить', offerTitle: n => `Работаете в ${n}?`, offerBody: 'Уже 5 минут, а таймер не идёт. Запустить его?', offerGo: 'Запустить таймер', offerLater: 'Не сейчас', offerSet: 'Предлагать запустить таймер', offerSetDesc: 'Если 5 минут работаете в отслеживаемой программе, а таймер стоит', peLater: 'Выберу в тот день', pePh: 'Или впишите задачу', startAtGo: tm => `Запустить в ${tm}`, clashQ: 'Время занято', clashCur: w => `В это время уже идёт серия (${w}). Два таймера сразу не запустить — выберите другое время.`, clashPlan: (w, d) => `Пересекается с планом ${w} (${d.toLowerCase()}). Два таймера сразу не запустить — выберите другое время или измените тот план.`, autoTellQ: w => `Таймер запустится сам ${w}`, autoTellText: 'Даже если вас не будет рядом: в это время он нажмёт «Старт» на любом включённом устройстве. Если вас не было, потом спросит, работали ли вы.', autoQ: tm => `Таймер запустился сам в ${tm}`, autoText: 'Вы работали всё это время?', autoTextDone: 'Вы работали в это время? Если нет, эти заходы не попадут в историю.', autoYes: 'Да, работал', autoNo: 'Нет', autoAgain: tm => `Не считаем время до ${tm}: таймер начат заново`, autoStop: 'Остановить', undone: 'Отменено', redone: 'Возвращено', undoNone: 'Нечего отменять', redoNone: 'Нечего возвращать', hintLong: 'Можно включить длинный перерыв: каждый 4-й перерыв будет длиннее, как в помодоро', hintLongAct: 'Настроить', hintRange: 'Забыли включить таймер? Выделите участок на графике — его можно записать как работу', hintTrack: 'Выберите программы, в которых вы работаете, — таймер покажет, сколько времени вы в них проводите', hintTrackAct: 'Выбрать', skipTomorrow: 'пропустить завтра', skipDay: d => `пропустить в ${d.toLowerCase()}`, skippedToday: 'сегодня пропущено · вернуть', adPerHourH: 'активных минут в каждом часе', adPickHint: 'Проведите по графику с зажатой кнопкой мыши — выделенный участок можно записать в историю как работу (удобно, если забыли включить таймер). Нажатие на участок берёт весь блок работы вокруг. Колесо мыши приближает и отдаляет, Shift + колесо листает.', adNothing: 'В этом промежутке нет активной работы',
+    activityOn: 'Работал', activityOff: 'Не работал', activityFrom: 'С', activityTo: 'До',
+    activityRangeHint: 'Выделите отрезок или введите время до секунды. Засчитается только активная работа.',
+    activityEstimated: 'Старые данные о времени внутри интервалов приблизительны.',
+    activityAlreadyLogged: 'В этом отрезке нет незаписанной работы',
+    activitySelection: d => `К записи · ${d}`,
+    offerMute: 'Не предлагать для этой программы', offerPrograms: 'Подсказки по программам',
+    offerNoPrograms: 'Сначала добавьте программу на вкладке «Программы».',
+    offerTodayOff: 'Не сегодня',
+    planSkipNext: 'Пропустить ближайший', untilShort: 'до', taQ: 'Над чем вы сейчас работаете?', taSub: tm => `Таймер идёт по плану с ${tm}. Выберите задачу — она запишется ко всем заходам этой серии.`, taNewPh: 'Или новая задача', taLater: 'Позже', quickOff: 'Убрать', schedL: 'Весь план…', taSet: n => `Задача: ${n}`, scTaskL: 'Задача', scNameQ: 'Как назвать эту серию?', scNameSub: 'Название запишется ко всем её заходам.', skipToday: 'пропустить сегодня', planRemove: 'удалить', offerTitle: n => `Работаете в ${n}?`, offerBody: 'Уже 5 минут, а таймер не идёт. Запустить его?', offerGo: 'Запустить таймер', offerLater: 'Не сейчас', offerSet: 'Предлагать запустить таймер', offerSetDesc: 'После 5 минут работы, не чаще раза в день для каждой программы', peLater: 'Выберу в тот день', pePh: 'Или впишите задачу', startAtGo: tm => `Запустить в ${tm}`, clashQ: 'Время занято', clashCur: w => `В это время уже идёт серия (${w}). Два таймера сразу не запустить — выберите другое время.`, clashPlan: (w, d) => `Пересекается с планом ${w} (${d.toLowerCase()}). Два таймера сразу не запустить — выберите другое время или измените тот план.`, autoTellQ: w => `Таймер запустится сам ${w}`, autoTellText: 'Даже если вас не будет рядом: в это время он нажмёт «Старт» на любом включённом устройстве. Если вас не было, потом спросит, работали ли вы.', autoQ: tm => `Таймер запустился сам в ${tm}`, autoText: 'Вы работали всё это время?', autoTextDone: 'Вы работали в это время? Если нет, эти заходы не попадут в историю.', autoYes: 'Да, работал', autoNo: 'Нет', autoAgain: tm => `Не считаем время до ${tm}: таймер начат заново`, autoStop: 'Остановить', undone: 'Отменено', redone: 'Возвращено', undoNone: 'Нечего отменять', redoNone: 'Нечего возвращать', hintLong: 'Можно включить длинный перерыв: каждый 4-й перерыв будет длиннее, как в помодоро', hintLongAct: 'Настроить', hintRange: 'Забыли включить таймер? Выделите участок на графике — его можно записать как работу', hintTrack: 'Выберите программы, в которых вы работаете, — таймер покажет, сколько времени вы в них проводите', hintTrackAct: 'Выбрать', skipTomorrow: 'пропустить завтра', skipDay: d => `пропустить в ${d.toLowerCase()}`, skippedToday: 'сегодня пропущено · вернуть', adPerHourH: 'активных минут в каждом часе', adPickHint: 'Проведите по графику с зажатой кнопкой мыши — выделенный участок можно записать в историю как работу (удобно, если забыли включить таймер). Нажатие на участок берёт весь блок работы вокруг. Колесо мыши приближает и отдаляет, Shift + колесо листает.', adNothing: 'В этом промежутке нет активной работы',
     tabPlan: 'План', planLead: 'Таймер сам запустится в нужное время — на компьютере и на телефоне. Откроете позже — время уже будет идти с начала.',
     planAdd: '+ Добавить время', planNextL: 'Следующий старт:', planNone: 'Ничего не запланировано', planEmpty: 'Например: по будням в 7:30 — два захода',
     planOnOff: 'Включить или выключить', planNew: 'Новое время', planEditT: 'Время старта', peTimeL: 'Во сколько', peRepeatL: 'Повтор',
@@ -180,7 +188,14 @@ scale: 'Zoom', appsPickTitle: 'Add a program', appsSearchPh: 'Search programs on
     stopHint: 'Stop: a session of 10 minutes or more is kept', goalWeek: 'Weekly goal', goalWeekDesc: 'Hours of work per week (from Monday)', goalWeekL: 'This week’s goal',
     pWeekL7: '7 days', editEntry: 'Edit entry', saveL: 'Save', edited: 'Entry changed', newProjOnly: 'No such project. Open the list ▾ and press “Create a new project”', newProjBtn: 'Create a new project', createNamed: n => `Create “${n}”`, newProjPh: 'New project name', projCreated: n => `Project “${n}” created`,
     adPerHour: 'active minutes in every 10 minutes', adPerDay: 'active hours per day', adToHist: 'To history', adAddQ: (d, a, b) => `Add ${d} of work (${a}–${b}) to your history?`, adAdded: d => `Added: ${d}`,
-    planSkipNext: 'Skip the next one', untilShort: 'to', taQ: 'What are you working on?', taSub: tm => `The timer has been running as planned since ${tm}. Pick a task: it goes to every session of this run.`, taNewPh: 'Or a new task', taLater: 'Later', quickOff: 'Remove', schedL: 'Full plan…', taSet: n => `Task: ${n}`, scTaskL: 'Task', scNameQ: 'Name this series', scNameSub: 'The name goes to all its sessions.', skipToday: 'skip today', planRemove: 'remove', offerTitle: n => `Working in ${n}?`, offerBody: 'Five minutes in, and the timer isn’t running. Start it?', offerGo: 'Start the timer', offerLater: 'Not now', offerSet: 'Offer to start the timer', offerSetDesc: 'When you work in a tracked program for 5 minutes and the timer stands', peLater: 'Pick on the day', pePh: 'Or type a task', startAtGo: tm => `Start at ${tm}`, clashQ: 'That time is taken', clashCur: w => `A run is already going then (${w}). Two timers can’t run at once: pick another time.`, clashPlan: (w, d) => `It overlaps the plan ${w} (${d}). Two timers can’t run at once: pick another time or change that plan.`, autoTellQ: w => `The timer will start by itself ${w}`, autoTellText: 'Even if you are away: at that time it presses Start on any device that is on. If you weren’t there, it will ask later whether you worked.', autoQ: tm => `The timer started by itself at ${tm}`, autoText: 'Have you been working all this time?', autoTextDone: 'Were you working then? If not, those sessions stay out of your history.', autoYes: 'Yes, I was', autoNo: 'No', autoAgain: tm => `Time before ${tm} doesn’t count: the timer started over`, autoStop: 'Stop', undone: 'Undone', redone: 'Redone', undoNone: 'Nothing to undo', redoNone: 'Nothing to redo', hintLong: 'You can turn on a long break: every 4th break gets longer, pomodoro style', hintLongAct: 'Set up', hintRange: 'Forgot the timer? Mark a stretch on the chart and log it as work', hintTrack: 'Pick the programs you work in, and the timer will show how much time you spend in them', hintTrackAct: 'Pick', skipTomorrow: 'skip tomorrow', skipDay: d => `skip ${d}`, skippedToday: 'skipped today · undo', adPerHourH: 'active minutes in each hour', adPickHint: 'Drag across the chart to mark a stretch and add it to your history as work (handy if you forgot the timer). A click takes the whole block of work around it. The mouse wheel zooms, Shift + wheel moves along.', adNothing: 'No active work in this stretch',
+    activityOn: 'Working', activityOff: 'Not working', activityFrom: 'From', activityTo: 'To',
+    activityRangeHint: 'Drag a range or type the times down to the second. Only active work is added.',
+    activityEstimated: 'Work times within older intervals are approximate.',
+    activityAlreadyLogged: 'No unlogged work in this range',
+    activitySelection: d => `To add · ${d}`,
+    offerMute: 'Never suggest for this program', offerPrograms: 'Suggestions by program',
+    offerNoPrograms: 'Add a tracked program under Programs first.', offerTodayOff: 'Not today',
+    planSkipNext: 'Skip the next one', untilShort: 'to', taQ: 'What are you working on?', taSub: tm => `The timer has been running as planned since ${tm}. Pick a task: it goes to every session of this run.`, taNewPh: 'Or a new task', taLater: 'Later', quickOff: 'Remove', schedL: 'Full plan…', taSet: n => `Task: ${n}`, scTaskL: 'Task', scNameQ: 'Name this series', scNameSub: 'The name goes to all its sessions.', skipToday: 'skip today', planRemove: 'remove', offerTitle: n => `Working in ${n}?`, offerBody: 'Five minutes in, and the timer isn’t running. Start it?', offerGo: 'Start the timer', offerLater: 'Not now', offerSet: 'Offer to start the timer', offerSetDesc: 'After five minutes of work, once a day per program', peLater: 'Pick on the day', pePh: 'Or type a task', startAtGo: tm => `Start at ${tm}`, clashQ: 'That time is taken', clashCur: w => `A run is already going then (${w}). Two timers can’t run at once: pick another time.`, clashPlan: (w, d) => `It overlaps the plan ${w} (${d}). Two timers can’t run at once: pick another time or change that plan.`, autoTellQ: w => `The timer will start by itself ${w}`, autoTellText: 'Even if you are away: at that time it presses Start on any device that is on. If you weren’t there, it will ask later whether you worked.', autoQ: tm => `The timer started by itself at ${tm}`, autoText: 'Have you been working all this time?', autoTextDone: 'Were you working then? If not, those sessions stay out of your history.', autoYes: 'Yes, I was', autoNo: 'No', autoAgain: tm => `Time before ${tm} doesn’t count: the timer started over`, autoStop: 'Stop', undone: 'Undone', redone: 'Redone', undoNone: 'Nothing to undo', redoNone: 'Nothing to redo', hintLong: 'You can turn on a long break: every 4th break gets longer, pomodoro style', hintLongAct: 'Set up', hintRange: 'Forgot the timer? Mark a stretch on the chart and log it as work', hintTrack: 'Pick the programs you work in, and the timer will show how much time you spend in them', hintTrackAct: 'Pick', skipTomorrow: 'skip tomorrow', skipDay: d => `skip ${d}`, skippedToday: 'skipped today · undo', adPerHourH: 'active minutes in each hour', adPickHint: 'Drag across the chart to mark a stretch and add it to your history as work (handy if you forgot the timer). A click takes the whole block of work around it. The mouse wheel zooms, Shift + wheel moves along.', adNothing: 'No active work in this stretch',
     tabPlan: 'Plan', planLead: 'The timer starts by itself at the time you set, on the PC and on the phone. Open it later and the time is already running from the start.',
     planAdd: '+ Add a time', planNextL: 'Next start:', planNone: 'Nothing planned', planEmpty: 'For example: weekdays at 7:30, two sessions',
     planOnOff: 'Turn on or off', planNew: 'New time', planEditT: 'Start time', peTimeL: 'At', peRepeatL: 'Repeat',
@@ -957,6 +972,7 @@ function renderSteppers() {
 
 function renderControls() {
   $$('.toggle[data-key]').forEach(el => el.classList.toggle('on', !!settings[el.dataset.key]));
+  if ($('#offerPrograms')?.open) renderAppOfferPrograms();
   $$('[data-long]').forEach(el => el.classList.toggle('off', !settings.longOn));
   $$('.seg[data-key]').forEach(seg => {
     seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.val === settings[seg.dataset.key]));
@@ -1820,8 +1836,9 @@ function bindLabelSuggest() {
 }
 
 /* ---------- Confirm dialog ---------- */
-let modalResolve = null;
+let modalResolve = null, modalPlanId = null;
 function confirmModal(title, text, okLabel, opts = {}) {
+  modalPlanId = opts.planId || null;
   $('#modalTitle').textContent = title;
   $('#modalText').textContent = text;
   $('#modalOk').textContent = okLabel;
@@ -1837,6 +1854,7 @@ function confirmModal(title, text, okLabel, opts = {}) {
 }
 function closeModal(ok) {
   $('#modal').hidden = true;
+  modalPlanId = null;
   if (modalResolve) { const r = modalResolve; modalResolve = null; r(ok); }
 }
 
@@ -2271,7 +2289,7 @@ function openAppDetail(exe) {
   if (!appStats.some(a => a.exe === exe)) return;
   adExe = exe;
   hintCount('appDetail');
-  adRange = APP_RANGES.includes(settings.appsRange) ? settings.appsRange : 1; // opens on the period of the list
+  adRange = 1; // always open the full-day activity view
   renderAppDetail();
   $('#appDetail').hidden = false;
 }
@@ -2285,53 +2303,20 @@ function renderAppDetail() {
   const tt = appTimes(a, adRange);
   swapText($('#adActive'), fmtLong(tt.active || 0));
   swapText($('#adOpen'), fmtLong(tt.run || 0));
+  const chart = $('#adChart');
+  if (chart._busy) return;
+  $('#adOpenBtn').hidden = adRange === 1;
   $('#adOpenBtn').classList.toggle('on', !!settings.adOpen);
-  let pts, span = '';
+  chart.classList.toggle('activity-day', adRange === 1);
+  chart.classList.toggle('lc', adRange !== 1);
   if (adRange === 1) {
-    // today in detail: every 10 minutes (fixed scale 0–10 min, so a slot can never look longer than it is);
-    // days recorded before 2.19 have hours only (scale 0–60 min)
-    const sa = Array.isArray(a.slotsActive) ? a.slotsActive : [], sr = Array.isArray(a.slotsRun) ? a.slotsRun : [];
-    const fine = sa.some(v => v > 0);
-    const per = fine ? 600 : 3600, n = fine ? 144 : 24;
-    const act = fine ? sa : (Array.isArray(a.hoursActive) ? a.hoursActive : []), run = fine ? sr : (Array.isArray(a.hoursRun) ? a.hoursRun : []);
-    const now = new Date(), cur = fine ? now.getHours() * 6 + Math.floor(now.getMinutes() / 10) : now.getHours();
-    const lab = i => { const m = (i * per) / 60; return `${pad(Math.floor(m / 60) % 24)}:${pad(m % 60)}`; };
-    // the axis covers the working part of the day (from an hour before the first activity to now),
-    // so ten-minute steps are wide enough to read; at least six hours are shown
-    const perH = fine ? 6 : 1;
-    const first = act.findIndex((v, i) => i <= cur && ((v || 0) > 0 || (run[i] || 0) > 0));
-    let s0 = first < 0 ? 0 : Math.max(0, (Math.floor(first / perH) - 1) * perH);
-    if (cur + 1 - s0 < 6 * perH) s0 = Math.max(0, cur + 1 - 6 * perH);
-    const total = fine ? Math.max(cur + 1 - s0, 6 * perH) : 24 - s0;
-    pts = Array.from({ length: cur + 1 - s0 }, (_, k) => {
-      const i = s0 + k;
-      return {
-        v: Math.min(per, act[i] || 0), w: Math.min(per, run[i] || 0), a: lab(i), b: lab(i + 1),
-        tip: `${lab(i)}–${lab(i + 1)} · ${fmtDur(act[i] || 0)}${settings.adOpen && (run[i] || 0) >= 60 ? ` · ${t('adOpenL')} ${fmtDur(run[i])}` : ''}`,
-      };
-    });
-    const on = pts.map((p, k) => (p.v >= (fine ? 30 : 60) ? k : -1)).filter(k => k >= 0);
-    if (on.length) span = t('adSpan')(pts[on[0]].a, pts[on[on.length - 1]].b);
-    // time ticks for whatever part is in view: every 10 / 20 / 30 min … 6 h, about six of them
-    const labels = (v0, v1) => {
-      const m0 = (s0 + v0) * per / 60, m1 = (s0 + v1) * per / 60;
-      const step = [10, 20, 30, 60, 120, 180, 240, 360].find(x => (m1 - m0) / x <= 6) || 360;
-      const out = [];
-      for (let m = Math.ceil(m0 / step) * step; m <= m1; m += step) out.push([m * 60 / per - s0 - 0.5, `${pad(Math.floor(m / 60) % 24)}:${pad(m % 60)}`]);
-      return out;
-    };
-    lineChart($('#adChart'), pts, {
-      slots: total, yMax: per, caption: fine ? t('adPerHour') : t('adPerHourH'), labels, key: `${a.exe}|1`, minSpan: fine ? 6 : 2,
-      smooth: fine ? 1.1 : 0.6, bands: true, open: !!settings.adOpen, // steady work reads as a plateau; open time as bands and a strip
-      // a click takes the whole block of work around it, a drag takes the stretch you marked
-      pick: i => addAppBlock(a, pts, i, fine ? 30 : 60),
-      pickRange: (i, j) => addAppRange(a, pts, i, j),
-    });
+    renderActivityDay(chart, a);
   } else {
     // day by day for the period (the last 90 days for "all time")
     const recent = Array.isArray(a.recent) ? a.recent : [];
     const days = recent.slice(adRange === 7 ? -7 : adRange === 30 ? -30 : -90);
-    pts = days.map(d => ({ v: d.active || 0, w: d.run || 0, tip: `${dayTitle(parseDay(d.day))} · ${fmtDur(d.active || 0)}${settings.adOpen && (d.run || 0) >= 60 ? ` · ${t('adOpenL')} ${fmtDur(d.run)}` : ''}` }));
+    chart._activityKey = null;
+    const pts = days.map(d => ({ v: d.active || 0, w: d.run || 0, tip: `${dayTitle(parseDay(d.day))} · ${fmtDur(d.active || 0)}${settings.adOpen && (d.run || 0) >= 60 ? ` · ${t('adOpenL')} ${fmtDur(d.run)}` : ''}` }));
     const n = days.length, labels = [];
     days.forEach((d, i) => {
       const dt = new Date(parseDay(d.day));
@@ -2340,7 +2325,174 @@ function renderAppDetail() {
     });
     lineChart($('#adChart'), pts, { slots: n, labels, key: `${a.exe}|${adRange}`, open: !!settings.adOpen });
   }
-  $('#adSpan').textContent = span;
+  $('#adSpan').textContent = '';
+}
+
+const ACTIVITY_DAY_END = 86400;
+function mergeActivity(ranges) {
+  const out = [];
+  for (const [start, end] of ranges.filter(r => r[1] > r[0]).sort((a, b) => a[0] - b[0])) {
+    const last = out.at(-1);
+    if (last && start <= last[1]) last[1] = Math.max(last[1], end);
+    else out.push([start, end]);
+  }
+  return out;
+}
+function dayActivity(a, day) {
+  if (a.activityDay && a.activityDay !== day) return { ranges: [], estimated: false };
+  const exact = mergeActivity((a.activity || []).filter(r => Array.isArray(r) && r.length === 2 && r.every(Number.isFinite))
+    .map(([start, end]) => [Math.max(0, start), Math.min(ACTIVITY_DAY_END, end)]));
+  const until = a.activitySince ?? ACTIVITY_DAY_END;
+  const fine = a.slotsActive?.some(v => v > 0);
+  const counts = (fine ? a.slotsActive : a.hoursActive) || [];
+  const step = fine ? 600 : 3600, estimate = [];
+  for (let i = 0; i < counts.length && i * step < until; i++) {
+    const start = i * step, end = start + step;
+    const exactSec = exact.reduce((n, [x, y]) => n + Math.max(0, Math.min(y, end) - Math.max(x, start)), 0);
+    const legacy = Math.max(0, Math.min((counts[i] || 0) - exactSec, until - start, step));
+    if (legacy) estimate.push([start, start + legacy]);
+  }
+  return { ranges: mergeActivity([...estimate, ...exact]), estimated: estimate.length > 0 };
+}
+function activityClock(seconds, precise = false) {
+  const hh = pad(Math.floor(seconds / 3600)), mm = pad(Math.floor(seconds / 60) % 60);
+  return `${hh}:${mm}${precise || seconds % 60 ? ':' + pad(Math.floor(seconds % 60)) : ''}`;
+}
+function parseActivityClock(text) {
+  const m = /^(\d{1,2}):([0-5]\d)(?::([0-5]\d))?$/.exec(text.trim());
+  if (!m) return NaN;
+  const at = +m[1] * 3600 + +m[2] * 60 + +(m[3] || 0);
+  return at <= ACTIVITY_DAY_END ? at : NaN;
+}
+function activityUnlogged(day, ranges, start, end, history) {
+  const d = new Date(parseDay(day));
+  const stamp = sec => new Date(d.getFullYear(), d.getMonth(), d.getDate(), Math.floor(sec / 3600),
+    Math.floor(sec / 60) % 60, sec % 60).getTime();
+  const taken = mergeActivity(history.filter(s => Number.isFinite(s.start) && Number.isFinite(s.end))
+    .map(s => [s.start, s.end]));
+  const result = [];
+  for (const [a, b] of ranges) {
+    if (Math.max(a, start) >= Math.min(b, end)) continue;
+    let cursor = stamp(Math.max(a, start));
+    const stop = stamp(Math.min(b, end));
+    for (const [x, y] of taken) {
+      if (y <= cursor) continue;
+      if (x >= stop) break;
+      if (x > cursor) result.push([cursor, x]);
+      cursor = Math.max(cursor, y);
+    }
+    if (cursor < stop) result.push([cursor, stop]);
+  }
+  return result;
+}
+const activitySeconds = ranges => ranges.reduce((n, [a, b]) => n + Math.round((b - a) / 1000), 0);
+const activityDuration = seconds => seconds < 60 ? `${seconds} ${settings.lang === 'en' ? 's' : 'с'}` : fmtDur(seconds);
+function renderActivityDay(chart, app) {
+  const day = dayKey(Date.now()), key = `${app.exe}|${day}|${settings.lang}`;
+  chart._activity = dayActivity(app, day);
+  if (chart._activityKey !== key) {
+    chart._activityKey = key;
+    chart.innerHTML = `<div class="activity-ruler"><span></span><div>${[0, 6, 12, 18, 24]
+      .map(h => `<span>${activityClock(h * 3600)}</span>`).join('')}</div></div>
+      <div class="activity-grid">
+        <div class="activity-labels"><span>${esc(t('activityOn'))}</span><span>${esc(t('activityOff'))}</span></div>
+        <div class="activity-plot" aria-label="${esc(t('activityRangeHint'))}">
+          <div class="activity-track on"></div><div class="activity-track off"></div><i class="activity-pick" hidden></i>
+        </div>
+      </div>
+      <div class="activity-actions">
+        <label>${esc(t('activityFrom'))} <input class="activity-start" type="text" placeholder="00:00" maxlength="8"></label>
+        <label>${esc(t('activityTo'))} <input class="activity-end" type="text" placeholder="24:00" maxlength="8"></label>
+        <button class="ghost activity-add" disabled>${esc(t('adToHist'))}</button>
+      </div>
+      <div class="activity-note" role="status"></div>`;
+    const plot = chart.querySelector('.activity-plot');
+    const fields = ['.activity-start', '.activity-end'].map(sel => chart.querySelector(sel));
+    const add = chart.querySelector('.activity-add'), selection = chart.querySelector('.activity-pick');
+    const note = chart.querySelector('.activity-note');
+    const bounds = () => fields.map(f => parseActivityClock(f.value));
+    const upcoming = () => activityUnlogged(day, chart._activity.ranges, ...bounds(), sessions);
+    const updateSelection = () => {
+      const [from, to] = bounds();
+      const valid = to > from, seconds = valid ? activitySeconds(upcoming()) : 0;
+      selection.hidden = !valid;
+      if (valid) {
+        selection.style.left = `${from * 100 / ACTIVITY_DAY_END}%`;
+        selection.style.width = `${(to - from) * 100 / ACTIVITY_DAY_END}%`;
+      }
+      add.disabled = !seconds;
+      note.textContent = [valid ? seconds ? t('activitySelection')(activityDuration(seconds)) : t('activityAlreadyLogged')
+        : t('activityRangeHint'), chart._activity.estimated ? t('activityEstimated') : ''].filter(Boolean).join(' · ');
+    };
+    const select = (start, end) => {
+      fields[0].value = activityClock(start);
+      fields[1].value = activityClock(end);
+      updateSelection();
+    };
+    fields.forEach(field => field.addEventListener('input', updateSelection));
+    const secondAt = e => {
+      const r = plot.getBoundingClientRect();
+      return Math.min(ACTIVITY_DAY_END, Math.max(0, Math.round((e.clientX - r.left) / r.width * 1440) * 60));
+    };
+    let drag = null;
+    plot.addEventListener('pointerdown', e => {
+      if (e.button !== 0 || drag) return;
+      drag = { id: e.pointerId, start: secondAt(e) };
+      chart._busy = true;
+      plot.setPointerCapture(e.pointerId);
+    });
+    plot.addEventListener('pointermove', e => {
+      if (drag?.id !== e.pointerId) return;
+      const at = secondAt(e);
+      select(Math.min(at, drag.start), Math.max(at, drag.start));
+    });
+    function endDrag(e) {
+      if (drag?.id !== e.pointerId) return;
+      const start = drag.start, at = secondAt(e);
+      drag = null; chart._busy = false;
+      if (e.type === 'pointercancel' || e.type === 'lostpointercapture') return;
+      if (at !== start) select(Math.min(at, start), Math.max(at, start));
+      else {
+        const block = chart._activity.ranges.find(([a, b]) => start >= a && start < b);
+        if (block) select(...block);
+        else select(Math.min(start, ACTIVITY_DAY_END - 60), Math.min(start + 60, ACTIVITY_DAY_END));
+      }
+    }
+    for (const e of ['pointerup', 'pointercancel', 'lostpointercapture']) plot.addEventListener(e, endDrag);
+    add.addEventListener('click', async () => {
+      const [from, to] = bounds();
+      const reminders = chart._activity.ranges;
+      const unlogged = () => activityUnlogged(day, reminders, from, to, sessions);
+      const seconds = activitySeconds(unlogged());
+      if (!seconds) return;
+      const ok = await confirmModal(app.name, t('adAddQ')(activityDuration(seconds), activityClock(from), activityClock(to)),
+        t('adToHist'), { safe: true });
+      if (!ok) return;
+      const needed = unlogged(), label = cleanName($('#label').value);
+      for (const [start, end] of needed) {
+        const dur = Math.round((end - start) / 1000);
+        if (dur) sessions.push({ id: newId(), start, end, dur, label, full: false, manual: true });
+      }
+      const added = activitySeconds(needed);
+      if (added) {
+        sessions.sort((a, b) => a.start - b.start);
+        persistNow();
+        render();
+        toast(t('adAdded')(activityDuration(added)));
+      }
+      updateSelection();
+    });
+    chart._updateActivitySelection = updateSelection;
+  }
+  const active = chart._activity.ranges, idle = [];
+  let cursor = 0;
+  for (const [a, b] of active) { if (a > cursor) idle.push([cursor, a]); cursor = b; }
+  if (cursor < ACTIVITY_DAY_END) idle.push([cursor, ACTIVITY_DAY_END]);
+  for (const [side, ranges] of [['on', active], ['off', idle]]) {
+    setHTML(chart.querySelector('.activity-track.' + side), ranges.map(([a, b]) =>
+      `<i style="left:${a * 100 / ACTIVITY_DAY_END}%;width:${(b - a) * 100 / ACTIVITY_DAY_END}%"></i>`).join(''));
+  }
+  chart._updateActivitySelection();
 }
 
 function niceMax(sec) {
@@ -2668,42 +2820,6 @@ function lineChart(el, pts, { slots, labels, yMax, pick, pickRange, key = '', mi
   }));
   draw();
 }
-// A stretch marked on today's chart: its active time goes into the history if you agree
-async function addAppRange(a, pts, i, j) {
-  const part = pts.slice(i, j + 1);
-  const dur = part.reduce((x, p) => x + p.v, 0);
-  if (dur < 60) { toast(t('adNothing')); return; }
-  const ok = await confirmModal(a.name, t('adAddQ')(fmtDur(dur), pts[i].a, pts[j].b), t('adToHist'), { safe: true });
-  if (!ok) return;
-  const [h0, m0] = pts[i].a.split(':').map(Number);
-  const d = new Date(); d.setHours(h0, m0, 0, 0);
-  const start = d.getTime();
-  sessions.push({ id: newId(), start, end: start + dur * 1000, dur, label: cleanName($('#label').value), full: false, manual: true });
-  sessions.sort((x, y) => x.start - y.start);
-  persistNow();
-  render();
-  toast(t('adAdded')(fmtDur(dur)));
-}
-// Forgot the timer? A click on today's chart takes the block of work around that point (neighbouring
-// slots with activity) and, if you agree, adds it to the history under the current task.
-async function addAppBlock(a, pts, i, minSec) {
-  if (!pts[i] || pts[i].v < minSec) return;
-  let s = i, e = i;
-  while (s > 0 && pts[s - 1].v >= minSec) s--;
-  while (e < pts.length - 1 && pts[e + 1].v >= minSec) e++;
-  const dur = pts.slice(s, e + 1).reduce((x, p) => x + p.v, 0);
-  if (dur < 60) return;
-  const ok = await confirmModal(a.name, t('adAddQ')(fmtDur(dur), pts[s].a, pts[e].b), t('adToHist'), { safe: true });
-  if (!ok) return;
-  const [h0, m0] = pts[s].a.split(':').map(Number);
-  const d = new Date(); d.setHours(h0, m0, 0, 0);
-  const start = d.getTime();
-  sessions.push({ id: newId(), start, end: start + dur * 1000, dur, label: cleanName($('#label').value), full: false, manual: true });
-  sessions.sort((x, y) => x.start - y.start);
-  persistNow();
-  render();
-  toast(t('adAdded')(fmtDur(dur)));
-}
 function bindAppDetail() {
   $('#appDetail').addEventListener('click', e => {
     if (e.target.id === 'appDetail' || e.target.closest('#adClose')) { closeAppDetail(); return; }
@@ -2825,11 +2941,55 @@ const planList = () => Object.values(settings.plans || {}).filter(p => p && type
 const planDow = key => new Date(parseDay(key)).getDay(); // 0 = Sunday
 // a day can be skipped once (p.skip), without touching the mark of what was already handled (p.last)
 const planOn = (p, key) => (p.date ? p.date === key : Array.isArray(p.days) && p.days.includes(planDow(key)));
-const planOccurs = (p, key) => p.on !== false && planOn(p, key) && !(p.skip || []).includes(key);
+const planSkipped = (p, key) => {
+  const choice = settings.plans?.choices?.[planSeriesId(p, key)];
+  return choice ? choice.skip : (p.skip || []).includes(key);
+};
+const planOccurs = (p, key) => p.on !== false && planOn(p, key) && !planSkipped(p, key);
+function isSkippedRun(id) {
+  const choice = settings.plans?.choices?.[id];
+  if (choice) return choice.skip;
+  const match = /^plan-(.+)-(\d{4}-\d\d-\d\d)$/.exec(id || '');
+  const p = match && settings.plans?.[match[1]];
+  return !!p && (p.skip || []).includes(match[2]);
+}
+function recordPlanChoice(id, skip) {
+  if (!/^plan-.+-\d{4}-\d\d-\d\d$/.test(id || '')) return;
+  const choices = settings.plans?.choices || {};
+  const u = Math.max(Date.now(), (choices[id]?.u || 0) + 1);
+  settings.plans = { v: 1, ...settings.plans, choices: { ...choices, [id]: { skip, u } } };
+  markPlansChanged();
+}
 function skipDay(p, key, on) {
   const today = dayKey(Date.now());
   const s = (p.skip || []).filter(k => k >= today && k !== key);
   p.skip = on ? [...s, key] : s;
+  recordPlanChoice(planSeriesId(p, key), on);
+}
+function changePlanDay(p, key, skip) {
+  skipDay(p, key, skip);
+  if (p.date && skip) delete settings.plans[p.id];
+  persistNow();
+  syncPush();
+  renderPlans();
+  render();
+  armPlan();
+}
+function reconcilePlanChoices() {
+  if (modalPlanId && isSkippedRun(modalPlanId)) closeModal(false);
+  const pending = settings.autoPend;
+  const id = pending?.id || (series?.auto && !series.ack ? series.id : null);
+  if (!id || !isSkippedRun(id)) return;
+  settings.autoPend = null;
+  if (series?.id === id && series.ack) { persist(); return; }
+  sessions = sessions.filter(s => s.series !== id);
+  if (series?.id === id && series.auto && !series.ack) {
+    series = null;
+    seriesPos = '';
+    setPhase('work');
+    api.closeAlert();
+  }
+  persist();
 }
 function planStart(p, key) {
   const [h, m] = p.time.split(':').map(Number);
@@ -2850,11 +3010,12 @@ function planRange(p, at = planStart(p, dayKey(Date.now()))) {
 function savePlans() {
   settings.plans = settings.plans || {};
   settings.plans.v = 1;
+  markPlansChanged();
   persist();
 }
 function putPlan(p) {
   settings.plans = { v: 1, ...(settings.plans || {}), [p.id]: p };
-  persist();
+  savePlans();
   renderPlans();
   render();
 }
@@ -2886,10 +3047,12 @@ const planCountText = p => (planCount(p) > 0 ? t('seriesN')(planCount(p)) : t('e
 
 // Called from tick (about every 2 s), at start and after sync: starts what is due
 let planChecked = 0, planArmed = 0, planArmedSent = 0, planAsked = false;
+const waitForPlanSyncUntil = Date.now() + 12000;
 function planTick(force) {
   const now = Date.now();
   if (!force && now - planChecked < 2000) return;
   planChecked = now;
+  if (account && !syncLoaded && now < waitForPlanSyncUntil) return;
   const today = dayKey(now);
   let changed = false;
   const missed = [];
@@ -2934,10 +3097,14 @@ function startPlan(p, at, id, fresh) {
 // A planned block passed while no device was on: count it only if you say so
 async function askMissed(list) {
   planAsked = true;
+  await checkCloudBeforePlanPrompt();
   for (const { p, at, id } of list) {
+    if (isSkippedRun(id)) continue;
     const n = planCount(p);
-    const ok = await confirmModal(t('planMissedQ'), t('planMissedText')(p.time, planCountText(p), fmtDur(n * planWork(p) / 1000)), t('planMissedYes'), { safe: true, cancel: t('planMissedNo') });
-    if (!ok) continue;
+    const ok = await confirmModal(t('planMissedQ'), t('planMissedText')(p.time, planCountText(p), fmtDur(n * planWork(p) / 1000)), t('planMissedYes'),
+      { safe: true, cancel: t('planMissedNo'), planId: id });
+    if (isSkippedRun(id)) continue;
+    if (!ok) { recordPlanChoice(id, true); persistNow(); syncPush(); continue; }
     for (let k = 0; k < n; k++) {
       const start = seriesWorkStart({ start: at, work: planWork(p), brk: planBrk(p), ...longOf() }, k);
       const one = { start, end: start + planWork(p), dur: Math.round(planWork(p) / 1000), label: p.label || '', full: true, series: id };
@@ -2956,7 +3123,7 @@ async function askMissed(list) {
 let autoAsking = false;
 function autoWatch() {
   const pd = settings.autoPend;
-  if (series && series.auto && !series.ack && (!pd || pd.id !== series.id)) {
+  if (series && series.auto && !series.ack && !isSkippedRun(series.id) && (!pd || pd.id !== series.id)) {
     settings.autoPend = { id: series.id, start: series.start };
     persist();
   } else if (pd && ((series && series.id === pd.id && series.ack) || Date.now() - pd.start > 3 * 86400e3)) {
@@ -2972,23 +3139,29 @@ function autoAck() {
 }
 async function autoPresent() {
   const pd = settings.autoPend;
-  if (!pd || autoAsking) return;
+  if (!pd || autoAsking || isSkippedRun(pd.id) || (account && !syncLoaded && Date.now() < waitForPlanSyncUntil)) return;
   if (Date.now() - pd.start < 5 * 60000) { autoAck(); return; } // here when it started
   autoAsking = true;
+  await checkCloudBeforePlanPrompt();
+  if (isSkippedRun(pd.id) || settings.autoPend?.id !== pd.id) { autoAsking = false; return; }
   const running = series && series.id === pd.id;
-  const ok = await confirmModal(t('autoQ')(hm(pd.start)), t(running ? 'autoText' : 'autoTextDone'), t('autoYes'), { safe: true, cancel: t('autoNo') });
+  const ok = await confirmModal(t('autoQ')(hm(pd.start)), t(running ? 'autoText' : 'autoTextDone'), t('autoYes'),
+    { safe: true, cancel: t('autoNo'), planId: pd.id });
   autoAsking = false;
+  if (isSkippedRun(pd.id)) return;
   if (ok) { autoAck(); return; }
   const now = Date.now();
   sessions = sessions.filter(s => !(s.series === pd.id && s.start < now)); // nothing logged while you were away
   settings.autoPend = null;
+  recordPlanChoice(pd.id, true);
   if (series && series.id === pd.id) {
-    series = { ...series, start: now, logged: 0, pausedAt: 0, ack: 1 };
+    series = { ...series, id: newId(), start: now, logged: 0, pausedAt: 0, auto: 0, ack: 1 };
     seriesPos = '';
     applySeries(true);
     toast(t('autoAgain')(hm(now)), t('autoStop'), () => stopSeries());
   }
   persistNow();
+  syncPush();
   renderStats();
   render();
 }
@@ -3063,7 +3236,7 @@ function renderPlans() {
   setHTML(box, list.length ? list.map(p => {
     const st = planStart(p, today), end = planEndAt(p, st);
     const nx = p.on === false ? null : nextOf(p);
-    const skippedToday = p.on !== false && !p.date && (p.skip || []).includes(today) && planOn(p, today) && planStart(p, today) > Date.now();
+    const skippedToday = p.on !== false && !p.date && planSkipped(p, today) && planOn(p, today) && planStart(p, today) > Date.now();
     // a one-off plan has nothing to skip: its key removes it
     const act = p.date ? `<button class="plan-skip plan-rm" data-act="skip">${esc(t('planRemove'))}</button>`
       : skippedToday ? `<button class="plan-skip" data-act="unskip">${esc(t('skippedToday'))}</button>`
@@ -3184,8 +3357,8 @@ function bindPlans() {
     if (!p) return;
     if (e.target.closest('[data-act="onoff"]')) { p.on = p.on === false; savePlans(); renderPlans(); render(); return; }
     const sk = e.target.closest('[data-act="skip"]');
-    if (sk) { if (p.date) dropPlan(p.id); else { skipDay(p, sk.dataset.k, true); savePlans(); renderPlans(); render(); } return; }
-    if (e.target.closest('[data-act="unskip"]')) { skipDay(p, dayKey(Date.now()), false); savePlans(); renderPlans(); render(); return; }
+    if (sk) { changePlanDay(p, p.date || sk.dataset.k, true); return; }
+    if (e.target.closest('[data-act="unskip"]')) { changePlanDay(p, dayKey(Date.now()), false); return; }
     openPlanEdit(p);
   });
   const step = (k, d) => {
@@ -3338,8 +3511,8 @@ function closePlanPanel() { planOpen = false; $('#planPanel').hidden = true; }
 function cancelNext() {
   const n = nextPlan();
   if (!n) return;
-  if (n.p.date) dropPlan(n.p.id);
-  else { skipDay(n.p, n.key, true); savePlans(); renderPlans(); render(); toast(t('planSkipped')(planWhenText(n))); }
+  changePlanDay(n.p, n.key, true);
+  toast(t('planSkipped')(planWhenText(n)));
 }
 // Little reactions to presses (phone): restart a CSS animation on the pressed thing.
 // Theme change: the new theme spreads from the pressed button as a growing circle
@@ -3649,22 +3822,74 @@ function avatar(name, exe, icon) {
    After five minutes of active work in one of your programs (short pauses don't count) while the
    timer stands, a small window asks whether to start it. Once per stretch of work: no reply or
    "Not now" waits until you leave that program for a while. */
-let appOfferAt = 0, appOfferOpen = false;
-async function checkAppOffer() {
-  if (ANDROID || api.web || !api.appsNow || settings.appOffer === false) return;
-  if (series || timer.running || !isUntouched() || timer.phase !== 'work' || appOfferOpen) return;
-  let n;
-  try { n = await api.appsNow(); } catch { return; }
-  if (!n || !(n.streak >= 300) || !n.since) return;
-  if (Math.abs(n.since - appOfferAt) < 3 * 60000) return; // this stretch was offered already
-  appOfferAt = n.since;
-  appOfferOpen = true;
-  setTimeout(() => { appOfferOpen = false; }, 120000); // a window closed without a reply does not block the next stretch
-  api.showAlert({
-    next: 'work', title: t('offerTitle')(n.name), body: t('offerBody'),
-    goLabel: t('offerGo'), okLabel: t('offerLater'), sound: false, repeatSec: 0,
-    theme: effectiveTheme(), lang: settings.lang,
+let appOffer = null, appOfferChecking = false, offerPrograms = [];
+const appOfferEligible = () => settings.appOffer !== false && !series && !timer.running &&
+  isUntouched() && timer.phase === 'work';
+const mutedOffers = () => settings.appOfferMuted || {};
+const offerMuted = exe => Object.hasOwn(mutedOffers(), exe);
+function setOfferMuted(exe, name, muted) {
+  const programs = { ...mutedOffers() };
+  if (muted) Object.defineProperty(programs, exe, { value: name, enumerable: true });
+  else delete programs[exe];
+  settings.appOfferMuted = programs;
+  persistNow();
+  renderAppOfferPrograms();
+}
+function renderAppOfferPrograms() {
+  const programs = new Map(Object.entries(mutedOffers()));
+  for (const a of offerPrograms) programs.set(a.exe, a.name || a.exe);
+  const rows = [...programs].sort((a, b) => a[1].localeCompare(b[1], settings.lang));
+  setHTML($('#offerProgramList'), rows.length ? rows.map(([exe, name]) =>
+    `<label class="set offer-program"><span>${esc(name)}</span><input type="checkbox" data-offer-exe="${esc(exe)}"
+       aria-label="${esc(t('offerPrograms') + ' · ' + name)}"${offerMuted(exe) ? '' : ' checked'}></label>`).join('')
+    : `<div class="set-desc">${esc(t('offerNoPrograms'))}</div>`);
+}
+function bindAppOffers() {
+  if (ANDROID || api.web) return;
+  $('#offerPrograms').addEventListener('toggle', async e => {
+    if (!e.currentTarget.open) return;
+    try { offerPrograms = (await api.appsStats()) || []; } catch {}
+    renderAppOfferPrograms();
   });
+  $('#offerProgramList').addEventListener('change', e => {
+    const exe = e.target.dataset.offerExe;
+    if (!exe) return;
+    const name = offerPrograms.find(p => p.exe === exe)?.name || mutedOffers()[exe] || exe;
+    setOfferMuted(exe, name, !e.target.checked);
+  });
+}
+async function checkAppOffer() {
+  if (ANDROID || api.web || !api.appsNow || !appOfferEligible() || appOffer || appOfferChecking) return;
+  appOfferChecking = true;
+  try {
+    const n = await api.appsNow();
+    if (!appOfferEligible() || appOffer || !n?.exe || !(n.streak >= 300) || offerMuted(n.exe)) return;
+    const day = dayKey(Date.now());
+    const dayRecord = settings.appOfferShown;
+    const shown = dayRecord?.day === day && Array.isArray(dayRecord.exes) ? dayRecord.exes : [];
+    if (shown.includes(n.exe)) return;
+    const id = newId();
+    const offer = { id, exe: n.exe, name: n.name || n.exe };
+    appOffer = offer;
+    settings.appOfferShown = { day, exes: [...shown, n.exe] };
+    persistNow();
+    setTimeout(() => { if (appOffer === offer) appOffer = null; }, 125000);
+    api.showAlert({
+      offerId: id, muteLabel: t('offerMute'), next: 'work', title: t('offerTitle')(offer.name), body: t('offerBody'),
+      goLabel: t('offerGo'), okLabel: t('offerTodayOff'), sound: false, repeatSec: 0,
+      theme: effectiveTheme(), lang: settings.lang,
+    });
+  } catch {} finally { appOfferChecking = false; }
+}
+function handleAppOffer(action) {
+  if (typeof action !== 'string' || !action.startsWith('offer:')) return false;
+  const [, id, choice] = action.split(':');
+  if (!appOffer || appOffer.id !== id) return true;
+  const { exe, name } = appOffer;
+  appOffer = null;
+  if (choice === 'mute') setOfferMuted(exe, name, true);
+  if (choice === 'start' && appOfferEligible()) toggle();
+  return true;
 }
 async function loadApps() {
   // the phone does not track programs: it shows what the PC sent through sync
@@ -4090,6 +4315,7 @@ function bind() {
   });
   setInterval(() => { if (view === 'apps') loadApps(); }, 10000);
   setInterval(checkAppOffer, 20000);
+  bindAppOffers();
 
   // Launch with Windows
   $('#autostartToggle').addEventListener('click', async () => {
@@ -4196,9 +4422,9 @@ function bind() {
   window.addEventListener('resize', () => { cancelAnimationFrame(fitT); fitT = requestAnimationFrame(() => { fitTimer(); fitTabs(); }); });
 
   api.onAlertAction(action => {
+    if (handleAppOffer(action)) return;
     if (settings.autoPend && Date.now() - settings.autoPend.start < 10 * 60000) autoAck(); // answered the start alert: you were there
     if (alertIsTest) { alertIsTest = false; return; }
-    if (appOfferOpen) { appOfferOpen = false; if (action === 'start' && !series && !timer.running) toggle(); return; } // "start the timer?" from a program
     if (action !== 'start') return;
     tick(); // a phase that ran out while the app slept is completed first
     if (!timer.running) start();

@@ -2376,6 +2376,25 @@ html.android .hint-card { bottom: calc(86px + env(safe-area-inset-bottom, 0px));
 .lc-plot.selecting { cursor: col-resize; }
 .lc-plot.selecting .lc-sel { background: rgba(111, 107, 255, .28); box-shadow: inset 0 0 0 1.5px rgba(138, 92, 255, .7); }
 
+.ad-chart.activity-day { display: block; height: auto; overflow: visible; font-variant-numeric: tabular-nums; }
+.activity-ruler, .activity-grid { display: grid; grid-template-columns: minmax(65px, max-content) minmax(0,1fr); gap: 8px; }
+.activity-ruler { color: var(--text-2); font-size: 11px; margin-bottom: 5px; }
+.activity-ruler > div { display: flex; justify-content: space-between; }
+.activity-labels { display: grid; grid-template-rows: 1fr 1fr; gap: 4px; font-size: 11px; color: var(--text-2); }
+.activity-labels span { display: flex; align-items: center; overflow-wrap: anywhere; }
+.activity-plot { position: relative; display: grid; gap: 4px; cursor: col-resize; touch-action: none; user-select: none; }
+.activity-track { position: relative; height: 22px; border-radius: 4px; background: var(--hover); overflow: hidden; }
+.activity-track i { position: absolute; top: 0; bottom: 0; }
+.activity-track.on i { background: #725cef; }
+.activity-track.off i { background: var(--text-2); opacity: .22; }
+.activity-pick { position: absolute; top: 0; bottom: 0; border: 2px solid #8c75ff; border-radius: 3px; background: #8c75ff22; pointer-events: none; }
+.activity-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 12px; }
+.activity-actions label { font-size: 12px; display: flex; align-items: center; gap: 5px; color: var(--text-2); }
+.activity-actions input { width: 77px; height: 32px; padding: 0 5px; border-radius: 5px; border: 1px solid var(--border); background: transparent; color: var(--text); font: inherit; }
+.activity-actions button { margin-left: auto; min-height: 32px; }
+.activity-actions button:disabled { opacity: .45; cursor: default; }
+.activity-note { min-height: 2.5em; margin-top: 8px; font-size: 12px; line-height: 1.35; color: var(--text-2); }
+
 /* ---------- 2.19.5: the phone's timer page, calmer ----------
    Not a stack of boxes: the task is the page's title (plain text), the wheels, then one quiet line of
    text controls (sessions, ∞, start time) with no fills, and the gradient key as the only solid thing. */
@@ -2400,3 +2419,7 @@ html.android #view-timer .controls { margin-top: 30px; }
 html.android .dial-unit { font-size: 13px; color: var(--text-3); }
 /* fewer small captions: a row with a − value + speaks for itself */
 #view-settings .set:has(> .stepper) .set-desc { display: none; }
+#offerPrograms { padding: 8px 0 8px 42px; }
+#offerPrograms summary, .offer-program input { cursor: pointer; }
+#offerProgramList { margin-top: 6px; }
+#offerProgramList .offer-program { justify-content: space-between; gap: 12px; }

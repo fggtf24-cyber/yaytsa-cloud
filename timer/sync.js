@@ -85,6 +85,47 @@ const unKey = k => { try { return decodeURIComponent(k); } catch { return k; } }
 const sessCore = s => ({ start: s.start, end: s.end, dur: s.dur, label: s.label || '', full: !!s.full, ...(s.manual ? { manual: true } : {}), ...(s.series ? { series: s.series } : {}) });
 const projCore = p => ({ name: p.name || '', deadline: p.deadline || '', hidden: !!p.hidden, created: p.created || 0 });
 const setCore = () => Object.fromEntries(SYNC_SETTINGS.map(k => [k, settings[k]]));
+let cloudPlans = {}, settingsPollT = null, settingsRetryAt = 0;
+function markPlansChanged() {
+  settings.uk ||= {};
+  settings.uk.plans = Math.max(Date.now(), (Number(settings.uk.plans) || 0) + 1);
+}
+function mergePlanChoices(local, remote) {
+  const merged = {};
+  for (const choices of [remote, local]) {
+    for (const [id, choice] of Object.entries(choices || {})) {
+      if (!/^plan-[\w-]+-\d{4}-\d\d-\d\d$/.test(id) || typeof choice?.skip !== 'boolean' || !Number.isFinite(choice.u)) continue;
+      const prev = merged[id];
+      if (!prev || choice.u > prev.u || (choice.u === prev.u && choice.skip)) merged[id] = choice;
+    }
+  }
+  return merged;
+}
+function planChoices(plans) {
+  const legacy = {};
+  for (const plan of Object.values(plans || {})) {
+    if (!plan?.id || !Array.isArray(plan.skip)) continue;
+    for (const day of plan.skip) legacy[`plan-${plan.id}-${day}`] = { skip: true, u: 0 };
+  }
+  return mergePlanChoices(plans?.choices, legacy);
+}
+function settingsPatch(value, legacy = false) {
+  const patch = {};
+  for (const [key, val] of Object.entries(value)) {
+    if (val === undefined || (legacy && ['plans', 'uk', 'goalWeek'].includes(key))) continue;
+    if (key !== 'plans') { patch[`set/${key}`] = val; continue; }
+    const plans = val || {};
+    const keys = new Set([...Object.keys(cloudPlans), ...Object.keys(plans)]);
+    keys.delete('choices');
+    for (const id of keys) {
+      if (/^[\w-]+$/.test(id) && sig(cloudPlans[id]) !== sig(plans[id])) patch[`set/plans/${id}`] = plans[id] ?? null;
+    }
+    for (const [id, choice] of Object.entries(mergePlanChoices(plans.choices))) {
+      if (sig(cloudPlans.choices?.[id]) !== sig(choice)) patch[`set/plans/choices/${id}`] = choice;
+    }
+  }
+  return patch;
+}
 
 async function post(url, body, form) {
   const r = await fetch(url, {
@@ -184,6 +225,9 @@ async function onAuthResult(r) {
 function syncReset() {
   syncSent = { s: {}, p: {}, set: '' };
   syncLoaded = false;
+  cloudPlans = {};
+  settingsRetryAt = 0;
+  clearTimeout(settingsPollT);
   tSent = ''; tU = 0;
 }
 
@@ -252,7 +296,7 @@ function onRemote(kind, path, data) {
   const seg = String(path || '/').split('/').filter(Boolean);
   if (kind === 'patch') Object.entries(data || {}).forEach(([k, v]) => applyAt(seg.concat(k.split('/').filter(Boolean)), v, false));
   else applyAt(seg, data, true);
-  syncStatus = 'ok';
+  syncStatus = settingsRetryAt ? 'denied' : 'ok';
   syncAt = Date.now();
   clearTimeout(uiT);
   uiT = setTimeout(afterRemote, 120);
@@ -268,7 +312,11 @@ function applyAt(seg, v, full) {
   if (kind === 't') { if (!key) applyRemoteTimer(v); else syncConnect(); return; }
   if (kind === 'apps') { applyRemoteApps(seg.length === 1 ? v : null); return; }
   if (!['s', 'p', 'set'].includes(kind)) return;
-  if (kind === 'set') { if (!key) applySettings(v); else syncConnect(); return; }
+  if (kind === 'set') {
+    if (!key) applySettings(v);
+    else { clearTimeout(settingsPollT); settingsPollT = setTimeout(pollSettings, 120); }
+    return;
+  }
   if (!key) { Object.entries(v || {}).forEach(([k, x]) => applyItem(kind, k, x)); return; }
   if (rest.length) { syncConnect(); return; } // a partial item: we never write those, reload everything
   applyItem(kind, key, v);
@@ -350,6 +398,8 @@ function applySettings(v) {
   if (!v || typeof v !== 'object') return;
   const ru = Number(v.u) || 0;
   const ruk = v.uk && typeof v.uk === 'object' ? v.uk : {};
+  cloudPlans = v.plans && typeof v.plans === 'object' ? v.plans : {};
+  const choices = mergePlanChoices(planChoices(settings.plans), planChoices(cloudPlans));
   settings.uk = settings.uk || {};
   syncSent.sv = syncSent.sv || {};
   let changed = false, langChanged = false, behind = false;
@@ -358,19 +408,26 @@ function applySettings(v) {
     const rT = Number(ruk[k]) || ru, lT = Number(settings.uk[k]) || settings.u || 0;
     if (rT > lT) {
       if (sig(settings[k]) !== sig(v[k])) { if (k === 'lang') langChanged = true; changed = true; }
-      settings[k] = v[k];
+      settings[k] = k === 'plans' && v[k] ? JSON.parse(JSON.stringify(v[k])) : v[k];
       settings.uk[k] = rT;
       syncSent.sv[k] = sig(v[k]);
     } else if (sig(settings[k]) === sig(v[k])) syncSent.sv[k] = sig(v[k]);
     else behind = true; // ours is newer: it goes up with the next push
   }
+  if (Object.keys(choices).length) {
+    const merged = { v: 1, ...settings.plans, choices };
+    if (sig(settings.plans) !== sig(merged)) changed = true;
+    settings.plans = merged;
+    behind ||= sig(choices) !== sig(cloudPlans.choices);
+  }
   settings.u = Math.max(settings.u || 0, ru);
   if (langChanged) applyI18n();
-  if (!behind) syncSent.set = sig(setCore());
+  syncSent.set = behind ? '' : sig(setCore());
   if (changed) remoteChanged++;
 }
 
 function afterRemote() {
+  if (typeof reconcilePlanChoices === 'function') reconcilePlanChoices();
   if (typeof planTick === 'function') { planTick(true); renderPlans(); }
   if (dedupeSessions()) remoteChanged++;
   sessions.sort((a, b) => a.start - b.start);
@@ -390,12 +447,9 @@ function afterRemote() {
 function syncSchedule() {
   if (!account) return;
   clearTimeout(pushT);
-  pushT = setTimeout(syncPush, 600);
+  pushT = setTimeout(syncPush, Math.max(600, settingsRetryAt - Date.now()));
 }
 
-// settings as versions before 2.19 wrote them (no plans, no per-setting times)
-let setLegacy = false;
-const legacySet = s => { const o = { ...s }; delete o.uk; delete o.plans; delete o.goalWeek; return o; };
 async function syncPush() {
   if (!account || !syncLoaded) return;
   if (pushing) { pushAgain = true; return; }
@@ -427,17 +481,22 @@ async function syncPush() {
     up[`p/${dbKey(k)}`] = { del: 1, u: now };
     marks.push(['p', k, '-' + now]);
   }
-  const sg = sig(setCore());
-  if (syncSent.set !== sg) {
+  const core = setCore(), sg = sig(core);
+  let outgoingSettings = null;
+  if (syncSent.set !== sg && now >= settingsRetryAt) {
     if (!settings.u || syncSent.set) settings.u = now;
     // stamp only the settings that changed here since they were last in the cloud
     settings.uk = settings.uk || {};
     syncSent.sv = syncSent.sv || {};
     for (const k of SYNC_SETTINGS) {
       const g = sig(settings[k]);
-      if (syncSent.sv[k] !== g) { settings.uk[k] = now; syncSent.sv[k] = g; }
+      if (syncSent.sv[k] !== g) {
+        if (k === 'plans') settings.uk.plans ||= now;
+        else settings.uk[k] = now;
+      }
     }
-    up.set = { ...setCore(), u: settings.u, uk: settings.uk };
+    outgoingSettings = { ...core, u: settings.u, uk: { ...settings.uk } };
+    Object.assign(up, settingsPatch(outgoingSettings));
     marks.push(['set', '', sg]);
   }
   if (!marks.length) return;
@@ -448,21 +507,27 @@ async function syncPush() {
     const patch = body => fetch(`${SYNC.db}/timer/${account.uid}.json?auth=${encodeURIComponent(tok)}`, {
       method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
     });
-    let r = await patch(setLegacy && up.set ? { ...up, set: legacySet(up.set) } : up);
-    // new settings fields turned down by the cloud must never hold back the history: the plain form goes
-    if (!r.ok && up.set && !setLegacy && r.status >= 400 && r.status < 500) {
+    let r = await patch(up), settingsWritten = !!outgoingSettings;
+    // Preserve the pending plan change when the server only accepts the old settings shape.
+    if (!r.ok && outgoingSettings && r.status >= 400 && r.status < 500) {
       syncLog('push', `HTTP ${r.status}, sending settings in the plain form`);
-      r = await patch({ ...up, set: legacySet(up.set) });
-      if (r.ok) setLegacy = true;
+      const records = Object.fromEntries(Object.entries(up).filter(([key]) => !key.startsWith('set/')));
+      r = await patch({ ...records, ...settingsPatch(outgoingSettings, true) });
+      if (r.ok) { settingsWritten = false; settingsRetryAt = Date.now() + 30000; }
     }
     if (r.ok) syncLog('push', 'ok'); else syncLog('push', `HTTP ${r.status}`);
     if (r.status === 401 || r.status === 403) { syncStatus = 'denied'; throw new Error('denied'); }
     if (r.status === 404) { syncStatus = 'nodb'; throw new Error('nodb'); }
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     for (const [kind, k, g] of marks) {
-      if (kind === 'set') syncSent.set = g; else syncSent[kind][k] = g;
+      if (kind !== 'set') syncSent[kind][k] = g;
+      else if (settingsWritten) {
+        syncSent.set = g;
+        syncSent.sv = Object.fromEntries(SYNC_SETTINGS.map(key => [key, sig(outgoingSettings[key])]));
+        settingsRetryAt = 0;
+      }
     }
-    syncStatus = 'ok';
+    syncStatus = settingsRetryAt ? 'denied' : 'ok';
     syncAt = Date.now();
     persist();
   } catch (e) {
@@ -540,9 +605,27 @@ async function pollTimer() {
     syncConnect();
   } catch {}
 }
+async function pollSettings() {
+  const user = account;
+  if (!user) return;
+  try {
+    const tok = await idToken();
+    const r = await fetch(`${SYNC.db}/timer/${user.uid}/set.json?auth=${encodeURIComponent(tok)}`);
+    if (!r.ok || account !== user) return;
+    const value = await r.json();
+    if (!value || account !== user) return;
+    applySettings(value);
+    afterRemote();
+  } catch {}
+}
+function checkCloudBeforePlanPrompt() {
+  if (!account || !syncLoaded) return Promise.resolve();
+  return Promise.race([pollSettings(), new Promise(resolve => setTimeout(resolve, 2500))]);
+}
 function applyRemoteTimer(v) {
   if (!v || typeof v !== 'object' || (Number(v.u) || 0) <= tU) return;
   if (v.phase !== 'work' && v.phase !== 'break') return;
+  if (v.series?.auto && !v.series.ack && typeof isSkippedRun === 'function' && isSkippedRun(v.series.id)) return;
   const now = Date.now();
   // A phase that ran out long ago (the other device was closed): its end is not news.
   if (v.running && v.endAt < now - 60000 && !v.series) return;
@@ -579,11 +662,11 @@ function applyRemoteTimer(v) {
 let appsRemote = null, appsSent = '', appsSentAt = 0;
 function syncApps(list) {
   if (ANDROID || api.web || !account || !syncLoaded || !Array.isArray(list)) return;
-  const g = sig(list.map(a => [a.exe, a.name, Math.round(a.total.run / 60), Math.round(a.total.active / 60), (a.icon || '').length, dayKey(Date.now())]));
+  const g = sig(list.map(a => [a.exe, a.name, Math.round(a.total.run / 60), Math.round(a.total.active / 60), (a.icon || '').length, a.activity, dayKey(Date.now())]));
   if (g === appsSent || Date.now() - appsSentAt < 60000) return; // at most once a minute, only when it changed
   appsSent = g;
   appsSentAt = Date.now();
-  const body = { u: Date.now(), list: list.map(a => ({ exe: a.exe, name: a.name, icon: a.icon || '', today: a.today, week: a.week, month: a.month, quarter: a.quarter, total: a.total, recent: a.recent || [], hoursRun: a.hoursRun || [], hoursActive: a.hoursActive || [], slotsRun: a.slotsRun || [], slotsActive: a.slotsActive || [], hoursDay: dayKey(Date.now()) })) };
+  const body = { u: Date.now(), list: list.map(a => ({ exe: a.exe, name: a.name, icon: a.icon || '', today: a.today, week: a.week, month: a.month, quarter: a.quarter, total: a.total, recent: a.recent || [], hoursRun: a.hoursRun || [], hoursActive: a.hoursActive || [], slotsRun: a.slotsRun || [], slotsActive: a.slotsActive || [], activity: a.activity || [], ...(a.activitySince != null ? { activitySince: a.activitySince } : {}), activityDay: a.activityDay || dayKey(Date.now()), hoursDay: dayKey(Date.now()) })) };
   idToken().then(tok => fetch(`${SYNC.db}/timer/${account.uid}/apps.json?auth=${encodeURIComponent(tok)}`, {
     method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
   })).catch(() => { appsSent = ''; });
@@ -600,7 +683,7 @@ function applyRemoteApps(v) {
       const idx = rec.findIndex(d => d.day === today);
       a.today = idx >= 0 ? rec[idx] : { run: 0, active: 0 };
     }
-    if (a.hoursDay !== today) { a.hoursRun = []; a.hoursActive = []; a.slotsRun = []; a.slotsActive = []; } // the hours are of another day
+    if (a.hoursDay !== today) { a.hoursRun = []; a.hoursActive = []; a.slotsRun = []; a.slotsActive = []; a.activity = []; } // the hours are of another day
     a.week = a.week || sum(7);
     a.month = a.month || sum(30);
   });
@@ -726,6 +809,7 @@ function syncInit(data) {
   const watch = () => {
     if (!account || !syncLoaded || document.hidden) return;
     pollTimer();
+    pollSettings();
   };
   setInterval(watch, 30000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) watch(); });
