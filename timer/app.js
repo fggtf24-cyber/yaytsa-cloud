@@ -80,8 +80,9 @@ scale: 'Масштаб', appsPickTitle: 'Добавить программу', a
     stopHint: 'Стоп — заход от 10 минут сохранится', goalWeek: 'Цель на неделю', goalWeekDesc: 'Часов работы за неделю (с понедельника)', goalWeekL: 'Цель на неделю',
     pWeekL7: '7 дней', editEntry: 'Изменить запись', saveL: 'Сохранить', edited: 'Запись изменена', newProjOnly: 'Такого проекта нет. Откройте список ▾ и нажмите «Создать новый проект»', newProjBtn: 'Создать новый проект', createNamed: n => `Создать «${n}»`, newProjPh: 'Название нового проекта', projCreated: n => `Проект «${n}» создан`,
     adPerHour: 'активных минут в каждые 10 минут', adPerDay: 'активных часов в день', adToHist: 'В историю', adAddQ: (d, a, b) => `Добавить ${d} работы (${a}–${b}) в историю?`, adAdded: d => `Добавлено: ${d}`,
+    activityDays: 'Дни', activityOlder: 'Раньше', activityNewer: 'Позже', activityUnknown: 'Есть итог за день, но точное время не сохранилось.',
     activityOn: 'Работал', activityOff: 'Не работал', activityFrom: 'С', activityTo: 'До',
-    activityRangeHint: 'Выделите отрезок или введите время до секунды. Засчитается только активная работа.',
+    activityRangeHint: 'Выделите отрезок или введите время.',
     activityEstimated: 'Старые данные о времени внутри интервалов приблизительны.',
     activityAlreadyLogged: 'В этом отрезке нет незаписанной работы',
     activitySelection: d => `К записи · ${d}`,
@@ -188,8 +189,9 @@ scale: 'Zoom', appsPickTitle: 'Add a program', appsSearchPh: 'Search programs on
     stopHint: 'Stop: a session of 10 minutes or more is kept', goalWeek: 'Weekly goal', goalWeekDesc: 'Hours of work per week (from Monday)', goalWeekL: 'This week’s goal',
     pWeekL7: '7 days', editEntry: 'Edit entry', saveL: 'Save', edited: 'Entry changed', newProjOnly: 'No such project. Open the list ▾ and press “Create a new project”', newProjBtn: 'Create a new project', createNamed: n => `Create “${n}”`, newProjPh: 'New project name', projCreated: n => `Project “${n}” created`,
     adPerHour: 'active minutes in every 10 minutes', adPerDay: 'active hours per day', adToHist: 'To history', adAddQ: (d, a, b) => `Add ${d} of work (${a}–${b}) to your history?`, adAdded: d => `Added: ${d}`,
+    activityDays: 'Days', activityOlder: 'Earlier', activityNewer: 'Later', activityUnknown: 'The daily total is available. The exact times were not recorded.',
     activityOn: 'Working', activityOff: 'Not working', activityFrom: 'From', activityTo: 'To',
-    activityRangeHint: 'Drag a range or type the times down to the second. Only active work is added.',
+    activityRangeHint: 'Drag to select or enter the times.',
     activityEstimated: 'Work times within older intervals are approximate.',
     activityAlreadyLogged: 'No unlogged work in this range',
     activitySelection: d => `To add · ${d}`,
@@ -2283,52 +2285,93 @@ function bindTimeSheet() {
   $('#tsExtra').addEventListener('click', () => { closeTimeSheet(); if (tsExtra) tsExtra.fn(); });
   $('#timeSheet').addEventListener('click', e => { if (e.target.id === 'timeSheet') closeTimeSheet(); });
 }
-/* ---------- One program in detail: open vs active time for a period, day by day ---------- */
-let adExe = null, adRange = 7;
+
+/* ---------- Program activity by day ---------- */
+let adExe = null, adRange = 1, adDay = null, adPage = 0;
 function openAppDetail(exe) {
   if (!appStats.some(a => a.exe === exe)) return;
   adExe = exe;
-  hintCount('appDetail');
-  adRange = 1; // always open the full-day activity view
+  adRange = 1;
+  adDay = null;
+  adPage = 0;
+  $('#adDayChart')._activityKey = null;
   renderAppDetail();
   $('#appDetail').hidden = false;
 }
 function closeAppDetail() { $('#appDetail').hidden = true; adExe = null; }
 function renderAppDetail() {
-  const a = appStats.find(x => x.exe === adExe);
-  if (!a) { closeAppDetail(); return; }
-  $('#adIco').innerHTML = avatar(a.name, a.exe, a.icon);
-  $('#adName').textContent = a.name;
+  const app = appStats.find(a => a.exe === adExe);
+  if (!app) { closeAppDetail(); return; }
+  const editor = $('#adDayChart');
+  if (editor._busy) return;
+  $('#adIco').innerHTML = avatar(app.name, app.exe, app.icon);
+  $('#adName').textContent = app.name;
   $$('#adRange button').forEach(b => b.classList.toggle('on', Number(b.dataset.r) === adRange));
-  const tt = appTimes(a, adRange);
-  swapText($('#adActive'), fmtLong(tt.active || 0));
-  swapText($('#adOpen'), fmtLong(tt.run || 0));
-  const chart = $('#adChart');
-  if (chart._busy) return;
-  $('#adOpenBtn').hidden = adRange === 1;
-  $('#adOpenBtn').classList.toggle('on', !!settings.adOpen);
-  chart.classList.toggle('activity-day', adRange === 1);
-  chart.classList.toggle('lc', adRange !== 1);
-  if (adRange === 1) {
-    renderActivityDay(chart, a);
+  swapText($('#adActive'), fmtLong(appTimes(app, adRange).active || 0));
+
+  const today = dayKey(Date.now()), days = new Map((app.recent || []).map(d => [d.day, d]));
+  for (const d of app.activityHistory || []) days.set(d.day, d);
+  const snapshot = app.activityDay || app.hoursDay || today;
+  days.set(snapshot, {
+    active: days.get(snapshot)?.active ?? app.today?.active,
+    activity: app.activity, activitySince: app.activitySince,
+    slotsActive: app.slotsActive, hoursActive: app.hoursActive,
+  });
+
+  const overview = $('#adChart');
+  const editing = adRange === 1 || !!adDay;
+  overview.hidden = editing;
+  editor.hidden = !editing;
+  $('#adDayHeader').hidden = !adDay;
+  if (editing) {
+    const day = adDay || today;
+    $('#adDayLabel').textContent = fmtDate(day);
+    renderActivityDay(editor, app, day, dayActivity(days.get(day)));
   } else {
-    // day by day for the period (the last 90 days for "all time")
-    const recent = Array.isArray(a.recent) ? a.recent : [];
-    const days = recent.slice(adRange === 7 ? -7 : adRange === 30 ? -30 : -90);
-    chart._activityKey = null;
-    const pts = days.map(d => ({ v: d.active || 0, w: d.run || 0, tip: `${dayTitle(parseDay(d.day))} · ${fmtDur(d.active || 0)}${settings.adOpen && (d.run || 0) >= 60 ? ` · ${t('adOpenL')} ${fmtDur(d.run)}` : ''}` }));
-    const n = days.length, labels = [];
-    days.forEach((d, i) => {
-      const dt = new Date(parseDay(d.day));
-      if (n <= 7) labels.push([(i + 0.5) / n, t('daysMon')[(dt.getDay() + 6) % 7].slice(0, 2)]);
-      else if (n <= 31 ? (n - 1 - i) % 7 === 0 : dt.getDate() === 1) labels.push([(i + 0.5) / n, n <= 31 ? String(dt.getDate()) : t('monthsShort')[dt.getMonth()]]);
-    });
-    lineChart($('#adChart'), pts, { slots: n, labels, key: `${a.exe}|${adRange}`, open: !!settings.adOpen });
+    const first = app.activityHistory?.[0]?.day || app.recent?.find(d => d.run > 0 || d.active > 0)?.day;
+    renderActivityPeriod(overview, today, first, days);
   }
-  $('#adSpan').textContent = '';
 }
 
 const ACTIVITY_DAY_END = 86400;
+const ACTIVITY_PAGE_DAYS = 30;
+function renderActivityPeriod(chart, today, first, days) {
+  const end = parseDay(today);
+  const total = adRange || Math.max(1, Math.round((end - parseDay(first || today)) / 86400000) + 1);
+  adPage = Math.min(adPage, Math.ceil(total / ACTIVITY_PAGE_DAYS) - 1);
+  const offset = adRange ? 0 : adPage * ACTIVITY_PAGE_DAYS;
+  const count = adRange || Math.min(ACTIVITY_PAGE_DAYS, total - offset);
+  const rows = [];
+  for (let i = 0; i < count; i++) {
+    const date = new Date(end);
+    date.setDate(date.getDate() - offset - i);
+    const day = dayKey(date), activity = dayActivity(days.get(day));
+    const label = new Intl.DateTimeFormat(settings.lang, { weekday: 'short', day: 'numeric', month: 'short' }).format(date);
+    const seconds = Math.round(days.get(day)?.active || 0);
+    const title = fmtDate(day) + (seconds ? ' · ' + activityDuration(seconds) : '');
+    rows.push('<button type="button" class="activity-row" data-activity-day="' + day + '" title="' + esc(title) + '">' +
+      '<span>' + esc(label) + '</span><span aria-hidden="true" class="activity-preview' + (activity.unknown ? ' unknown' : '') + '">' +
+      activitySegments(activity.ranges) + '</span></button>');
+  }
+
+  const key = [adExe, adRange, adPage, settings.lang, total, today].join('|');
+  if (chart._periodKey !== key) {
+    chart._periodKey = key;
+    const legend = '<div class="activity-legend"><span>' + esc(t('activityOn')) + '</span><span>' + esc(t('activityOff')) + '</span></div>';
+    const nav = !adRange && total > ACTIVITY_PAGE_DAYS
+      ? '<div class="activity-pages"><button type="button" class="ghost" data-activity-page="1"' +
+        (offset + count >= total ? ' disabled' : '') + '>‹ ' + esc(t('activityOlder')) +
+        '</button><button type="button" class="ghost" data-activity-page="-1"' +
+        (offset === 0 ? ' disabled' : '') + '>' + esc(t('activityNewer')) + ' ›</button></div>' : '';
+    const ruler = '<div class="activity-preview-ruler" aria-hidden="true"><div><span>00:00</span><span>12:00</span><span>24:00</span></div></div>';
+    chart.innerHTML = legend + ruler + '<div class="activity-list" tabindex="0" aria-label="' + esc(t('activityDays')) + '"></div>' + nav;
+  }
+  setHTML(chart.querySelector('.activity-list'), rows.join(''));
+}
+function activitySegments(ranges) {
+  return ranges.map(([a, b]) => '<i style="left:' + (a / ACTIVITY_DAY_END * 100) + '%;width:' +
+    ((b - a) / ACTIVITY_DAY_END * 100) + '%"></i>').join('');
+}
 function mergeActivity(ranges) {
   const out = [];
   for (const [start, end] of ranges.filter(r => r[1] > r[0]).sort((a, b) => a[0] - b[0])) {
@@ -2338,8 +2381,7 @@ function mergeActivity(ranges) {
   }
   return out;
 }
-function dayActivity(a, day) {
-  if (a.activityDay && a.activityDay !== day) return { ranges: [], estimated: false };
+function dayActivity(a = {}) {
   const exact = mergeActivity((a.activity || []).filter(r => Array.isArray(r) && r.length === 2 && r.every(Number.isFinite))
     .map(([start, end]) => [Math.max(0, start), Math.min(ACTIVITY_DAY_END, end)]));
   const until = a.activitySince ?? ACTIVITY_DAY_END;
@@ -2352,7 +2394,8 @@ function dayActivity(a, day) {
     const legacy = Math.max(0, Math.min((counts[i] || 0) - exactSec, until - start, step));
     if (legacy) estimate.push([start, start + legacy]);
   }
-  return { ranges: mergeActivity([...estimate, ...exact]), estimated: estimate.length > 0 };
+  const ranges = mergeActivity([...estimate, ...exact]);
+  return { ranges, estimated: estimate.length > 0, unknown: !ranges.length && a.active > 0 };
 }
 function activityClock(seconds, precise = false) {
   const hh = pad(Math.floor(seconds / 3600)), mm = pad(Math.floor(seconds / 60) % 60);
@@ -2387,13 +2430,13 @@ function activityUnlogged(day, ranges, start, end, history) {
 }
 const activitySeconds = ranges => ranges.reduce((n, [a, b]) => n + Math.round((b - a) / 1000), 0);
 const activityDuration = seconds => seconds < 60 ? `${seconds} ${settings.lang === 'en' ? 's' : 'с'}` : fmtDur(seconds);
-function renderActivityDay(chart, app) {
-  const day = dayKey(Date.now()), key = `${app.exe}|${day}|${settings.lang}`;
-  chart._activity = dayActivity(app, day);
+function renderActivityDay(chart, app, day, activity) {
+  const key = `${app.exe}|${day}|${settings.lang}`;
+  chart._activity = activity;
   if (chart._activityKey !== key) {
     chart._activityKey = key;
-    chart.innerHTML = `<div class="activity-ruler"><span></span><div>${[0, 6, 12, 18, 24]
-      .map(h => `<span>${activityClock(h * 3600)}</span>`).join('')}</div></div>
+    chart.innerHTML = `<div class="activity-ruler"><span aria-hidden="true">${esc(t('activityOff'))}</span><div>${[0, 6, 12, 18, 24]
+      .map(h => `<span${h % 12 ? ' class="tick-quarter"' : ''}>${activityClock(h * 3600)}</span>`).join('')}</div></div>
       <div class="activity-grid">
         <div class="activity-labels"><span>${esc(t('activityOn'))}</span><span>${esc(t('activityOff'))}</span></div>
         <div class="activity-plot" aria-label="${esc(t('activityRangeHint'))}">
@@ -2421,8 +2464,9 @@ function renderActivityDay(chart, app) {
         selection.style.width = `${(to - from) * 100 / ACTIVITY_DAY_END}%`;
       }
       add.disabled = !seconds;
-      note.textContent = [valid ? seconds ? t('activitySelection')(activityDuration(seconds)) : t('activityAlreadyLogged')
-        : t('activityRangeHint'), chart._activity.estimated ? t('activityEstimated') : ''].filter(Boolean).join(' · ');
+      note.textContent = chart._activity.unknown ? t('activityUnknown')
+        : [valid ? seconds ? t('activitySelection')(activityDuration(seconds)) : t('activityAlreadyLogged') : '',
+          chart._activity.estimated ? t('activityEstimated') : ''].filter(Boolean).join(' · ');
     };
     const select = (start, end) => {
       fields[0].value = activityClock(start);
@@ -2465,7 +2509,8 @@ function renderActivityDay(chart, app) {
       const unlogged = () => activityUnlogged(day, reminders, from, to, sessions);
       const seconds = activitySeconds(unlogged());
       if (!seconds) return;
-      const ok = await confirmModal(app.name, t('adAddQ')(activityDuration(seconds), activityClock(from), activityClock(to)),
+      const title = day === dayKey(Date.now()) ? app.name : app.name + ' · ' + fmtDate(day);
+      const ok = await confirmModal(title, t('adAddQ')(activityDuration(seconds), activityClock(from), activityClock(to)),
         t('adToHist'), { safe: true });
       if (!ok) return;
       const needed = unlogged(), label = cleanName($('#label').value);
@@ -2485,341 +2530,16 @@ function renderActivityDay(chart, app) {
     chart._updateActivitySelection = updateSelection;
   }
   const active = chart._activity.ranges, idle = [];
+  chart.classList.toggle('unknown', chart._activity.unknown);
   let cursor = 0;
   for (const [a, b] of active) { if (a > cursor) idle.push([cursor, a]); cursor = b; }
-  if (cursor < ACTIVITY_DAY_END) idle.push([cursor, ACTIVITY_DAY_END]);
+  if (cursor < ACTIVITY_DAY_END && !chart._activity.unknown) idle.push([cursor, ACTIVITY_DAY_END]);
   for (const [side, ranges] of [['on', active], ['off', idle]]) {
-    setHTML(chart.querySelector('.activity-track.' + side), ranges.map(([a, b]) =>
-      `<i style="left:${a * 100 / ACTIVITY_DAY_END}%;width:${(b - a) * 100 / ACTIVITY_DAY_END}%"></i>`).join(''));
+    setHTML(chart.querySelector('.activity-track.' + side), activitySegments(ranges));
   }
   chart._updateActivitySelection();
 }
 
-function niceMax(sec) {
-  const m = sec / 60;
-  const steps = [15, 30, 60, 120, 180, 240, 360, 480, 600, 720, 960, 1200, 1440, 2400, 3600, 6000];
-  return (steps.find(s => s >= m) || Math.ceil(m / 600) * 600) * 60;
-}
-function smoothPath(xy) {
-  // monotone cubic: smooth, but never dips below zero or overshoots a peak
-  const n = xy.length;
-  if (n === 1) return `M${xy[0][0]} ${xy[0][1]}`;
-  const d = [], m = [];
-  for (let i = 0; i < n - 1; i++) d.push((xy[i + 1][1] - xy[i][1]) / (xy[i + 1][0] - xy[i][0]));
-  m.push(d[0]);
-  for (let i = 1; i < n - 1; i++) m.push(d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2);
-  m.push(d[n - 2]);
-  for (let i = 0; i < n - 1; i++) {
-    if (d[i] === 0) { m[i] = 0; m[i + 1] = 0; continue; }
-    const a = m[i] / d[i], b = m[i + 1] / d[i], s = a * a + b * b;
-    if (s > 9) { const k = 3 / Math.sqrt(s); m[i] = k * a * d[i]; m[i + 1] = k * b * d[i]; }
-  }
-  let p = `M${xy[0][0].toFixed(2)} ${xy[0][1].toFixed(2)}`;
-  for (let i = 0; i < n - 1; i++) {
-    const h = (xy[i + 1][0] - xy[i][0]) / 3;
-    p += `C${(xy[i][0] + h).toFixed(2)} ${(xy[i][1] + m[i] * h).toFixed(2)} ${(xy[i + 1][0] - h).toFixed(2)} ${(xy[i + 1][1] - m[i + 1] * h).toFixed(2)} ${xy[i + 1][0].toFixed(2)} ${xy[i + 1][1].toFixed(2)}`;
-  }
-  return p;
-}
-// A line chart made to read "when did I work": the active time as a smoothed area (steady work is a
-// plateau, not a picket fence), the time the program was open as soft bands behind it, and under it
-// a strip — grey where the program was open, coloured where you worked.
-//   wheel: a smooth zoom around the pointer · wheel held down (or Shift+wheel, or the slider) moves along
-//   hover / touch: the slot · drag: mark a stretch (pickRange) · click: the block around (pick)
-// The view survives the refresh every few seconds while the same chart is shown (key). Light: one
-// SVG and a few divs, redrawn only when something moves.
-function lineChart(el, pts, { slots, labels, yMax, pick, pickRange, key = '', minSpan = 3, smooth = 0, bands = false, open = false }) {
-  bands = bands && open; // open time shows only when asked for: by default the chart is active time alone
-  if (el._busy) return; // a drag is going on: the refresh waits
-  const W = 300, H = 120;
-  // smoothing: a small Gaussian over the neighbours, so ten-minute jitter does not read as spikes
-  const sv = smooth > 0 ? pts.map((_, i) => {
-    let s = 0, w = 0;
-    for (let d = -3; d <= 3; d++) {
-      const j = i + d;
-      if (j < 0 || j >= pts.length) continue;
-      const k = Math.exp(-(d * d) / (2 * smooth * smooth));
-      s += pts[j].v * k; w += k;
-    }
-    return s / w;
-  }) : pts.map(p => p.v);
-  const max = yMax || niceMax(Math.max(60, ...pts.map(p => Math.max(p.v, p.w))));
-  if (el._key !== key || !el._vp) { el._vp = [0, slots]; el._goal = null; }
-  el._key = key;
-  const clamp = (a, b) => {
-    const w = Math.min(slots, Math.max(minSpan, b - a));
-    a = Math.max(0, Math.min(slots - w, a));
-    return [a, a + w];
-  };
-  el._vp = clamp(el._vp[0], el._vp[1]);
-  el.innerHTML = `
-    <div class="lc-zoom"><button class="lc-b" data-z="out" title="−">−</button><button class="lc-b" data-z="in" title="+">+</button><button class="lc-b" data-z="all" title="⟲" hidden>⟲</button></div>
-    <div class="lc-plot">
-      <span class="lc-y" style="top:0">${fmtMinutes(max / 60)}</span><span class="lc-y" style="top:50%">${fmtMinutes(max / 120)}</span>
-      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="lcFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6f6bff" stop-opacity=".5"/><stop offset="1" stop-color="#6f6bff" stop-opacity=".04"/></linearGradient>
-          <linearGradient id="lcLine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4f8bff"/><stop offset="1" stop-color="#8a5cff"/></linearGradient>
-        </defs>
-        <g class="lc-bands"></g>
-        <path class="lc-grid" d="M0 0H${W}M0 ${H / 2}H${W}M0 ${H}H${W}"/>
-        <path class="lc-run"/><path class="lc-area"/><path class="lc-line"/>
-      </svg>
-      <i class="lc-sel" hidden></i><i class="lc-guide" hidden></i><i class="lc-dot" hidden></i><div class="lc-tip" hidden></div>
-    </div>
-    ${bands ? '<div class="lc-strip"></div>' : ''}
-    <div class="lc-x"></div>
-    <div class="lc-scroll" hidden><i class="lc-thumb"></i></div>`;
-  const plot = el.querySelector('.lc-plot'), svg = el.querySelector('svg');
-  const guide = el.querySelector('.lc-guide'), dot = el.querySelector('.lc-dot'), tip = el.querySelector('.lc-tip'), sel = el.querySelector('.lc-sel');
-  const strip = el.querySelector('.lc-strip'), scroll = el.querySelector('.lc-scroll'), thumb = el.querySelector('.lc-thumb');
-  const Y = v => H - (Math.min(v, max) / max) * H;
-  const X = i => ((i + 0.5 - el._vp[0]) / (el._vp[1] - el._vp[0])) * W;
-  const XL = i => ((i - el._vp[0]) / (el._vp[1] - el._vp[0])) * W; // the left edge of slot i
-  // runs of slots where cond holds: [from, to) pairs, for the bands and the strip
-  const runs = cond => { const out = []; let a = -1; pts.forEach((p, i) => { if (cond(p, i)) { if (a < 0) a = i; } else if (a >= 0) { out.push([a, i]); a = -1; } }); if (a >= 0) out.push([a, pts.length]); return out; };
-  const openRuns = bands ? runs(p => p.w > 0) : [];
-  const workRuns = bands ? runs(p => p.v >= Math.max(60, (yMax || max) * 0.25)) : [];
-  const draw = () => {
-    const [v0, v1] = el._vp;
-    const a = Math.max(0, Math.floor(v0) - 4), b = Math.min(pts.length, Math.ceil(v1) + 4);
-    const qa = [], qr = [];
-    for (let i = a; i < b; i++) { qa.push([X(i), Y(sv[i])]); qr.push([X(i), Y(pts[i].w)]); }
-    const area = (line, q) => (q.length ? `${line}L${q[q.length - 1][0].toFixed(2)} ${H}L${q[0][0].toFixed(2)} ${H}Z` : '');
-    const la = qa.length ? smoothPath(qa) : '';
-    svg.querySelector('.lc-run').setAttribute('d', bands || !open || !qr.length ? '' : area(smoothPath(qr), qr));
-    svg.querySelector('.lc-area').setAttribute('d', area(la, qa));
-    svg.querySelector('.lc-line').setAttribute('d', la);
-    if (bands) {
-      svg.querySelector('.lc-bands').innerHTML = openRuns.map(([s, e]) => `<rect x="${XL(s).toFixed(2)}" y="0" width="${(XL(e) - XL(s)).toFixed(2)}" height="${H}"/>`).join('');
-      const pct = i => ((i - v0) / (v1 - v0)) * 100;
-      strip.innerHTML = openRuns.map(([s, e]) => `<i class="o" style="left:${pct(s).toFixed(2)}%;width:${(pct(e) - pct(s)).toFixed(2)}%"></i>`).join('')
-        + workRuns.map(([s, e]) => `<i class="w" style="left:${pct(s).toFixed(2)}%;width:${(pct(e) - pct(s)).toFixed(2)}%"></i>`).join('');
-    }
-    const lab = typeof labels === 'function' ? labels(v0, v1) : labels.map(([f, s]) => [f * slots - 0.5, s]);
-    el.querySelector('.lc-x').innerHTML = lab.filter(([s]) => s + 0.5 >= v0 && s + 0.5 <= v1)
-      .map(([s, txt]) => `<span style="left:${(((s + 0.5 - v0) / (v1 - v0)) * 100).toFixed(2)}%">${esc(txt)}</span>`).join('');
-    const zoomed = v1 - v0 < slots - 0.01;
-    scroll.hidden = !zoomed;
-    thumb.style.left = `${(v0 / slots) * 100}%`;
-    thumb.style.width = `${((v1 - v0) / slots) * 100}%`;
-    el.querySelector('[data-z="all"]').hidden = !zoomed;
-    el.querySelector('[data-z="in"]').disabled = v1 - v0 <= minSpan + 0.01;
-    el.querySelector('[data-z="out"]').disabled = !zoomed;
-  };
-  // the view glides to where it is asked to go (a few frames, then it stops: nothing runs at rest)
-  const goTo = (vp, now) => {
-    el._goal = clamp(vp[0], vp[1]);
-    if (now) { el._vp = el._goal; el._goal = null; draw(); return; }
-    if (el._anim) return;
-    const step = () => {
-      const g = el._goal;
-      if (!g) { el._anim = 0; return; }
-      const [a, b] = el._vp, k = 0.28;
-      const na = a + (g[0] - a) * k, nb = b + (g[1] - b) * k;
-      if (Math.abs(na - g[0]) < 0.01 && Math.abs(nb - g[1]) < 0.01) { el._vp = g; el._goal = null; el._anim = 0; draw(); return; }
-      el._vp = [na, nb];
-      draw();
-      el._anim = requestAnimationFrame(step);
-    };
-    el._anim = requestAnimationFrame(step);
-  };
-  const cur = () => el._goal || el._vp;
-  const zoom = (k, at) => {
-    const [v0, v1] = cur(), w = v1 - v0, c = at == null ? v0 + w / 2 : at;
-    const nw = Math.min(slots, Math.max(minSpan, w * k));
-    const n0 = c - (c - v0) * (nw / w);
-    goTo([n0, n0 + nw]);
-  };
-  const panBy = d => { const [v0, v1] = cur(); goTo([v0 + d, v1 + d]); };
-  const slotAt = e => { const r = plot.getBoundingClientRect(); return el._vp[0] + ((e.clientX - r.left) / r.width) * (el._vp[1] - el._vp[0]); };
-  const idx = e => Math.max(0, Math.min(pts.length - 1, Math.floor(slotAt(e))));
-  const pctOf = i => ((i - el._vp[0]) / (el._vp[1] - el._vp[0])) * 100;
-  const show = e => {
-    if (!pts.length) return;
-    const i = idx(e), r = plot.getBoundingClientRect();
-    const x = (X(i) / W) * 100, y = (Y(sv[i]) / H) * 100;
-    guide.hidden = dot.hidden = tip.hidden = false;
-    guide.style.left = dot.style.left = `${x}%`;
-    dot.style.top = `${y}%`;
-    tip.textContent = pts[i].tip;
-    const tw = tip.offsetWidth, px = (x / 100) * r.width;
-    tip.style.left = `${Math.min(Math.max(0, px - tw / 2), r.width - tw)}px`;
-  };
-  const hide = () => { guide.hidden = dot.hidden = tip.hidden = true; };
-  /* Fingers (the phone): one finger moves the chart along and it glides on after a flick; two
-     fingers pinch to zoom, like a photo; holding a finger still for a moment starts a selection
-     (a short buzz says so), like selecting text: then drag to mark a stretch, or let go to take the
-     block of work under the finger. A quick tap shows the value there. */
-  const tps = new Map();
-  let tm = null, t0 = null, lpT = 0, pinch = null, fling = 0, tipT = 0;
-  const mid = () => { const [a, b] = [...tps.values()]; return { x: (a.x + b.x) / 2, d: Math.hypot(a.x - b.x, a.y - b.y) }; };
-  const touchEnd = () => { clearTimeout(lpT); tm = null; t0 = null; pinch = null; el._busy = false; plot.classList.remove('selecting'); };
-  plot.addEventListener('pointerdown', e => {
-    if (e.pointerType !== 'touch' || !pts.length) return;
-    cancelAnimationFrame(fling);
-    el._goal = null;
-    tps.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    try { plot.setPointerCapture(e.pointerId); } catch {}
-    el._busy = true;
-    const r = plot.getBoundingClientRect();
-    if (tps.size === 1) {
-      tm = 'wait';
-      t0 = { x: e.clientX, y: e.clientY, vp: [...el._vp], w: r.width, i: idx(e), lx: e.clientX, lt: e.timeStamp, v: 0 };
-      lpT = setTimeout(() => {
-        if (tm !== 'wait') return;
-        tm = 'select';
-        plot.classList.add('selecting');
-        if (api.haptic) api.haptic(); else if (navigator.vibrate) navigator.vibrate(12);
-        sel.hidden = false;
-        sel.style.left = `${Math.max(0, pctOf(t0.i))}%`;
-        sel.style.width = `${Math.min(100, pctOf(t0.i + 1)) - Math.max(0, pctOf(t0.i))}%`;
-      }, 420);
-    } else if (tps.size === 2) {
-      clearTimeout(lpT);
-      sel.hidden = true;
-      hide();
-      tm = 'pinch';
-      const m = mid();
-      pinch = { d: Math.max(20, m.d), vp: [...el._vp], f: (m.x - r.left) / r.width };
-      pinch.c = pinch.vp[0] + pinch.f * (pinch.vp[1] - pinch.vp[0]);
-    }
-  });
-  plot.addEventListener('pointermove', e => {
-    if (e.pointerType !== 'touch' || !tps.has(e.pointerId)) return;
-    tps.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (tm === 'pinch' && tps.size === 2) {
-      const m = mid(), w0 = pinch.vp[1] - pinch.vp[0];
-      const nw = Math.min(slots, Math.max(minSpan, w0 * (pinch.d / Math.max(20, m.d))));
-      const r = plot.getBoundingClientRect(), f = Math.min(1, Math.max(0, (m.x - r.left) / r.width)); // the point between the fingers stays put
-      const n0 = pinch.c - f * nw;
-      goTo([n0, n0 + nw], true);
-      return;
-    }
-    if (!t0) return;
-    if (tm === 'wait' && Math.hypot(e.clientX - t0.x, e.clientY - t0.y) > 8) {
-      clearTimeout(lpT);
-      tm = Math.abs(e.clientX - t0.x) >= Math.abs(e.clientY - t0.y) ? 'pan' : 'page'; // up or down: the page scrolls as usual
-      hide();
-    }
-    if (tm === 'pan') {
-      const span = t0.vp[1] - t0.vp[0], d = -((e.clientX - t0.x) / t0.w) * span;
-      goTo([t0.vp[0] + d, t0.vp[1] + d], true);
-      const dt = e.timeStamp - t0.lt;
-      if (dt > 0) { t0.v = 0.7 * t0.v + 0.3 * ((e.clientX - t0.lx) / dt); t0.lx = e.clientX; t0.lt = e.timeStamp; }
-    } else if (tm === 'select') {
-      const i = idx(e), a = Math.min(t0.i, i), b = Math.max(t0.i, i);
-      t0.moved = t0.moved || i !== t0.i;
-      sel.style.left = `${Math.max(0, pctOf(a))}%`;
-      sel.style.width = `${Math.min(100, pctOf(b + 1)) - Math.max(0, pctOf(a))}%`;
-      show(e);
-    }
-  });
-  const touchUp = e => {
-    if (e.pointerType !== 'touch' || !tps.has(e.pointerId)) return;
-    tps.delete(e.pointerId);
-    if (tm === 'pinch') { if (!tps.size) touchEnd(); else { tm = 'done'; } return; }
-    if (tps.size) return;
-    const mode = tm, s = t0;
-    touchEnd();
-    if (e.type === 'pointercancel' || !s) { sel.hidden = true; return; }
-    if (mode === 'select') {
-      const i = idx(e);
-      if (s.moved && pickRange) pickRange(Math.min(s.i, i), Math.max(s.i, i)).finally(() => { sel.hidden = true; });
-      else { sel.hidden = true; if (pick) pick(s.i); }
-    } else if (mode === 'wait') { // a tap: the value there, for a moment
-      show(e);
-      clearTimeout(tipT);
-      tipT = setTimeout(hide, 2500);
-    } else if (mode === 'pan' && Math.abs(s.v) > 0.05) { // a flick: glide on and slow down
-      let v = s.v;
-      const w = s.w;
-      const go = () => {
-        v *= 0.92;
-        if (Math.abs(v) < 0.02) return;
-        const [v0, v1] = el._vp, d = -(v * 16 / w) * (v1 - v0);
-        goTo([v0 + d, v1 + d], true);
-        fling = requestAnimationFrame(go);
-      };
-      fling = requestAnimationFrame(go);
-    }
-  };
-  // while moving, selecting or pinching, the page itself stays still
-  plot.addEventListener('touchmove', e => { if (tm === 'pan' || tm === 'select' || tm === 'pinch') e.preventDefault(); }, { passive: false });
-  plot.addEventListener('pointerup', touchUp);
-  plot.addEventListener('pointercancel', touchUp);
-  let drag = null, pan = null;
-  plot.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); }); // no autoscroll on the middle button
-  plot.addEventListener('pointerdown', e => {
-    if (e.pointerType === 'touch') return; // fingers: above
-    if (!pts.length) return;
-    if (e.button === 1) { // the wheel held down: move along
-      pan = { x: e.clientX, vp: [...el._vp], id: e.pointerId, w: plot.getBoundingClientRect().width };
-      try { plot.setPointerCapture(e.pointerId); } catch {}
-      plot.classList.add('panning');
-      el._busy = true;
-      return;
-    }
-    if (e.button !== 0) return;
-    drag = { x: e.clientX, i: idx(e), moved: false, id: e.pointerId };
-    el._busy = true;
-    show(e);
-  });
-  plot.addEventListener('pointermove', e => {
-    if (e.pointerType === 'touch') return;
-    if (pan && e.pointerId === pan.id) {
-      const span = pan.vp[1] - pan.vp[0], d = -((e.clientX - pan.x) / pan.w) * span;
-      goTo([pan.vp[0] + d, pan.vp[1] + d], true);
-      return;
-    }
-    show(e);
-    if (!drag || e.pointerId !== drag.id) return;
-    if (!drag.moved && Math.abs(e.clientX - drag.x) < 5) return;
-    if (!drag.moved) { drag.moved = true; try { plot.setPointerCapture(drag.id); } catch {} }
-    const i = idx(e), a = Math.min(drag.i, i), b = Math.max(drag.i, i);
-    sel.hidden = false;
-    sel.style.left = `${Math.max(0, pctOf(a))}%`;
-    sel.style.width = `${Math.min(100, pctOf(b + 1)) - Math.max(0, pctOf(a))}%`;
-  });
-  const up = e => {
-    if (e.pointerType === 'touch') return;
-    if (pan && e.pointerId === pan.id) { pan = null; el._busy = false; plot.classList.remove('panning'); return; }
-    if (!drag || e.pointerId !== drag.id) return;
-    const d = drag;
-    drag = null;
-    el._busy = false;
-    const i = idx(e);
-    if (d.moved && pickRange) pickRange(Math.min(d.i, i), Math.max(d.i, i)).finally(() => { sel.hidden = true; });
-    else { sel.hidden = true; if (!d.moved && pick) pick(i); }
-  };
-  plot.addEventListener('pointerup', up);
-  plot.addEventListener('pointercancel', e => { if (e.pointerType === 'touch') return; drag = null; pan = null; el._busy = false; sel.hidden = true; plot.classList.remove('panning'); void e; });
-  plot.addEventListener('pointerleave', () => { if (!drag && !pan) hide(); });
-  plot.addEventListener('wheel', e => {
-    e.preventDefault();
-    const [v0, v1] = cur();
-    if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) panBy(((e.shiftKey ? e.deltaY : e.deltaX) > 0 ? 1 : -1) * (v1 - v0) * 0.2);
-    else zoom(Math.pow(1.0015, e.deltaY), slotAt(e)); // follows the wheel (or a touchpad) in small steps
-    show(e);
-  }, { passive: false });
-  // the slider under a zoomed chart: drag the thumb, or click the track to jump there
-  let sdrag = null;
-  thumb.addEventListener('pointerdown', e => { e.stopPropagation(); sdrag = { x: e.clientX, vp: [...el._vp], w: scroll.getBoundingClientRect().width, id: e.pointerId }; try { thumb.setPointerCapture(e.pointerId); } catch {} el._busy = true; });
-  thumb.addEventListener('pointermove', e => { if (!sdrag || e.pointerId !== sdrag.id) return; const d = ((e.clientX - sdrag.x) / sdrag.w) * slots; goTo([sdrag.vp[0] + d, sdrag.vp[1] + d], true); });
-  const sup = e => { if (sdrag && e.pointerId === sdrag.id) { sdrag = null; el._busy = false; } };
-  thumb.addEventListener('pointerup', sup);
-  thumb.addEventListener('pointercancel', sup);
-  scroll.addEventListener('pointerdown', e => {
-    if (e.target === thumb) return;
-    const r = scroll.getBoundingClientRect(), c = ((e.clientX - r.left) / r.width) * slots, [v0, v1] = cur(), w = v1 - v0;
-    goTo([c - w / 2, c + w / 2]);
-  });
-  el.querySelectorAll('.lc-b').forEach(b => b.addEventListener('click', () => {
-    const z = b.dataset.z;
-    if (z === 'in') zoom(0.6); else if (z === 'out') zoom(1 / 0.6); else goTo([0, slots]);
-  }));
-  draw();
-}
 function bindAppDetail() {
   $('#appDetail').addEventListener('click', e => {
     if (e.target.id === 'appDetail' || e.target.closest('#adClose')) { closeAppDetail(); return; }
@@ -2830,8 +2550,26 @@ function bindAppDetail() {
       return;
     }
     const r = e.target.closest('#adRange button');
-    if (r) { adRange = Number(r.dataset.r); renderAppDetail(); }
-    if (e.target.closest('#adOpenBtn')) { settings.adOpen = !settings.adOpen; persist(); renderAppDetail(); }
+    if (r) { adRange = Number(r.dataset.r); adDay = null; adPage = 0; renderAppDetail(); }
+    const day = e.target.closest('[data-activity-day]');
+    if (day) {
+      adDay = day.dataset.activityDay;
+      renderAppDetail();
+      $('#adDayBack').focus();
+    }
+    if (e.target.closest('#adDayBack')) {
+      const day = adDay;
+      adDay = null;
+      renderAppDetail();
+      $('#adChart').querySelector('[data-activity-day="' + day + '"]')?.focus();
+    }
+    const page = e.target.closest('[data-activity-page]');
+    if (page) {
+      adPage += Number(page.dataset.activityPage);
+      renderAppDetail();
+      const target = $('#adChart').querySelector('[data-activity-page="' + page.dataset.activityPage + '"]');
+      (target.disabled ? $('#adChart .activity-list') : target).focus();
+    }
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && adExe) closeAppDetail(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && scId) closeSeriesCard(); });

@@ -440,12 +440,14 @@
   <div class="modal" id="appDetail" hidden>
     <div class="modal-card ad-card">
       <div class="ad-head"><span id="adIco"></span><h3 id="adName"></h3><button class="when-x" id="adClose" aria-label="×"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg></button></div>
-      <div class="seg small" id="adRange"><button data-r="1" data-i18n="adToday"></button><button data-r="7" data-i18n="ad7"></button><button data-r="30" data-i18n="ad30"></button><button data-r="90" data-i18n="ad90"></button><button data-r="0" data-i18n="adAll"></button></div>
+      <div class="seg" id="adRange"><button data-r="1" data-i18n="adToday"></button><button data-r="7" data-i18n="ad7"></button><button data-r="30" data-i18n="ad30"></button><button data-r="90" data-i18n="ad90"></button><button data-r="0" data-i18n="adAll"></button></div>
       <div class="ad-main"><b id="adActive"></b><span data-i18n="adActiveL"></span></div>
-      <!-- open time: only on request; on, it also shows as a background on the chart -->
-      <button class="ad-open" id="adOpenBtn"><span data-i18n="adOpenB"></span> <b id="adOpen"></b></button>
-      <div class="ad-chart lc" id="adChart"></div>
-      <div class="ad-span" id="adSpan"></div>
+      <div id="adChart" hidden></div>
+      <div class="activity-day-header" id="adDayHeader" hidden>
+        <button type="button" class="ghost" id="adDayBack">‹ <span data-i18n="activityDays"></span></button>
+        <strong id="adDayLabel"></strong>
+      </div>
+      <div class="activity-day" id="adDayChart"></div>
       <button class="ad-untrack" id="adUntrack" data-desktop data-i18n="stopTrack"></button>
     </div>
   </div>
