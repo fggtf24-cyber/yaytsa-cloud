@@ -349,6 +349,9 @@ const APPS = [
       'Несколько камер и скринкаст: всё синхронизируется и режется одинаково, каждая запись на своей дорожке',
       'XML для Premiere Pro и DaVinci Resolve: видео, звук микрофона, звук камеры, дорожки экрана и их звук — даже отдельная дорожка звука компьютера из OBS',
       'Учится на ваших правках: сравнивает свою нарезку с вашим финалом из Premiere и подстраивает разбор дублей под ваш стиль',
+      '«Проанализировать заново»: выделите участок монтажа — нейросеть заново разберёт дубли и пересчитает склейки только там, остальной монтаж не изменится',
+      'Стиль нарезки по образцу: загрузите свой готовый монтаж — XML или проект Premiere — и Яйцерез выставит такую же паузу на склейках и так же поступит со вдохами',
+      'Обновляется сам: новая версия ставится в один клик прямо из программы',
       'Распознавание речи на вашем компьютере, русский и английский',
     ],
     needs: [
@@ -370,6 +373,9 @@ const APPS = [
       'Several cameras and a screencast: everything syncs and is cut the same way, each recording on its own track',
       'XML for Premiere Pro and DaVinci Resolve: video, microphone audio, camera audio, screen tracks and their audio — even a separate OBS desktop-audio track',
       'Learns from your edits: compares its cut with your Premiere final and tunes take detection to your style',
+      '"Re-analyze": select part of the edit and the neural network re-checks the takes and recomputes the cuts only there, the rest of the edit stays as it is',
+      'Cutting style from a sample: load a finished edit of yours — XML or a Premiere project — and Яйцерез sets the same pause at cuts and treats breaths the same way',
+      'Updates itself: a new version installs with one click right from the program',
       'Speech recognition runs on your computer, Russian and English',
     ],
     needsEn: [
