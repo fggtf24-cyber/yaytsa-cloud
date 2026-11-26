@@ -2377,7 +2377,8 @@ html.android .hint-card { bottom: calc(86px + env(safe-area-inset-bottom, 0px));
 .lc-plot.selecting { cursor: col-resize; }
 .lc-plot.selecting .lc-sel { background: rgba(111, 107, 255, .28); box-shadow: inset 0 0 0 1.5px rgba(138, 92, 255, .7); }
 
-.ad-card { --activity-on: #7762e9; --activity-off: var(--track); }
+.ad-card { --activity-on: #8c78ff; --activity-off: rgba(255, 255, 255, .12); }
+:root[data-theme="light"] .ad-card { --activity-on: #6951db; --activity-off: rgba(55, 53, 47, .11); }
 .activity-day, #adChart { font-size: 15px; font-variant-numeric: tabular-nums; }
 .activity-day-header, .activity-legend, .activity-pages { display: flex; align-items: center; gap: 12px; font-size: 15px; }
 .activity-day-header button, .activity-pages button { min-height: 40px; font-size: inherit; }
@@ -2387,8 +2388,19 @@ html.android .hint-card { bottom: calc(86px + env(safe-area-inset-bottom, 0px));
 .activity-legend span + span::before { background: var(--activity-off); box-shadow: inset 0 0 0 1px var(--border); }
 .activity-list { max-height: min(296px, 40dvh); overflow: auto; scrollbar-width: thin; }
 .activity-row, .activity-preview-ruler { display: grid; grid-template-columns: 100px minmax(0, 1fr); align-items: center; gap: 10px; padding: 0 6px; }
-.activity-row { width: 100%; min-height: 40px; text-align: left; font: inherit; border-radius: 8px; color: var(--text); }
+.activity-row {
+  appearance: none;
+  width: 100%;
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-strong);
+  text-align: left;
+  font: inherit;
+}
 .activity-row:hover { background: var(--hover); }
+.activity-row:focus-visible { outline: 2px solid var(--activity-on); outline-offset: -2px; }
 .activity-preview { display: block; position: relative; height: 16px; border-radius: 5px; overflow: hidden; background: var(--activity-off); }
 .activity-preview-ruler > div { grid-column: 2; display: flex; justify-content: space-between; margin-bottom: 4px; }
 .activity-pages { justify-content: space-between; margin-top: 10px; }
@@ -2402,6 +2414,7 @@ html.android .hint-card { bottom: calc(86px + env(safe-area-inset-bottom, 0px));
 .activity-plot { position: relative; display: grid; gap: 6px; cursor: col-resize; touch-action: none; user-select: none; }
 .activity-track { position: relative; height: 26px; border-radius: 6px; background: var(--hover); overflow: hidden; }
 .activity-track i, .activity-preview i { position: absolute; top: 0; bottom: 0; }
+.activity-preview i { min-width: 1px; }
 .activity-track.on i, .activity-preview i { background: var(--activity-on); }
 .activity-track.off i { background: var(--activity-off); }
 .activity-preview.unknown, .activity-day.unknown .activity-track { background: repeating-linear-gradient(135deg, var(--hover) 0 5px, transparent 5px 10px); }

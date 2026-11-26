@@ -2348,8 +2348,8 @@ function renderActivityPeriod(chart, today, first, days) {
     const day = dayKey(date), activity = dayActivity(days.get(day));
     const label = new Intl.DateTimeFormat(settings.lang, { weekday: 'short', day: 'numeric', month: 'short' }).format(date);
     const seconds = Math.round(days.get(day)?.active || 0);
-    const title = fmtDate(day) + (seconds ? ' · ' + activityDuration(seconds) : '');
-    rows.push('<button type="button" class="activity-row" data-activity-day="' + day + '" title="' + esc(title) + '">' +
+    const accessibleLabel = label + (seconds ? ' · ' + activityDuration(seconds) : '');
+    rows.push('<button type="button" class="activity-row" data-activity-day="' + day + '" aria-label="' + esc(accessibleLabel) + '">' +
       '<span>' + esc(label) + '</span><span aria-hidden="true" class="activity-preview' + (activity.unknown ? ' unknown' : '') + '">' +
       activitySegments(activity.ranges) + '</span></button>');
   }
