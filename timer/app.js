@@ -4,7 +4,7 @@
 const I18N = {
   ru: {
     appName: 'Яйцетаймер', updReady: v => `Версия ${v} загружена`, updNow: 'Перезапустить',
-    tabTimer: 'Таймер', tabStats: 'Статистика', tabSettings: 'Настройки',
+    tabTimer: 'Таймер', tabStats: 'Статистика', tabSettings: 'Настройки', tabFocus: 'Фокус', focusLead: 'Сайты и приложения, которые отвлекают, закрываются на время работы — на компьютере и на телефоне сразу. Перерывы можно оставить свободными.', fzOffTitle: 'Фокус', fzOffTitle2: 'Фокус выключен', fzOffSub: () => 'Включите, и выбранное будет закрываться на время работы', fzTurnOn: 'Включить', fzTurnOff: 'Выключить', fzPick: 'Выберите, что закрывать на время работы', fzOnTitle: 'Отвлекалки закрыты', fzReadyTitle: 'Фокус ждёт', fzMore: n => `и ещё ${n}`, fzUntil: w => `до ${w}`, fzWhileWork: 'пока идёт работа', fzReleased: 'блок снят до конца захода', fzWhenSub_work: 'закроются, когда начнётся работа', fzWhenSub_series: 'закроются на всю серию', fzWhenSub_off: 'только вручную и по расписанию', fzNowFor: 'Закрыть сейчас на', fzLift: 'Снять блок', fzLiftIn: n => `Снять можно через ${n} с`, fzLiftNow: 'Точно снять?', fzLifted: 'Блок снят до конца этого захода', fzLockedNote: 'Строгий режим: откроется само, когда время выйдет', gFzWhat: 'Что закрывать', gFzWhen: 'Когда', gFzStrict: 'Снять раньше времени', gFzDev: 'Устройства', fzAddPh: 'Свой сайт, например pikabu.ru', fzBadSite: 'Нужен адрес сайта, например pikabu.ru', fzWhen_work: 'Во время работы', fzWhenD_work: 'Перерывы свободны', fzWhen_series: 'Всю серию', fzWhenD_series: 'И в перерывах между заходами', fzWhen_off: 'Только вручную', fzWhenD_off: 'Таймер не трогает, только кнопка и расписание', fzAddWin: 'Добавить время по расписанию', fzSchedBad: 'Выберите дни и время начала и конца', fzEdit: 'Изменить', fzStrict_free: 'Сразу', fzStrict_wait: 'Через 10 с', fzStrict_lock: 'Нельзя', fzStrictDesc: 'Как легко снять блок, пока он идёт', fzPcName: 'Этот компьютер', fzPcOk: 'Сайты закрываются во всех браузерах, открытые вкладки закрываются', fzPcAsk: 'Windows один раз спросит разрешение менять файл hosts', fzPhoneName: 'Этот телефон', fzPhoneOk: 'Приложения и сайты в браузерах закрываются', fzPhoneAsk: 'Включите Яйцетаймер в «Специальных возможностях»', fzWebName: 'Этот браузер', fzWebDesc: 'Здесь блокировка не работает — только настройка. Закрывают приложения для Windows и Android', fzAllow: 'Разрешить', fzPermOk: 'Готово: сайты будут закрываться', fzPermNo: 'Разрешение не дали — закрываются только вкладки', fzNotePc: 'Настройки общие для всех устройств с вашим аккаунтом.', fzNoteAndroid: 'Если Android пишет «Ограниченная настройка»: О приложении → ⋮ → «Разрешить ограниченные настройки», потом снова сюда. Настройки общие для всех устройств.', fzNoteWeb: 'Настройки общие для всех устройств с вашим аккаунтом.', fzHitTitle: n => `${n} закрыт — вы в фокусе`, fzSyncWait: 'Пока фокус не синхронизируется: база ещё не знает эту настройку, на каждом устройстве он свой.', 
     work: 'Работа', break: 'Перерыв', today: 'Сегодня',
     start: 'Старт', pause: 'Пауза', resume: 'Продолжить',
     reset: 'Сбросить', skip: 'Пропустить этап',
@@ -81,14 +81,14 @@ scale: 'Масштаб', appsPickTitle: 'Добавить программу', a
     pWeekL7: '7 дней', editEntry: 'Изменить запись', saveL: 'Сохранить', edited: 'Запись изменена', newProjOnly: 'Такого проекта нет. Откройте список ▾ и нажмите «Создать новый проект»', newProjBtn: 'Создать новый проект', createNamed: n => `Создать «${n}»`, newProjPh: 'Название нового проекта', projCreated: n => `Проект «${n}» создан`,
     adPerHour: 'активных минут в каждые 10 минут', adPerDay: 'активных часов в день', adToHist: 'В историю', adAddQ: (d, a, b) => `Добавить ${d} работы (${a}–${b}) в историю?`, adAdded: d => `Добавлено: ${d}`,
     activityDays: 'Дни', activityOlder: 'Раньше', activityNewer: 'Позже', activityUnknown: 'Есть итог за день, но точное время не сохранилось.',
-    activityOn: 'Работал', activityOff: 'Не работал', activityFrom: 'С', activityTo: 'До',
+    activityOn: 'Работал', activityOff: 'Не работал', activityPickHint: 'Забыли таймер? Выделите отрезок на графике, чтобы записать его в историю', activityDaySum: (a, b, n) => `${a}–${b} · ${n} ${plural(n, 'отрезок', 'отрезка', 'отрезков')} работы`, activityNone: 'В этот день не работали', activityApprox: 'примерно', apSummary: (avg, n, hrs) => `В среднем ${avg} в день · ${n} ${plural(n, 'день', 'дня', 'дней')} с работой${hrs ? ' · обычно ' + hrs : ''}`, apNone: 'За это время работы не было', apIdle: 'без работы', activityFrom: 'С', activityTo: 'До',
     activityRangeHint: 'Выделите отрезок или введите время.',
     activityEstimated: 'Старые данные о времени внутри интервалов приблизительны.',
     activityAlreadyLogged: 'В этом отрезке нет незаписанной работы',
     activitySelection: d => `К записи · ${d}`,
-    offerMute: 'Не предлагать для этой программы', offerPrograms: 'Подсказки по программам',
+    offerMute: 'Не предлагать для этой программы', offerSetHere: 'Настроить для этой программы', offerPrograms: 'Подсказки по программам',
     offerNoPrograms: 'Сначала добавьте программу на вкладке «Программы».',
-    offerTodayOff: 'Не сегодня',
+    offerTodayOff: 'Закрыть',
     planSkipNext: 'Пропустить ближайший', untilShort: 'до', taQ: 'Над чем вы сейчас работаете?', taSub: tm => `Таймер идёт по плану с ${tm}. Выберите задачу — она запишется ко всем заходам этой серии.`, taNewPh: 'Или новая задача', taLater: 'Позже', quickOff: 'Убрать', schedL: 'Весь план…', taSet: n => `Задача: ${n}`, scTaskL: 'Задача', scNameQ: 'Как назвать эту серию?', scNameSub: 'Название запишется ко всем её заходам.', skipToday: 'пропустить сегодня', planRemove: 'удалить', offerTitle: n => `Работаете в ${n}?`, offerBody: 'Уже 5 минут, а таймер не идёт. Запустить его?', offerGo: 'Запустить таймер', offerLater: 'Не сейчас', offerSet: 'Предлагать запустить таймер', offerSetDesc: 'После 5 минут работы, не чаще раза в день для каждой программы', peLater: 'Выберу в тот день', pePh: 'Или впишите задачу', startAtGo: tm => `Запустить в ${tm}`, clashQ: 'Время занято', clashCur: w => `В это время уже идёт серия (${w}). Два таймера сразу не запустить — выберите другое время.`, clashPlan: (w, d) => `Пересекается с планом ${w} (${d.toLowerCase()}). Два таймера сразу не запустить — выберите другое время или измените тот план.`, autoTellQ: w => `Таймер запустится сам ${w}`, autoTellText: 'Даже если вас не будет рядом: в это время он нажмёт «Старт» на любом включённом устройстве. Если вас не было, потом спросит, работали ли вы.', autoQ: tm => `Таймер запустился сам в ${tm}`, autoText: 'Вы работали всё это время?', autoTextDone: 'Вы работали в это время? Если нет, эти заходы не попадут в историю.', autoYes: 'Да, работал', autoNo: 'Нет', autoAgain: tm => `Не считаем время до ${tm}: таймер начат заново`, autoStop: 'Остановить', undone: 'Отменено', redone: 'Возвращено', undoNone: 'Нечего отменять', redoNone: 'Нечего возвращать', hintLong: 'Можно включить длинный перерыв: каждый 4-й перерыв будет длиннее, как в помодоро', hintLongAct: 'Настроить', hintRange: 'Забыли включить таймер? Выделите участок на графике — его можно записать как работу', hintTrack: 'Выберите программы, в которых вы работаете, — таймер покажет, сколько времени вы в них проводите', hintTrackAct: 'Выбрать', skipTomorrow: 'пропустить завтра', skipDay: d => `пропустить в ${d.toLowerCase()}`, skippedToday: 'сегодня пропущено · вернуть', adPerHourH: 'активных минут в каждом часе', adPickHint: 'Проведите по графику с зажатой кнопкой мыши — выделенный участок можно записать в историю как работу (удобно, если забыли включить таймер). Нажатие на участок берёт весь блок работы вокруг. Колесо мыши приближает и отдаляет, Shift + колесо листает.', adNothing: 'В этом промежутке нет активной работы',
     tabPlan: 'План', planLead: 'Таймер сам запустится в нужное время — на компьютере и на телефоне. Откроете позже — время уже будет идти с начала.',
     planAdd: '+ Добавить время', planNextL: 'Следующий старт:', planNone: 'Ничего не запланировано', planEmpty: 'Например: по будням в 7:30 — два захода',
@@ -113,7 +113,7 @@ scale: 'Масштаб', appsPickTitle: 'Добавить программу', a
   },
   en: {
     appName: 'Яйцетаймер', updReady: v => `Version ${v} downloaded`, updNow: 'Restart',
-    tabTimer: 'Timer', tabStats: 'Stats', tabSettings: 'Settings',
+    tabTimer: 'Timer', tabStats: 'Stats', tabSettings: 'Settings', tabFocus: 'Focus', focusLead: 'Distracting sites and apps close while you work, on the PC and the phone together. Breaks can stay free.', fzOffTitle: 'Focus', fzOffTitle2: 'Focus is off', fzOffSub: () => 'Turn it on and what you picked closes while you work', fzTurnOn: 'Turn on', fzTurnOff: 'Turn off', fzPick: 'Pick what to close while you work', fzOnTitle: 'Distractions are closed', fzReadyTitle: 'Focus is ready', fzMore: n => `and ${n} more`, fzUntil: w => `until ${w}`, fzWhileWork: 'while the work lasts', fzReleased: 'lifted until this session ends', fzWhenSub_work: 'they close when work starts', fzWhenSub_series: 'they close for the whole series', fzWhenSub_off: 'by hand and on schedule only', fzNowFor: 'Close now for', fzLift: 'Lift the block', fzLiftIn: n => `You can lift it in ${n} s`, fzLiftNow: 'Lift it now?', fzLifted: 'Lifted until this session ends', fzLockedNote: 'Strict mode: it opens by itself when the time is up', gFzWhat: 'What to close', gFzWhen: 'When', gFzStrict: 'Lifting it early', gFzDev: 'Devices', fzAddPh: 'Your own site, e.g. reddit.com', fzBadSite: 'Type a site address, e.g. reddit.com', fzWhen_work: 'While working', fzWhenD_work: 'Breaks stay free', fzWhen_series: 'The whole series', fzWhenD_series: 'Breaks between sessions too', fzWhen_off: 'By hand only', fzWhenD_off: 'Not tied to the timer: the button and the schedule', fzAddWin: 'Add a scheduled time', fzSchedBad: 'Pick days and a start and end time', fzEdit: 'Edit', fzStrict_free: 'At once', fzStrict_wait: 'After 10 s', fzStrict_lock: 'Never', fzStrictDesc: 'How easily a running block can be lifted', fzPcName: 'This PC', fzPcOk: 'Sites are closed in every browser, open tabs get closed', fzPcAsk: 'Windows asks once for the right to change the hosts file', fzPhoneName: 'This phone', fzPhoneOk: 'Apps and sites in browsers get closed', fzPhoneAsk: 'Turn Яйцетаймер on under Accessibility', fzWebName: 'This browser', fzWebDesc: 'Nothing is blocked here, it is settings only. The Windows and Android apps do the blocking', fzAllow: 'Allow', fzPermOk: 'Done: sites will be closed', fzPermNo: 'Not allowed: only tabs get closed', fzNotePc: 'The settings are the same on every device with your account.', fzNoteAndroid: 'If Android says “Restricted setting”: App info → ⋮ → “Allow restricted settings”, then come back here. The settings are the same on every device.', fzNoteWeb: 'The settings are the same on every device with your account.', fzHitTitle: n => `${n} is closed: you are in focus`, fzSyncWait: 'Focus does not sync yet: the database does not know this setting, each device keeps its own.', 
     work: 'Work', break: 'Break', today: 'Today',
     start: 'Start', pause: 'Pause', resume: 'Resume',
     reset: 'Reset', skip: 'Skip phase',
@@ -190,13 +190,13 @@ scale: 'Zoom', appsPickTitle: 'Add a program', appsSearchPh: 'Search programs on
     pWeekL7: '7 days', editEntry: 'Edit entry', saveL: 'Save', edited: 'Entry changed', newProjOnly: 'No such project. Open the list ▾ and press “Create a new project”', newProjBtn: 'Create a new project', createNamed: n => `Create “${n}”`, newProjPh: 'New project name', projCreated: n => `Project “${n}” created`,
     adPerHour: 'active minutes in every 10 minutes', adPerDay: 'active hours per day', adToHist: 'To history', adAddQ: (d, a, b) => `Add ${d} of work (${a}–${b}) to your history?`, adAdded: d => `Added: ${d}`,
     activityDays: 'Days', activityOlder: 'Earlier', activityNewer: 'Later', activityUnknown: 'The daily total is available. The exact times were not recorded.',
-    activityOn: 'Working', activityOff: 'Not working', activityFrom: 'From', activityTo: 'To',
+    activityOn: 'Working', activityOff: 'Not working', activityPickHint: 'Forgot the timer? Select a stretch on the chart to add it to your history', activityDaySum: (a, b, n) => `${a}–${b} · ${n} stretch${n === 1 ? '' : 'es'} of work`, activityNone: 'No work this day', activityApprox: 'approximate', apSummary: (avg, n, hrs) => `${avg} a day on average · ${n} day${n === 1 ? '' : 's'} with work${hrs ? ' · usually ' + hrs : ''}`, apNone: 'No work in this period', apIdle: 'no work', activityFrom: 'From', activityTo: 'To',
     activityRangeHint: 'Drag to select or enter the times.',
     activityEstimated: 'Work times within older intervals are approximate.',
     activityAlreadyLogged: 'No unlogged work in this range',
     activitySelection: d => `To add · ${d}`,
-    offerMute: 'Never suggest for this program', offerPrograms: 'Suggestions by program',
-    offerNoPrograms: 'Add a tracked program under Programs first.', offerTodayOff: 'Not today',
+    offerMute: 'Never suggest for this program', offerSetHere: 'Settings for this program', offerPrograms: 'Suggestions by program',
+    offerNoPrograms: 'Add a tracked program under Programs first.', offerTodayOff: 'Close',
     planSkipNext: 'Skip the next one', untilShort: 'to', taQ: 'What are you working on?', taSub: tm => `The timer has been running as planned since ${tm}. Pick a task: it goes to every session of this run.`, taNewPh: 'Or a new task', taLater: 'Later', quickOff: 'Remove', schedL: 'Full plan…', taSet: n => `Task: ${n}`, scTaskL: 'Task', scNameQ: 'Name this series', scNameSub: 'The name goes to all its sessions.', skipToday: 'skip today', planRemove: 'remove', offerTitle: n => `Working in ${n}?`, offerBody: 'Five minutes in, and the timer isn’t running. Start it?', offerGo: 'Start the timer', offerLater: 'Not now', offerSet: 'Offer to start the timer', offerSetDesc: 'After five minutes of work, once a day per program', peLater: 'Pick on the day', pePh: 'Or type a task', startAtGo: tm => `Start at ${tm}`, clashQ: 'That time is taken', clashCur: w => `A run is already going then (${w}). Two timers can’t run at once: pick another time.`, clashPlan: (w, d) => `It overlaps the plan ${w} (${d}). Two timers can’t run at once: pick another time or change that plan.`, autoTellQ: w => `The timer will start by itself ${w}`, autoTellText: 'Even if you are away: at that time it presses Start on any device that is on. If you weren’t there, it will ask later whether you worked.', autoQ: tm => `The timer started by itself at ${tm}`, autoText: 'Have you been working all this time?', autoTextDone: 'Were you working then? If not, those sessions stay out of your history.', autoYes: 'Yes, I was', autoNo: 'No', autoAgain: tm => `Time before ${tm} doesn’t count: the timer started over`, autoStop: 'Stop', undone: 'Undone', redone: 'Redone', undoNone: 'Nothing to undo', redoNone: 'Nothing to redo', hintLong: 'You can turn on a long break: every 4th break gets longer, pomodoro style', hintLongAct: 'Set up', hintRange: 'Forgot the timer? Mark a stretch on the chart and log it as work', hintTrack: 'Pick the programs you work in, and the timer will show how much time you spend in them', hintTrackAct: 'Pick', skipTomorrow: 'skip tomorrow', skipDay: d => `skip ${d}`, skippedToday: 'skipped today · undo', adPerHourH: 'active minutes in each hour', adPickHint: 'Drag across the chart to mark a stretch and add it to your history as work (handy if you forgot the timer). A click takes the whole block of work around it. The mouse wheel zooms, Shift + wheel moves along.', adNothing: 'No active work in this stretch',
     tabPlan: 'Plan', planLead: 'The timer starts by itself at the time you set, on the PC and on the phone. Open it later and the time is already running from the start.',
     planAdd: '+ Add a time', planNextL: 'Next start:', planNone: 'Nothing planned', planEmpty: 'For example: weekdays at 7:30, two sessions',
@@ -736,8 +736,10 @@ function seriesWaitText() {
 let winVisible = true;
 let tickN = 0;
 let lastTick = 0;
+let focusTickAt = 0;
 function tick() {
   planTick();
+  if (Date.now() - focusTickAt >= 1000) { focusTickAt = Date.now(); focusTick(); }
   if (series && !(tickN++ % 8)) maybeAskTask(); // about every 2 s: a planned run without a task asks once
   if (series) applySeries();
   if (timer.running && Date.now() >= timer.endAt) {
@@ -1024,7 +1026,7 @@ function initInfo() {
    Three tabs (timer, stats, settings); on the timer page the time, the key and the day at a glance
    (today towards the goal, the streak). Nothing is lost: everything comes back with the switch.
    One class on <html> hides the rest, so it costs nothing in memory. */
-const SIMPLE_HIDDEN = ['projects', 'apps', 'plan'];
+const SIMPLE_HIDDEN = ['projects', 'apps', 'plan', 'focus'];
 function applyMode() {
   document.documentElement.classList.toggle('simple', !!settings.simple);
   if (settings.simple && SIMPLE_HIDDEN.includes(view)) $('.tab[data-view="timer"]').click();
@@ -2334,43 +2336,129 @@ function renderAppDetail() {
 }
 
 const ACTIVITY_DAY_END = 86400;
-const ACTIVITY_PAGE_DAYS = 30;
+const ACTIVITY_PLOT_H = 264; // px the period chart may take: a month or three fit without scrolling
+/* A period at a glance: one thin strip per day (time of day left to right), newest on top, and how long
+   that day was on the right. Three months still fit: the strips just get thinner and read like a barcode
+   of your working hours. "All time" folds a week into one strip, darker where you worked more often. */
 function renderActivityPeriod(chart, today, first, days) {
   const end = parseDay(today);
-  const total = adRange || Math.max(1, Math.round((end - parseDay(first || today)) / 86400000) + 1);
-  adPage = Math.min(adPage, Math.ceil(total / ACTIVITY_PAGE_DAYS) - 1);
-  const offset = adRange ? 0 : adPage * ACTIVITY_PAGE_DAYS;
-  const count = adRange || Math.min(ACTIVITY_PAGE_DAYS, total - offset);
+  const span = adRange || Math.max(1, Math.round((end - parseDay(first || today)) / 86400000) + 1);
+  const byWeek = span > 92;
+  const fmt = o => new Intl.DateTimeFormat(settings.lang, o);
   const rows = [];
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < span; i++) {
     const date = new Date(end);
-    date.setDate(date.getDate() - offset - i);
-    const day = dayKey(date), activity = dayActivity(days.get(day));
-    const label = new Intl.DateTimeFormat(settings.lang, { weekday: 'short', day: 'numeric', month: 'short' }).format(date);
-    const seconds = Math.round(days.get(day)?.active || 0);
-    const accessibleLabel = label + (seconds ? ' · ' + activityDuration(seconds) : '');
-    rows.push('<button type="button" class="activity-row" data-activity-day="' + day + '" aria-label="' + esc(accessibleLabel) + '">' +
-      '<span>' + esc(label) + '</span><span aria-hidden="true" class="activity-preview' + (activity.unknown ? ' unknown' : '') + '">' +
-      activitySegments(activity.ranges) + '</span></button>');
+    date.setDate(date.getDate() - i);
+    const key = dayKey(date), d = days.get(key), act = dayActivity(d);
+    const sec = Math.round(d?.active || activitySecondsOf(act.ranges));
+    if (!byWeek) { rows.push({ date, keys: [key], sec, ranges: [act.ranges], unknown: act.unknown }); continue; }
+    const row = rows.at(-1);
+    if (row && !row.closed) { row.keys.push(key); row.sec += sec; row.ranges.push(act.ranges); row.date = date; }
+    else rows.push({ date, keys: [key], sec, ranges: [act.ranges] });
+    if (date.getDay() === 1) rows.at(-1).closed = true; // a week strip runs Monday to Sunday
   }
+  const n = rows.length, rowH = Math.max(2, Math.min(30, Math.floor(ACTIVITY_PLOT_H / n)));
+  const roomy = rowH >= 16, gap = !roomy && rowH >= 5, max = Math.max(...rows.map(r => r.sec), 1);
+  const short = o => fmt(o).format.bind(fmt(o));
+  const dayName = short(roomy ? { weekday: 'short', day: 'numeric', month: 'short' } : { day: 'numeric', month: 'short' });
+  const monthName = short({ month: 'short' });
+  // thin strips get sparse labels: every Monday (days) or the first week of each month (weeks)
+  // (or the 1st of each month when even Mondays would crowd), never closer than a line apart
+  const monthly = byWeek || rowH * 7 < 18;
+  const candidate = (r, i) => roomy || i === 0 || (byWeek ? r.date.getDate() <= 7 : monthly ? r.date.getDate() === 1 : r.date.getDay() === 1);
+  const labels = [], strips = [], totals = [];
+  let lastLabel = -99;
+  rows.forEach((r, i) => {
+    const top = i * rowH;
+    if (candidate(r, i) && top - lastLabel >= 16) {
+      lastLabel = top;
+      labels.push(`<span style="top:${top + rowH / 2}px">${esc(monthly ? (i === 0 && !byWeek ? dayName(r.date) : monthName(r.date)) : dayName(r.date))}</span>`);
+    }
+    const alpha = byWeek ? Math.min(1, 1.6 / r.ranges.length) : 0;
+    strips.push(`<div class="ap-row${r.unknown ? ' unknown' : ''}" style="top:${top}px;height:${rowH}px">` +
+      r.ranges.map(rs => activitySegments(rs, alpha)).join('') + '</div>');
+    totals.push(`<div class="ap-total" style="top:${top}px;height:${rowH}px">${roomy
+      ? (r.sec >= 60 ? esc(fmtShort(r.sec)) : '<em>—</em>')
+      : `<i style="width:${Math.round(r.sec / max * 100)}%"></i>`}</div>`);
+  });
+  // the gist in one line: an average working day and the hours you usually work (the middle 80% of it)
+  const bins = new Array(96).fill(0);
+  for (const r of rows) for (const rs of r.ranges) for (const [a, b] of rs) {
+    for (let k = Math.floor(a / 900); k * 900 < b && k < 96; k++) bins[k] += Math.min(b, (k + 1) * 900) - Math.max(a, k * 900);
+  }
+  const all = bins.reduce((x, y) => x + y, 0);
+  let from = 0, to = 96, acc = 0;
+  for (let k = 0; k < 96; k++) { acc += bins[k]; if (acc >= all * 0.1) { from = k; break; } }
+  acc = 0;
+  for (let k = 95; k >= 0; k--) { acc += bins[k]; if (acc >= all * 0.1) { to = k + 1; break; } }
+  const totalSec = rows.reduce((x, r) => x + r.sec, 0);
+  const workDays = rows.reduce((x, r) => x + r.ranges.filter(rs => rs.length).length, 0) || rows.filter(r => r.sec >= 60).length;
+  const sum = !totalSec ? t('apNone') : t('apSummary')(fmtShort(totalSec / Math.max(1, workDays)), workDays,
+    all ? `${activityClock(from * 900)}–${activityClock(to * 900)}` : '');
 
-  const key = [adExe, adRange, adPage, settings.lang, total, today].join('|');
+  const key = [adExe, adRange, settings.lang, n, rowH, today].join('|');
   if (chart._periodKey !== key) {
     chart._periodKey = key;
-    const legend = '<div class="activity-legend"><span>' + esc(t('activityOn')) + '</span><span>' + esc(t('activityOff')) + '</span></div>';
-    const nav = !adRange && total > ACTIVITY_PAGE_DAYS
-      ? '<div class="activity-pages"><button type="button" class="ghost" data-activity-page="1"' +
-        (offset + count >= total ? ' disabled' : '') + '>‹ ' + esc(t('activityOlder')) +
-        '</button><button type="button" class="ghost" data-activity-page="-1"' +
-        (offset === 0 ? ' disabled' : '') + '>' + esc(t('activityNewer')) + ' ›</button></div>' : '';
-    const ruler = '<div class="activity-preview-ruler" aria-hidden="true"><div><span>00:00</span><span>12:00</span><span>24:00</span></div></div>';
-    chart.innerHTML = legend + ruler + '<div class="activity-list" tabindex="0" aria-label="' + esc(t('activityDays')) + '"></div>' + nav;
+    chart.innerHTML = `<div class="ap-axis" aria-hidden="true"><div>${[0, 6, 12, 18, 24].map(h => `<span>${pad(h)}</span>`).join('')}</div></div>
+      <div class="ap-body${roomy ? ' roomy' : ''}${gap ? ' gap' : ''}" style="height:${n * rowH}px">
+        <div class="ap-labels" aria-hidden="true"></div>
+        <div class="ap-plot" tabindex="0" role="img"><b class="ap-grid"></b><div class="ap-strips"></div><i class="ap-hover" hidden></i></div>
+        <div class="ap-totals" aria-hidden="true"></div>
+        <div class="ap-tip" hidden></div>
+      </div>
+      <div class="ap-sum"></div>`;
+    const plot = chart.querySelector('.ap-plot'), tip = chart.querySelector('.ap-tip'), hover = chart.querySelector('.ap-hover');
+    let at = -1;
+    const show = i => {
+      const st = chart._ap;
+      at = i;
+      if (i < 0 || i >= st.rows.length) { hover.hidden = tip.hidden = true; return; }
+      const r = st.rows[i], ranges = r.ranges.flat();
+      hover.hidden = false;
+      hover.style.top = `${i * st.rowH}px`;
+      hover.style.height = `${st.rowH}px`;
+      const when = !st.byWeek && ranges.length ? ` · ${activityClock(Math.min(...ranges.map(x => x[0])))}–${activityClock(Math.max(...ranges.map(x => x[1])))}` : '';
+      const name = st.byWeek ? `${fmt({ day: 'numeric', month: 'short' }).format(r.date)} – ${fmt({ day: 'numeric', month: 'short' }).format(parseDay(r.keys[0]))}`
+        : fmt({ weekday: 'long', day: 'numeric', month: 'long' }).format(r.date);
+      tip.textContent = `${name} · ${r.sec >= 60 ? fmtShort(r.sec) : t('apIdle')}${when}`;
+      tip.hidden = false;
+      const below = (i + 1) * st.rowH + 6, h = st.rows.length * st.rowH;
+      tip.style.top = `${below + 30 > h ? i * st.rowH - 34 : below}px`;
+    };
+    const rowAt = e => Math.floor((e.clientY - plot.getBoundingClientRect().top) / chart._ap.rowH);
+    plot.addEventListener('pointermove', e => show(rowAt(e)));
+    plot.addEventListener('pointerleave', () => show(-1));
+    const open = i => {
+      const r = chart._ap.rows[i];
+      if (!r || chart._ap.byWeek) return;
+      adDay = r.keys[0];
+      renderAppDetail();
+      $('#adDayBack').focus();
+    };
+    plot.addEventListener('click', e => open(rowAt(e)));
+    plot.addEventListener('keydown', e => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        show(Math.max(0, Math.min(chart._ap.rows.length - 1, at + (e.key === 'ArrowDown' ? 1 : -1))));
+      } else if (e.key === 'Enter' && at >= 0) open(at);
+    });
+    plot.addEventListener('blur', () => show(-1));
   }
-  setHTML(chart.querySelector('.activity-list'), rows.join(''));
+  chart._ap = { rows, rowH, byWeek };
+  const plot = chart.querySelector('.ap-plot');
+  plot.classList.toggle('weeks', byWeek);
+  plot.setAttribute('aria-label', sum);
+  setHTML(chart.querySelector('.ap-labels'), labels.join(''));
+  setHTML(chart.querySelector('.ap-strips'), strips.join(''));
+  setHTML(chart.querySelector('.ap-totals'), totals.join(''));
+  chart.querySelector('.ap-sum').textContent = sum;
 }
-function activitySegments(ranges) {
+const activitySecondsOf = ranges => ranges.reduce((n, [a, b]) => n + b - a, 0);
+// "5:52" reads faster than "5 ч 52 мин" in a column of numbers
+const fmtShort = sec => { const m = Math.round(sec / 60); return m < 60 ? `${m} ${t('min')}` : `${Math.floor(m / 60)}:${pad(m % 60)}`; };
+function activitySegments(ranges, alpha) {
   return ranges.map(([a, b]) => '<i style="left:' + (a / ACTIVITY_DAY_END * 100) + '%;width:' +
-    ((b - a) / ACTIVITY_DAY_END * 100) + '%"></i>').join('');
+    ((b - a) / ACTIVITY_DAY_END * 100) + '%' + (alpha ? ';opacity:' + alpha.toFixed(2) : '') + '"></i>').join('');
 }
 function mergeActivity(ranges) {
   const out = [];
@@ -2435,20 +2523,18 @@ function renderActivityDay(chart, app, day, activity) {
   chart._activity = activity;
   if (chart._activityKey !== key) {
     chart._activityKey = key;
-    chart.innerHTML = `<div class="activity-ruler"><span aria-hidden="true">${esc(t('activityOff'))}</span><div>${[0, 6, 12, 18, 24]
-      .map(h => `<span${h % 12 ? ' class="tick-quarter"' : ''}>${activityClock(h * 3600)}</span>`).join('')}</div></div>
-      <div class="activity-grid">
-        <div class="activity-labels"><span>${esc(t('activityOn'))}</span><span>${esc(t('activityOff'))}</span></div>
-        <div class="activity-plot" aria-label="${esc(t('activityRangeHint'))}">
-          <div class="activity-track on"></div><div class="activity-track off"></div><i class="activity-pick" hidden></i>
-        </div>
+    chart.innerHTML = `<div class="ap-axis" aria-hidden="true"><div>${[0, 6, 12, 18, 24].map(h => `<span>${pad(h)}</span>`).join('')}</div></div>
+      <div class="activity-plot" aria-label="${esc(t('activityRangeHint'))}">
+        <b class="ap-grid"></b><div class="activity-track on"></div><i class="activity-pick" hidden></i>
       </div>
-      <div class="activity-actions">
-        <label>${esc(t('activityFrom'))} <input class="activity-start" type="text" placeholder="00:00" maxlength="8"></label>
-        <label>${esc(t('activityTo'))} <input class="activity-end" type="text" placeholder="24:00" maxlength="8"></label>
-        <button class="ghost activity-add" disabled>${esc(t('adToHist'))}</button>
+      <div class="activity-sum"></div>
+      <div class="activity-actions" hidden>
+        <input class="activity-start" type="text" placeholder="00:00" maxlength="8" aria-label="${esc(t('activityFrom'))}"><span>–</span><input class="activity-end" type="text" placeholder="24:00" maxlength="8" aria-label="${esc(t('activityTo'))}">
+        <span class="activity-note" role="status"></span>
+        <button class="activity-add" disabled>${esc(t('adToHist'))}</button>
+        <button class="when-x activity-clear" aria-label="×"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg></button>
       </div>
-      <div class="activity-note" role="status"></div>`;
+      <div class="activity-hint">${esc(t('activityPickHint'))}</div>`;
     const plot = chart.querySelector('.activity-plot');
     const fields = ['.activity-start', '.activity-end'].map(sel => chart.querySelector(sel));
     const add = chart.querySelector('.activity-add'), selection = chart.querySelector('.activity-pick');
@@ -2464,10 +2550,13 @@ function renderActivityDay(chart, app, day, activity) {
         selection.style.width = `${(to - from) * 100 / ACTIVITY_DAY_END}%`;
       }
       add.disabled = !seconds;
-      note.textContent = chart._activity.unknown ? t('activityUnknown')
-        : [valid ? seconds ? t('activitySelection')(activityDuration(seconds)) : t('activityAlreadyLogged') : '',
-          chart._activity.estimated ? t('activityEstimated') : ''].filter(Boolean).join(' · ');
+      const editing = valid || chart.contains(document.activeElement) && fields.includes(document.activeElement);
+      chart.querySelector('.activity-actions').hidden = !editing;
+      chart.querySelector('.activity-hint').hidden = editing;
+      chart.querySelector('.activity-hint').textContent = chart._activity.unknown ? t('activityUnknown') : t('activityPickHint');
+      note.textContent = !valid ? '' : seconds ? activityDuration(seconds) : t('activityAlreadyLogged');
     };
+    chart.querySelector('.activity-clear').addEventListener('click', () => { fields.forEach(f => { f.value = ''; }); updateSelection(); });
     const select = (start, end) => {
       fields[0].value = activityClock(start);
       fields[1].value = activityClock(end);
@@ -2529,14 +2618,14 @@ function renderActivityDay(chart, app, day, activity) {
     });
     chart._updateActivitySelection = updateSelection;
   }
-  const active = chart._activity.ranges, idle = [];
+  const active = chart._activity.ranges;
   chart.classList.toggle('unknown', chart._activity.unknown);
-  let cursor = 0;
-  for (const [a, b] of active) { if (a > cursor) idle.push([cursor, a]); cursor = b; }
-  if (cursor < ACTIVITY_DAY_END && !chart._activity.unknown) idle.push([cursor, ACTIVITY_DAY_END]);
-  for (const [side, ranges] of [['on', active], ['off', idle]]) {
-    setHTML(chart.querySelector('.activity-track.' + side), activitySegments(ranges));
-  }
+  setHTML(chart.querySelector('.activity-track.on'), activitySegments(active));
+  // one quiet line under the track: from the first to the last bit of work, and how many stretches
+  chart.querySelector('.activity-sum').textContent = active.length
+    ? t('activityDaySum')(activityClock(Math.floor(active[0][0] / 60) * 60), activityClock(Math.ceil(active.at(-1)[1] / 60) * 60), active.length) +
+      (chart._activity.estimated ? ' · ' + t('activityApprox') : '')
+    : chart._activity.unknown ? '' : t('activityNone');
   chart._updateActivitySelection();
 }
 
@@ -2862,7 +2951,10 @@ let autoAsking = false;
 function autoWatch() {
   const pd = settings.autoPend;
   if (series && series.auto && !series.ack && !isSkippedRun(series.id) && (!pd || pd.id !== series.id)) {
-    settings.autoPend = { id: series.id, start: series.start };
+    // runs that started by themselves one after another with nobody there (three slept-through morning
+    // plans) wait for one question together: "no" takes back all of them, not only the last one
+    const earlier = pd && !isSkippedRun(pd.id) ? [...(pd.earlier || []), pd.id].filter(id => !isSkippedRun(id)) : [];
+    settings.autoPend = { id: series.id, start: series.start, ...(earlier.length ? { earlier, first: pd.first || pd.start } : {}) };
     persist();
   } else if (pd && ((series && series.id === pd.id && series.ack) || Date.now() - pd.start > 3 * 86400e3)) {
     settings.autoPend = null; // answered on another device, or too old to ask about
@@ -2878,20 +2970,21 @@ function autoAck() {
 async function autoPresent() {
   const pd = settings.autoPend;
   if (!pd || autoAsking || isSkippedRun(pd.id) || (account && !syncLoaded && Date.now() < waitForPlanSyncUntil)) return;
-  if (Date.now() - pd.start < 5 * 60000) { autoAck(); return; } // here when it started
+  if (Date.now() - pd.start < 5 * 60000 && !pd.earlier) { autoAck(); return; } // here when it started
   autoAsking = true;
   await checkCloudBeforePlanPrompt();
   if (isSkippedRun(pd.id) || settings.autoPend?.id !== pd.id) { autoAsking = false; return; }
   const running = series && series.id === pd.id;
-  const ok = await confirmModal(t('autoQ')(hm(pd.start)), t(running ? 'autoText' : 'autoTextDone'), t('autoYes'),
+  const ok = await confirmModal(t('autoQ')(hm(pd.first || pd.start)), t(running ? 'autoText' : 'autoTextDone'), t('autoYes'),
     { safe: true, cancel: t('autoNo'), planId: pd.id });
   autoAsking = false;
   if (isSkippedRun(pd.id)) return;
   if (ok) { autoAck(); return; }
   const now = Date.now();
-  sessions = sessions.filter(s => !(s.series === pd.id && s.start < now)); // nothing logged while you were away
+  const runs = new Set([pd.id, ...(pd.earlier || [])]);
+  sessions = sessions.filter(s => !(runs.has(s.series) && s.start < now)); // nothing logged while you were away
   settings.autoPend = null;
-  recordPlanChoice(pd.id, true);
+  for (const id of runs) recordPlanChoice(id, true);
   if (series && series.id === pd.id) {
     series = { ...series, id: newId(), start: now, logged: 0, pausedAt: 0, auto: 0, ack: 1 };
     seriesPos = '';
@@ -3613,7 +3706,7 @@ async function checkAppOffer() {
     persistNow();
     setTimeout(() => { if (appOffer === offer) appOffer = null; }, 125000);
     api.showAlert({
-      offerId: id, muteLabel: t('offerMute'), next: 'work', title: t('offerTitle')(offer.name), body: t('offerBody'),
+      offerId: id, setLabel: t('offerSetHere'), next: 'work', title: t('offerTitle')(offer.name), body: t('offerBody'),
       goLabel: t('offerGo'), okLabel: t('offerTodayOff'), sound: false, repeatSec: 0,
       theme: effectiveTheme(), lang: settings.lang,
     });
@@ -3622,12 +3715,29 @@ async function checkAppOffer() {
 function handleAppOffer(action) {
   if (typeof action !== 'string' || !action.startsWith('offer:')) return false;
   const [, id, choice] = action.split(':');
+  if (id === 'focus') { if (choice === 'settings') { api.focusWindow(); $('.tab[data-view="focus"]').click(); } return true; }
   if (!appOffer || appOffer.id !== id) return true;
   const { exe, name } = appOffer;
   appOffer = null;
   if (choice === 'mute') setOfferMuted(exe, name, true);
+  if (choice === 'settings') openOfferSettings(exe);
   if (choice === 'start' && appOfferEligible()) toggle();
   return true;
+}
+// The gear on the offer: the main window opens on the list of programs, this one lit up
+async function openOfferSettings(exe) {
+  api.focusWindow();
+  const box = $('#offerPrograms');
+  goSettingsAt('#appOfferRow');
+  try { offerPrograms = (await api.appsStats()) || []; } catch {}
+  box.open = true;
+  renderAppOfferPrograms();
+  setTimeout(() => {
+    const row = box.querySelector(`[data-offer-exe="${CSS.escape(exe)}"]`)?.closest('.set');
+    if (!row) return;
+    row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    row.classList.remove('hint-flash'); void row.offsetWidth; row.classList.add('hint-flash');
+  }, 400);
 }
 async function loadApps() {
   // the phone does not track programs: it shows what the PC sent through sync
@@ -3995,6 +4105,314 @@ async function exportCsv() {
   if (ok) toast(t('exported'));
 }
 
+/* ================= Focus: sites and apps closed while you work =================
+   One synced object, settings.focus: what to close (presets + your own sites), when (the work
+   phases, the whole series, by a schedule, or by hand for a while) and how firm it is (lift at
+   once, after a pause, or not at all). Every device works out "closed now?" on its own from the
+   same settings and the same synced timer, so the PC and the phone close and open together.
+   The lists each device needs (hosts names, tab titles, Android packages, PC programs) are kept
+   in the object too (d, k, a, x), so the phone's background service needs no copy of the presets. */
+const FOCUS_SITES = [
+  { id: 'youtube', name: 'YouTube', d: ['youtube.com', 'www.youtube.com', 'm.youtube.com', 'music.youtube.com', 'youtu.be'], k: ['youtube'], a: ['com.google.android.youtube', 'app.revanced.android.youtube'] },
+  { id: 'instagram', name: 'Instagram', d: ['instagram.com', 'www.instagram.com'], k: ['instagram'], a: ['com.instagram.android'] },
+  { id: 'tiktok', name: 'TikTok', d: ['tiktok.com', 'www.tiktok.com', 'm.tiktok.com', 'vm.tiktok.com'], k: ['tiktok'], a: ['com.zhiliaoapp.musically', 'com.ss.android.ugc.trill'] },
+  { id: 'vk', name: 'VK', d: ['vk.com', 'www.vk.com', 'm.vk.com', 'vk.ru', 'www.vk.ru', 'm.vk.ru', 'vkvideo.ru', 'www.vkvideo.ru'], k: ['вконтакте', 'vk видео', 'vk video'], a: ['com.vkontakte.android', 'com.vk.vkvideo'] },
+  { id: 'telegram', name: 'Telegram', d: ['web.telegram.org'], k: ['telegram web'], a: ['org.telegram.messenger', 'org.telegram.messenger.web', 'org.thunderdog.challegram'], x: ['telegram.exe', 'ayugram.exe'] },
+  { id: 'x', name: 'X', d: ['x.com', 'www.x.com', 'twitter.com', 'www.twitter.com', 'mobile.twitter.com'], k: [' / x', 'twitter'], a: ['com.twitter.android'] },
+  { id: 'facebook', name: 'Facebook', d: ['facebook.com', 'www.facebook.com', 'm.facebook.com'], k: ['facebook'], a: ['com.facebook.katana', 'com.facebook.lite'] },
+  { id: 'reddit', name: 'Reddit', d: ['reddit.com', 'www.reddit.com', 'old.reddit.com'], k: ['reddit'], a: ['com.reddit.frontpage'] },
+  { id: 'twitch', name: 'Twitch', d: ['twitch.tv', 'www.twitch.tv', 'm.twitch.tv'], k: ['twitch'], a: ['tv.twitch.android.app'] },
+  { id: 'pinterest', name: 'Pinterest', d: ['pinterest.com', 'www.pinterest.com', 'ru.pinterest.com'], k: ['pinterest'], a: ['com.pinterest'] },
+  { id: 'threads', name: 'Threads', d: ['threads.net', 'www.threads.net', 'threads.com', 'www.threads.com'], k: ['threads'], a: ['com.instagram.barcelona'] },
+  { id: 'discord', name: 'Discord', d: ['discord.com', 'www.discord.com'], k: ['discord'], a: ['com.discord'], x: ['discord.exe'] },
+];
+const FOCUS_DEFAULT = { on: false, sites: { youtube: true }, custom: [], when: 'work', sched: [], until: 0, strict: 'wait', release: 0, lockUntil: 0 };
+const focusCfg = () => { const f = { ...FOCUS_DEFAULT, ...(settings.focus || {}) }; return f.d ? f : focusDerive(f); };
+const cleanDomain = s => String(s || '').trim().toLowerCase().replace(/^[a-z]+:\/\//, '').replace(/^www\./, '').split(/[/?#:]/)[0];
+const isDomain = d => /^([a-z0-9-]+\.)+[a-z]{2,}$/.test(d) && d.length <= 253;
+// the device lists (d, k, a, x) follow the sites; called after every change of the list
+function focusDerive(f) {
+  const d = new Set(), k = new Set(), a = new Set(), x = new Set();
+  for (const s of FOCUS_SITES) if (f.sites?.[s.id]) { s.d.forEach(v => d.add(v)); s.k.forEach(v => k.add(v)); s.a.forEach(v => a.add(v)); (s.x || []).forEach(v => x.add(v)); }
+  for (const c of f.custom || []) { d.add(c); d.add('www.' + c); d.add('m.' + c); const l = c.split('.')[0]; if (l.length >= 4) k.add(l); }
+  return { ...f, d: [...d], k: [...k], a: [...a], x: [...x] };
+}
+function saveFocus(f) {
+  settings.focus = { ...focusDerive(f), u: Date.now() };
+  persistNow();
+  if (typeof syncPush === 'function') syncPush();
+  focusTick(true);
+  renderFocus();
+}
+const focusEmpty = f => !(f.d?.length || f.a?.length || f.x?.length);
+
+// The block the timer gives, if any: {until, why}; until = Infinity while it is open-ended (paused)
+function focusTimerBlock(f, now) {
+  if (f.when !== 'work' && f.when !== 'series') return null;
+  if (series) {
+    const p = seriesAt(series, series.pausedAt || now);
+    if (p.waiting || p.done) return null;
+    if (f.when === 'series') {
+      const end = series.count > 0 ? seriesWorkStart(series, series.count - 1) + series.work : 0;
+      return { until: series.pausedAt || !end ? Infinity : end, why: 'series' };
+    }
+    return p.phase === 'work' ? { until: series.pausedAt ? Infinity : p.end, why: 'work' } : null;
+  }
+  if (timer.phase === 'work' && (timer.running || !isUntouched())) return { until: timer.running ? timer.endAt : Infinity, why: 'work' };
+  return null;
+}
+const hmMin = s => { const [h, m] = String(s || '').split(':').map(Number); return h * 60 + m; };
+// A schedule window open now: {until, why: 'sched'}. Windows may run past midnight (22:00–02:00).
+function focusSchedBlock(f, now) {
+  const d = new Date(now), m = d.getHours() * 60 + d.getMinutes(), dow = d.getDay();
+  let best = null;
+  for (const w of f.sched || []) {
+    if (w.on === false || !Array.isArray(w.days)) continue;
+    const a = hmMin(w.from), b = hmMin(w.to);
+    if (!(a >= 0) || !(b >= 0) || a === b) continue;
+    let end = null;
+    if (a < b && w.days.includes(dow) && m >= a && m < b) end = new Date(d).setHours(0, b, 0, 0);
+    if (a > b && w.days.includes(dow) && m >= a) end = addDays(startOfDay(now), 1) + b * 60000;
+    if (a > b && w.days.includes((dow + 6) % 7) && m < b) end = startOfDay(now) + b * 60000;
+    if (end && (!best || end > best.until)) best = { until: end, why: 'sched' };
+  }
+  return best;
+}
+// Closed now? {active, until, why} — the same rules as Focus.java on the phone
+function focusState(now = Date.now()) {
+  const f = focusCfg();
+  if (focusEmpty(f)) return { active: false, empty: true };
+  const blocks = [];
+  if (f.until > now) blocks.push({ until: f.until, why: 'manual' });
+  // the timer and the schedule only once focus is switched on (nothing closes by itself after an update)
+  const tb = f.on && focusTimerBlock(f, now);
+  if (tb) blocks.push(tb);
+  const sb = f.on && focusSchedBlock(f, now);
+  if (sb) blocks.push(sb);
+  const locked = f.lockUntil > now;
+  if (locked) blocks.push({ until: f.lockUntil, why: 'lock' });
+  if (!blocks.length) return { active: false };
+  if (f.release > now && !locked) return { active: false, released: f.release };
+  return { active: true, until: Math.max(...blocks.map(b => b.until)), why: blocks[0].why, locked };
+}
+
+// About once a second: strict mode holds the block to its planned end; the PC gets the list.
+let focusSent = '', focusPc = null, focusNow = { active: false };
+function focusTick(force) {
+  if (!settings.focus && !focusSent && !force) { if (api.focusBlock && !focusSent) { focusSent = 'off'; api.focusBlock({ on: false, domains: [], titles: [], exes: [] }); } return; }
+  const f = focusCfg(), st = focusState();
+  if (st.active && f.strict === 'lock' && Number.isFinite(st.until) && st.until > (f.lockUntil || 0) + 1000) {
+    settings.focus = { ...settings.focus, lockUntil: st.until, u: Date.now() };
+    persist();
+    if (typeof syncSchedule === 'function') syncSchedule();
+  }
+  const changed = st.active !== focusNow.active || st.until !== focusNow.until;
+  focusNow = st;
+  if (changed && view === 'focus') renderFocus();
+  if (changed) $('.tab[data-view="focus"]')?.classList.toggle('on', !!st.active);
+  if (!api.focusBlock) return;
+  const req = { on: !!st.active, keep: f.strict === 'lock', domains: f.d || [], titles: f.k || [], exes: f.x || [] };
+  const g = JSON.stringify(req);
+  if (g === focusSent && !force) return;
+  focusSent = g;
+  Promise.resolve(api.focusBlock(req)).then(r => { focusPc = r || null; if (view === 'focus') renderFocusDevices(); }).catch(() => {});
+}
+function focusUntilText(st) {
+  if (!Number.isFinite(st.until)) return t('fzWhileWork');
+  const sameDay = startOfDay(st.until) === startOfDay();
+  return t('fzUntil')((sameDay ? '' : dayTitle(st.until) + ', ') + hm(st.until));
+}
+// Lifting the block early: at once, after a ten-second pause, or not at all (strict)
+let focusLiftT = null, focusLiftAt = 0;
+function focusLift() {
+  const f = focusCfg(), st = focusState();
+  if (!st.active || st.locked || f.strict === 'lock') return;
+  if (f.strict === 'wait' && !(focusLiftAt && Date.now() >= focusLiftAt)) {
+    if (focusLiftAt) return; // counting already
+    focusLiftAt = Date.now() + 10000;
+    clearInterval(focusLiftT);
+    focusLiftT = setInterval(() => { renderFocusHero(); if (Date.now() > focusLiftAt + 8000) { focusLiftAt = 0; clearInterval(focusLiftT); renderFocusHero(); } }, 250);
+    renderFocusHero();
+    return;
+  }
+  focusLiftAt = 0;
+  clearInterval(focusLiftT);
+  saveFocus({ ...f, until: 0, release: Number.isFinite(st.until) ? st.until : Date.now() + 30 * 60000 });
+  toast(t('fzLifted'));
+}
+function focusFor(min) {
+  const f = focusCfg();
+  saveFocus({ ...f, until: Math.max(f.until || 0, Date.now()) + min * 60000, release: 0 });
+}
+
+/* ---------- the Focus tab ---------- */
+const FZ_ICON = {
+  shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2 5 6v5.6c0 4.3 2.9 7.9 7 9.2 4.1-1.3 7-4.9 7-9.2V6z"/></svg>',
+  shieldOn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2 5 6v5.6c0 4.3 2.9 7.9 7 9.2 4.1-1.3 7-4.9 7-9.2V6z"/><path d="m9 12 2.2 2.2L15.5 10"/></svg>',
+  lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5.5v13M5.5 12h13"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg>',
+  work: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7.5" width="17" height="12" rx="2.6"/><path d="M9 7.5V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5M3.5 12.5h17"/></svg>',
+  series: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11a7 7 0 0 1 12-4.9L19 8M19 4v4h-4M19 13a7 7 0 0 1-12 4.9L5 16M5 20v-4h4"/></svg>',
+  hand: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12M11 11V4.5a1.5 1.5 0 0 1 3 0V12M14 11.5v-5a1.5 1.5 0 0 1 3 0V14a6.5 6.5 0 0 1-6.5 6.5h-.3a6 6 0 0 1-4.7-2.3L3.8 15.6a1.5 1.5 0 0 1 2.3-1.9L8 15.5"/></svg>',
+  cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
+  pc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="12" rx="2.5"/><path d="M9 20h6M12 16.5V20"/></svg>',
+  phone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="2.5" width="11" height="19" rx="2.8"/><path d="M11 18.5h2"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5.5 12.5 4 4 9-9"/></svg>',
+};
+let fzSchedEdit = null; // the schedule row being edited: {id, days, from, to}
+function renderFocus() {
+  if (!$('#view-focus')) return;
+  renderFocusHero();
+  const f = focusCfg(), st = focusNow, locked = st.active && (st.locked || f.strict === 'lock');
+  $('#view-focus').classList.toggle('fz-locked', !!locked);
+  // what to close: presets as quiet chips, your own sites after them
+  setHTML($('#fzSites'), FOCUS_SITES.map(s => `<button class="fz-chip${f.sites?.[s.id] ? ' on' : ''}" data-fz-site="${s.id}" aria-pressed="${!!f.sites?.[s.id]}"${locked ? ' disabled' : ''}>
+      ${avatar(s.name, s.id)}<span>${esc(s.name)}</span></button>`).join('') +
+    (f.custom || []).map(c => `<span class="fz-chip on custom"><span class="fz-dot"></span><span>${esc(c)}</span>${locked ? '' : `<button class="fz-x" data-fz-del="${esc(c)}" aria-label="×">${FZ_ICON.x}</button>`}</span>`).join('') +
+    (locked ? '' : `<form class="fz-add" id="fzAdd"><input id="fzAddIn" maxlength="80" autocomplete="off" spellcheck="false" placeholder="${esc(t('fzAddPh'))}"><button type="submit" aria-label="${esc(t('add'))}">${FZ_ICON.plus}</button></form>`));
+  // when: three plain choices; the schedule is an extra on top of any of them
+  const opt = (id, ico) => `<button class="fz-opt${f.when === id ? ' on' : ''}" data-fz-when="${id}"${locked ? ' disabled' : ''}>
+      <span class="fz-oi">${FZ_ICON[ico]}</span><span class="fz-ot"><b>${esc(t('fzWhen_' + id))}</b><small>${esc(t('fzWhenD_' + id))}</small></span><span class="fz-radio"></span></button>`;
+  setHTML($('#fzWhen'), opt('work', 'work') + opt('series', 'series') + opt('off', 'hand'));
+  const dn = DOW_ORDER.map(d => t('days')[d]);
+  setHTML($('#fzSched'), (f.sched || []).map(w => fzSchedEdit && fzSchedEdit.id === w.id ? '' : `<div class="fz-win">
+      <span class="fz-oi">${FZ_ICON.cal}</span><span class="fz-wt">${esc(fzDaysText(w.days))} · ${esc(w.from)}–${esc(w.to)}</span>
+      ${locked ? '' : `<button class="fz-x" data-fz-edit="${esc(w.id)}" aria-label="${esc(t('fzEdit'))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/></svg></button><button class="fz-x" data-fz-unsched="${esc(w.id)}" aria-label="×">${FZ_ICON.x}</button>`}</div>`).join('') +
+    (fzSchedEdit ? `<div class="fz-win edit">
+      <div class="fz-days">${DOW_ORDER.map((d, i) => `<button class="fz-day${fzSchedEdit.days.includes(d) ? ' on' : ''}" data-fz-day="${d}">${esc(dn[i])}</button>`).join('')}</div>
+      <div class="fz-times"><input type="time" id="fzFrom" value="${esc(fzSchedEdit.from)}"><span>–</span><input type="time" id="fzTo" value="${esc(fzSchedEdit.to)}">
+      <button class="ghost" id="fzSchedCancel">${esc(t('cancel'))}</button><button class="fz-save" id="fzSchedSave">${esc(t('done'))}</button></div></div>`
+      : locked ? '' : `<button class="fz-addwin" id="fzAddWin">${FZ_ICON.plus}<span>${esc(t('fzAddWin'))}</span></button>`));
+  $$('#fzStrict button').forEach(b => { b.classList.toggle('on', b.dataset.val === f.strict); b.disabled = !!locked; });
+  renderFocusDevices();
+}
+function fzDaysText(days) {
+  const d = [...(days || [])].sort((a, b) => DOW_ORDER.indexOf(a) - DOW_ORDER.indexOf(b));
+  if (d.length === 7) return t('everyDay');
+  if (d.length === 5 && !d.includes(0) && !d.includes(6)) return t('weekdays');
+  return d.map(x => t('days')[x]).join(', ');
+}
+function renderFocusHero() {
+  const box = $('#fzHero');
+  if (!box) return;
+  const f = focusCfg(), st = focusNow;
+  const names = [...FOCUS_SITES.filter(s => f.sites?.[s.id]).map(s => s.name), ...(f.custom || [])];
+  const list = names.length ? (names.length > 3 ? `${names.slice(0, 3).join(', ')} ${t('fzMore')(names.length - 3)}` : names.join(', ')) : '';
+  box.classList.toggle('on', !!st.active);
+  let title, sub, acts = '';
+  if (focusEmpty(f)) { title = t('fzOffTitle'); sub = t('fzPick'); }
+  else if (st.active) {
+    title = t('fzOnTitle');
+    sub = `${list} · ${focusUntilText(st)}`;
+    if (st.locked || f.strict === 'lock') acts = `<span class="fz-note">${FZ_ICON.lock}${esc(t('fzLockedNote'))}</span>`;
+    else {
+      const left = focusLiftAt ? Math.ceil((focusLiftAt - Date.now()) / 1000) : 0;
+      acts = `<button class="fz-lift${left <= 0 && focusLiftAt ? ' ready' : ''}" id="fzLift">${esc(focusLiftAt ? left > 0 ? t('fzLiftIn')(left) : t('fzLiftNow') : t('fzLift'))}</button>`;
+    }
+    if (f.until > Date.now() && !(st.locked || f.strict === 'lock')) acts += `<button class="fz-q" data-fz-for="25">+25 ${esc(t('min'))}</button>`;
+  } else {
+    title = t(f.on ? 'fzReadyTitle' : 'fzOffTitle2');
+    sub = f.on ? `${list} · ${t(st.released ? 'fzReleased' : 'fzWhenSub_' + f.when)}` : t('fzOffSub')(list);
+    acts = `<button class="fz-power${f.on ? '' : ' go'}" id="fzPower">${esc(t(f.on ? 'fzTurnOff' : 'fzTurnOn'))}</button>` +
+      `<span class="fz-qL">${esc(t('fzNowFor'))}</span>` +
+      [25, 60, 120].map(m => `<button class="fz-q" data-fz-for="${m}">${esc(m < 60 ? `${m} ${t('min')}` : `${m / 60} ${t('h')}`)}</button>`).join('');
+  }
+  setHTML(box, `<span class="fz-badge">${st.active ? FZ_ICON.shieldOn : FZ_ICON.shield}</span>
+    <div class="fz-title">${esc(title)}</div><div class="fz-sub">${esc(sub)}</div><div class="fz-acts">${acts}</div>`);
+}
+let fzPhone = null;
+function renderFocusDevices() {
+  const box = $('#fzDevices');
+  if (!box) return;
+  const row = (ico, name, desc, right) => `<div class="set fz-dev"><span class="set-ico">${FZ_ICON[ico]}</span><div class="set-text"><div class="set-name">${esc(name)}</div><div class="set-desc">${esc(desc)}</div></div>${right}</div>`;
+  const ok = `<span class="fz-ok">${FZ_ICON.check}</span>`;
+  let html = '';
+  if (api.focusBlock) {
+    const can = !focusPc || focusPc.writable;
+    html += row('pc', t('fzPcName'), t(can ? 'fzPcOk' : 'fzPcAsk'), can ? ok : `<button class="ghost" id="fzGrant">${esc(t('fzAllow'))}</button>`);
+  } else if (ANDROID) {
+    const on = fzPhone?.a11y;
+    html += row('phone', t('fzPhoneName'), t(on ? 'fzPhoneOk' : 'fzPhoneAsk'), on ? ok : `<button class="ghost" id="fzA11y">${esc(t('fzAllow'))}</button>`);
+  } else html += row('pc', t('fzWebName'), t('fzWebDesc'), '');
+  html += `<div class="set-desc fz-devnote">${esc(t(ANDROID ? 'fzNoteAndroid' : api.focusBlock ? 'fzNotePc' : 'fzNoteWeb'))}${typeof focusDenied !== 'undefined' && focusDenied ? ' ' + esc(t('fzSyncWait')) : ''}</div>`;
+  setHTML(box, html);
+}
+function focusHit(what) {
+  const st = focusState();
+  if (!st.active) return;
+  const site = FOCUS_SITES.find(s => s.k.includes(what) || (s.x || []).includes(what));
+  const name = site ? site.name : (focusCfg().custom || []).find(c => c.startsWith(what)) || what;
+  api.showAlert({
+    offerId: 'focus', setLabel: t('tabFocus'), next: 'work', title: t('fzHitTitle')(name), body: focusUntilText(st),
+    goLabel: '', hideGo: true, okLabel: t('gotIt'), sound: false, repeatSec: 0, autoHide: 4500,
+    theme: effectiveTheme(), lang: settings.lang,
+  });
+}
+function bindFocus() {
+  const v = $('#view-focus');
+  if (!v) return;
+  v.addEventListener('click', e => {
+    const f = focusCfg();
+    const site = e.target.closest('[data-fz-site]');
+    if (site && !site.disabled) { saveFocus({ ...f, sites: { ...f.sites, [site.dataset.fzSite]: !f.sites?.[site.dataset.fzSite] } }); return; }
+    const del = e.target.closest('[data-fz-del]');
+    if (del) { saveFocus({ ...f, custom: (f.custom || []).filter(c => c !== del.dataset.fzDel) }); return; }
+    const when = e.target.closest('[data-fz-when]');
+    if (when && !when.disabled) { saveFocus({ ...f, when: when.dataset.fzWhen, release: 0 }); return; }
+    const forMin = e.target.closest('[data-fz-for]');
+    if (forMin) { focusFor(Number(forMin.dataset.fzFor)); return; }
+    if (e.target.closest('#fzLift')) { focusLift(); return; }
+    if (e.target.closest('#fzPower')) { saveFocus({ ...f, on: !f.on, release: 0 }); return; }
+    if (e.target.closest('#fzGrant')) { api.focusGrant(); return; }
+    if (e.target.closest('#fzA11y')) { api.focusSetup && api.focusSetup(); return; }
+    if (e.target.closest('#fzAddWin')) { fzSchedEdit = { id: newId(), days: [1, 2, 3, 4, 5], from: '09:00', to: '13:00', fresh: true }; renderFocus(); return; }
+    const ed = e.target.closest('[data-fz-edit]');
+    if (ed) { const w = (f.sched || []).find(x => x.id === ed.dataset.fzEdit); if (w) { fzSchedEdit = { ...w, days: [...w.days] }; renderFocus(); } return; }
+    const un = e.target.closest('[data-fz-unsched]');
+    if (un) { saveFocus({ ...f, sched: (f.sched || []).filter(x => x.id !== un.dataset.fzUnsched) }); return; }
+    const day = e.target.closest('[data-fz-day]');
+    if (day && fzSchedEdit) {
+      const d = Number(day.dataset.fzDay);
+      fzSchedEdit.days = fzSchedEdit.days.includes(d) ? fzSchedEdit.days.filter(x => x !== d) : [...fzSchedEdit.days, d];
+      day.classList.toggle('on', fzSchedEdit.days.includes(d));
+      return;
+    }
+    if (e.target.closest('#fzSchedCancel')) { fzSchedEdit = null; renderFocus(); return; }
+    if (e.target.closest('#fzSchedSave') && fzSchedEdit) {
+      const from = $('#fzFrom').value, to = $('#fzTo').value;
+      if (!fzSchedEdit.days.length || !from || !to || from === to) { toast(t('fzSchedBad')); return; }
+      const w = { id: fzSchedEdit.id, days: fzSchedEdit.days, from, to };
+      fzSchedEdit = null;
+      saveFocus({ ...f, sched: [...(f.sched || []).filter(x => x.id !== w.id), w] });
+      return;
+    }
+    const strict = e.target.closest('#fzStrict button');
+    if (strict && !strict.disabled) saveFocus({ ...f, strict: strict.dataset.val });
+  });
+  v.addEventListener('submit', e => {
+    if (e.target.id !== 'fzAdd') return;
+    e.preventDefault();
+    const d = cleanDomain($('#fzAddIn').value), f = focusCfg();
+    if (!isDomain(d)) { toast(t('fzBadSite')); return; }
+    if ((f.custom || []).includes(d) || FOCUS_SITES.some(s => s.d.includes(d))) {
+      const s = FOCUS_SITES.find(x => x.d.includes(d));
+      if (s) saveFocus({ ...f, sites: { ...f.sites, [s.id]: true } });
+      $('#fzAddIn').value = '';
+      return;
+    }
+    saveFocus({ ...f, custom: [...(f.custom || []), d] });
+    setTimeout(() => $('#fzAddIn')?.focus(), 0);
+  });
+  if (api.onFocusPerm) api.onFocusPerm(ok => { if (focusPc) focusPc.writable = !!ok; focusSent = ''; focusTick(true); renderFocusDevices(); toast(t(ok ? 'fzPermOk' : 'fzPermNo')); });
+  if (api.onFocusHit) api.onFocusHit(focusHit);
+  if (ANDROID && api.focusStatus) {
+    const look = () => api.focusStatus().then(s => { fzPhone = s || null; if (view === 'focus') renderFocusDevices(); });
+    look();
+    api.onWindowVisible(vis => { if (vis) look(); });
+  }
+}
+
 /* ================= Events ================= */
 function bind() {
   $$('.tab').forEach(b => b.addEventListener('click', () => {
@@ -4006,6 +4424,7 @@ function bind() {
     if (view === 'projects') renderProjects();
     if (view === 'plan') renderPlans();
     if (view === 'apps') { closePicker(); loadApps(); }
+    if (view === 'focus') renderFocus();
     if (view === 'timer') fitTimer();
     if (ANDROID) setPager(true);
     closeCalendar();
@@ -4054,6 +4473,7 @@ function bind() {
   setInterval(() => { if (view === 'apps') loadApps(); }, 10000);
   setInterval(checkAppOffer, 20000);
   bindAppOffers();
+  bindFocus();
 
   // Launch with Windows
   $('#autostartToggle').addEventListener('click', async () => {

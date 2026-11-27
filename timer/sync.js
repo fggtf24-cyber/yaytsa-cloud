@@ -420,6 +420,10 @@ function applySettings(v) {
     settings.plans = merged;
     behind ||= sig(choices) !== sig(cloudPlans.choices);
   }
+  if (v.focus && typeof v.focus === 'object') {
+    if ((Number(v.focus.u) || 0) > (Number(settings.focus?.u) || 0)) { settings.focus = v.focus; changed = true; }
+    if (sig(settings.focus) === sig(v.focus)) syncSent.focus = sig(v.focus);
+  }
   settings.u = Math.max(settings.u || 0, ru);
   if (langChanged) applyI18n();
   syncSent.set = behind ? '' : sig(setCore());
@@ -499,7 +503,10 @@ async function syncPush() {
     Object.assign(up, settingsPatch(outgoingSettings));
     marks.push(['set', '', sg]);
   }
-  if (!marks.length) return;
+  if (!marks.length) {
+    if (settings.focus && syncSent.focus !== sig(settings.focus)) idToken().then(pushFocus).catch(() => {});
+    return;
+  }
 
   pushing = true;
   try {
@@ -530,6 +537,7 @@ async function syncPush() {
     syncStatus = settingsRetryAt ? 'denied' : 'ok';
     syncAt = Date.now();
     persist();
+    pushFocus(tok);
   } catch (e) {
     if (syncStatus === 'ok' || syncStatus === 'conn') syncStatus = 'offline';
     clearTimeout(pushT);
@@ -538,6 +546,23 @@ async function syncPush() {
   pushing = false;
   renderSync();
   if (pushAgain) { pushAgain = false; syncSchedule(); }
+}
+
+// Focus (2.21) is sent apart from the other settings: until the database rules know set/focus,
+// it stays on each device and everything else syncs as before.
+let focusRetryAt = 0, focusDenied = false;
+async function pushFocus(tok) {
+  const f = settings.focus;
+  if (!f || syncSent.focus === sig(f) || Date.now() < focusRetryAt) return;
+  const g = sig(f);
+  try {
+    const r = await fetch(`${SYNC.db}/timer/${account.uid}/set/focus.json?auth=${encodeURIComponent(tok)}`, {
+      method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(f),
+    });
+    if (r.ok) { syncSent.focus = g; focusDenied = false; focusRetryAt = 0; persist(); syncLog('focus', 'ok'); }
+    else { focusDenied = r.status >= 400 && r.status < 500; focusRetryAt = Date.now() + 5 * 60000; syncLog('focus', `HTTP ${r.status}`); }
+  } catch { focusRetryAt = Date.now() + 60000; }
+  if (typeof renderFocusDevices === 'function' && view === 'focus') renderFocusDevices();
 }
 
 /* ---------- live timer: t = the running phase, shared by every device ----------
