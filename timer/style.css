@@ -2596,3 +2596,11 @@ html.simple .tab[data-view="focus"] { display: none !important; }
 .fz-power { height: 30px; padding: 0 14px; margin-right: 10px; border: 0; border-radius: 999px; background: var(--hover); color: var(--text-2); font: inherit; font-size: 13.5px; cursor: pointer; }
 .fz-power.go { background: linear-gradient(135deg, #5a8dff, #8b5cff); color: #fff; font-weight: 550; }
 .fz-power:hover { filter: brightness(1.08); }
+
+/* 2.21.1: the services' own marks in the chips; a little air under the page title */
+.fz-ico { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
+  filter: grayscale(1); opacity: .5; transition: filter .2s var(--ease), opacity .2s var(--ease); }
+.fz-ico svg { width: 16px; height: 16px; display: block; }
+.fz-chip.on .fz-ico, .fz-chip:hover:not(:disabled) .fz-ico { filter: none; opacity: 1; }
+#view-focus .fz-hero { margin-top: 18px; }
+.fz-add input { width: 230px; }

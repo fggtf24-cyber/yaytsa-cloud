@@ -4126,6 +4126,22 @@ const FOCUS_SITES = [
   { id: 'threads', name: 'Threads', d: ['threads.net', 'www.threads.net', 'threads.com', 'www.threads.com'], k: ['threads'], a: ['com.instagram.barcelona'] },
   { id: 'discord', name: 'Discord', d: ['discord.com', 'www.discord.com'], k: ['discord'], a: ['com.discord'], x: ['discord.exe'] },
 ];
+// small marks of the services (white on their colour), drawn here so nothing is fetched
+const FOCUS_ICONS = {
+  youtube: ['#ff0033', '<path fill="#fff" d="M9.6 7.8v8.4l7-4.2z"/>'],
+  instagram: ['linear-gradient(45deg,#f9a03a,#e8336d 55%,#8a3ab9)', '<rect x="6" y="6" width="12" height="12" rx="3.6" fill="none" stroke="#fff" stroke-width="1.8"/><circle cx="12" cy="12" r="2.9" fill="none" stroke="#fff" stroke-width="1.8"/><circle cx="15.6" cy="8.4" r="1" fill="#fff"/>'],
+  tiktok: ['#111', '<path d="M13.6 5.5v8.6a2.9 2.9 0 1 1-2.9-2.9" fill="none" stroke="#25f4ee" stroke-width="2" stroke-linecap="round" transform="translate(-.6 -.4)"/><path d="M13.6 5.5c.4 1.9 1.8 3.2 3.8 3.3" fill="none" stroke="#25f4ee" stroke-width="2" stroke-linecap="round" transform="translate(-.6 -.4)"/><path d="M13.6 5.5v8.6a2.9 2.9 0 1 1-2.9-2.9M13.6 5.5c.4 1.9 1.8 3.2 3.8 3.3" fill="none" stroke="#fe2c55" stroke-width="2" stroke-linecap="round" transform="translate(.6 .4)"/><path d="M13.6 5.5v8.6a2.9 2.9 0 1 1-2.9-2.9M13.6 5.5c.4 1.9 1.8 3.2 3.8 3.3" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>'],
+  vk: ['#0077ff', '<path fill="#fff" d="M12.9 16.6c-4.8 0-7.6-3.3-7.7-8.8h2.4c.1 4 1.9 5.7 3.3 6V7.8h2.3v3.5c1.4-.2 2.8-1.7 3.3-3.5h2.2a6.6 6.6 0 0 1-3 4.3 6.9 6.9 0 0 1 3.5 4.5h-2.5a4.4 4.4 0 0 0-3.5-3.2v3.2z"/>'],
+  telegram: ['#229ed9', '<path fill="#fff" d="M5.6 11.6 16.9 7.2c.6-.2 1.1.1.9.9l-1.9 9c-.1.6-.6.8-1.1.5l-3.1-2.3-1.5 1.5c-.2.2-.3.3-.6.3l.2-3.2 5.8-5.2c.3-.2-.1-.4-.4-.2l-7.1 4.5-3.1-1c-.7-.2-.7-.7.1-1z"/>'],
+  x: ['#111', '<path fill="#fff" d="M15.9 6h2.2l-4.8 5.4L19 18h-4.4l-3.4-4.5L7.3 18H5.1l5.1-5.8L5 6h4.5l3.1 4.1zm-.8 10.8h1.2L8.9 7.2H7.6z"/>'],
+  facebook: ['#1877f2', '<path fill="#fff" d="M13.3 19v-6.1h2.1l.3-2.4h-2.4V9c0-.7.2-1.2 1.2-1.2h1.3V5.7a17 17 0 0 0-1.9-.1c-1.9 0-3.1 1.1-3.1 3.2v1.7H8.7v2.4h2.1V19z"/>'],
+  reddit: ['#ff4500', '<ellipse cx="12" cy="13.6" rx="5.6" ry="3.9" fill="#fff"/><circle cx="16.9" cy="10.6" r="1.2" fill="#fff"/><circle cx="7.1" cy="10.6" r="1.2" fill="#fff"/><path d="M12 9.7l.9-3.6 2.8.7" fill="none" stroke="#fff" stroke-width="1.1" stroke-linecap="round"/><circle cx="16.3" cy="6.9" r="1" fill="#fff"/><circle cx="10" cy="13.2" r="1" fill="#ff4500"/><circle cx="14" cy="13.2" r="1" fill="#ff4500"/><path d="M10.2 15.3c1.1.7 2.5.7 3.6 0" fill="none" stroke="#ff4500" stroke-width=".9" stroke-linecap="round"/>'],
+  twitch: ['#9146ff', '<path fill="#fff" d="M7.4 5.5 6.3 8.3v9.1h3.1v1.7h1.7l1.7-1.7h2.6l3.3-3.4V5.5zm9.8 8-2 2h-3.1l-1.7 1.7v-1.7H7.8V6.7h9.4z"/><path fill="#fff" d="M11.3 8.6h1.3v3.8h-1.3zM14.6 8.6h1.3v3.8h-1.3z"/>'],
+  pinterest: ['#e60023', '<path fill="#fff" d="M12.2 5C8.5 5 6.5 7.6 6.5 9.8c0 1.3.5 2.5 1.6 3 .2.1.3 0 .4-.2l.2-.7c0-.2 0-.3-.1-.4a2.7 2.7 0 0 1-.6-1.8c0-2.4 1.8-4.5 4.6-4.5 2.5 0 3.9 1.5 3.9 3.6 0 2.7-1.2 5-3 5-1 0-1.7-.8-1.5-1.8.3-1.2.8-2.5.8-3.3 0-.8-.4-1.4-1.3-1.4-1 0-1.9 1.1-1.9 2.5 0 .9.3 1.5.3 1.5l-1.2 5.3c-.3 1.4-.1 3-.1 3.2l.2.1c.1-.1 1.2-1.4 1.5-2.7l.6-2.2c.3.6 1.1 1 2 1 2.7 0 4.5-2.4 4.5-5.7C17.8 7.3 15.5 5 12.2 5z"/>'],
+  threads: ['#111', '<path d="M15.3 11.3c-.2-2.2-1.6-3.3-3.6-3.3-1.6 0-2.7.8-3.2 1.8M15.4 11.4c-3.1-.6-5.7.2-5.6 2.2.1 1.4 1.5 2 2.9 1.9 1.9-.1 2.9-1.5 2.9-3.9 0-3.5-2.1-5.6-5.3-5.6-3.6 0-5.4 2.6-5.4 6s1.9 6 5.6 6c2.4 0 4.4-1 5.2-3" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>'],
+  discord: ['#5865f2', '<path fill="#fff" d="M16.9 7.6a12.8 12.8 0 0 0-3.2-1l-.4.8a11.8 11.8 0 0 0-2.6 0l-.4-.8a12.8 12.8 0 0 0-3.2 1C5 10.6 4.5 13.5 4.7 16.4a13 13 0 0 0 3.9 2l.8-1.3a8.3 8.3 0 0 1-1.3-.6l.3-.2a9.3 9.3 0 0 0 7.9 0l.3.2-1.3.6.8 1.3a13 13 0 0 0 3.9-2c.3-3.4-.6-6.3-2.1-8.8zM9.6 14.6c-.8 0-1.4-.7-1.4-1.6s.6-1.6 1.4-1.6 1.4.7 1.4 1.6-.6 1.6-1.4 1.6zm4.8 0c-.8 0-1.4-.7-1.4-1.6s.6-1.6 1.4-1.6 1.4.7 1.4 1.6-.6 1.6-1.4 1.6z"/>'],
+};
+const siteIcon = id => { const i = FOCUS_ICONS[id]; return i ? `<span class="fz-ico" style="background:${i[0]}"><svg viewBox="0 0 24 24" aria-hidden="true">${i[1]}</svg></span>` : ''; };
 const FOCUS_DEFAULT = { on: false, sites: { youtube: true }, custom: [], when: 'work', sched: [], until: 0, strict: 'wait', release: 0, lockUntil: 0 };
 const focusCfg = () => { const f = { ...FOCUS_DEFAULT, ...(settings.focus || {}) }; return f.d ? f : focusDerive(f); };
 const cleanDomain = s => String(s || '').trim().toLowerCase().replace(/^[a-z]+:\/\//, '').replace(/^www\./, '').split(/[/?#:]/)[0];
@@ -4268,7 +4284,7 @@ function renderFocus() {
   $('#view-focus').classList.toggle('fz-locked', !!locked);
   // what to close: presets as quiet chips, your own sites after them
   setHTML($('#fzSites'), FOCUS_SITES.map(s => `<button class="fz-chip${f.sites?.[s.id] ? ' on' : ''}" data-fz-site="${s.id}" aria-pressed="${!!f.sites?.[s.id]}"${locked ? ' disabled' : ''}>
-      ${avatar(s.name, s.id)}<span>${esc(s.name)}</span></button>`).join('') +
+      ${siteIcon(s.id)}<span>${esc(s.name)}</span></button>`).join('') +
     (f.custom || []).map(c => `<span class="fz-chip on custom"><span class="fz-dot"></span><span>${esc(c)}</span>${locked ? '' : `<button class="fz-x" data-fz-del="${esc(c)}" aria-label="×">${FZ_ICON.x}</button>`}</span>`).join('') +
     (locked ? '' : `<form class="fz-add" id="fzAdd"><input id="fzAddIn" maxlength="80" autocomplete="off" spellcheck="false" placeholder="${esc(t('fzAddPh'))}"><button type="submit" aria-label="${esc(t('add'))}">${FZ_ICON.plus}</button></form>`));
   // when: three plain choices; the schedule is an extra on top of any of them
